@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_42.html -->
+<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_43.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -3888,17 +3888,7 @@ async function gbGirisGuncelle() {
     '</div>' +
 
     // Hesaplanan tutar kutusu
-    (onayliKaynak && !onaylandi || onaylandi ?
-      '<div style="padding:16px;background:' + (onaylandi?'var(--accent)':' var(--bg2)') + ';border:2px solid ' + (onaylandi?'var(--accent)':' var(--border)') + ';border-radius:10px;margin-bottom:14px">' +
-      '<div style="font-size:11px;font-weight:600;' + (onaylandi?'color:rgba(255,255,255,0.8)':' color:var(--text-3)') + ';margin-bottom:6px">Hesaplama: Toplam Ciro × ' + (s.katsayi==='ZEC'?'ZEC':'SEC') + ' × Onaylanan %</div>' +
-      '<div style="font-family:DM Mono,monospace;font-size:11px;' + (onaylandi?'color:rgba(255,255,255,0.7)':' color:var(--text-3)') + ';margin-bottom:8px">' +
-      Math.round(_gbCiroGB).toLocaleString('tr-TR') + ' TL × ' + (s.katsayi==='ZEC'?zec.toFixed(4):sec.toFixed(4)) + ' × %' + (onayliKaynak==='gecen_yil'?gecenYilYuzde:onayliKaynak==='manuel'?(kayit?kayit.manuel_tutar:0):ciroYuzde).toFixed(2) +
-      '</div>' +
-      '<div style="font-family:DM Mono,monospace;font-size:24px;font-weight:700;' + (onaylandi?'color:#fff':' color:var(--danger)') + '">' +
-      Math.round(kayit?kayit.hesaplanan_tutar:0).toLocaleString('tr-TR') + ' TL</div>' +
-      (onaylandi ? '<div style="font-size:11px;color:rgba(255,255,255,0.7);margin-top:4px">🔒 Onaylayan: ' + (kayit.onaylayan||'—') + '</div>' : '') +
-      '</div>' : ''
-    ) +
+    gbHesapKutusu(onayliKaynak, onaylandi, kayit, s, zec, sec, ciroYuzde, gecenYilYuzde) +
 
     // Aktar / Revize butonları
     '<div style="display:flex;gap:10px;justify-content:flex-end">' +
@@ -3913,6 +3903,28 @@ async function gbGirisGuncelle() {
   el.innerHTML = html;
   window._gbSecilenAna = anaBaslik;
   window._gbSecilenAy = ay;
+}
+
+function gbHesapKutusu(onayliKaynak, onaylandi, kayit, s, zec, sec, ciroYuzde, gecenYilYuzde) {
+  if (!onayliKaynak) return '';
+  var katsayi = s.katsayi === 'ZEC' ? zec : sec;
+  var yuzde = 0;
+  if (onayliKaynak === 'arastirma') yuzde = ciroYuzde;
+  else if (onayliKaynak === 'gecen_yil') yuzde = gecenYilYuzde;
+  else if (onayliKaynak === 'manuel') {
+    var manuelEl = document.getElementById('gb-manuel-yuzde');
+    yuzde = manuelEl ? (parseFloat(manuelEl.value)||0) : (kayit?kayit.manuel_tutar:0);
+  }
+  var tutar = onaylandi && kayit ? kayit.hesaplanan_tutar : (_gbCiroGB * (yuzde/100) * katsayi);
+  return '<div style="padding:16px;background:' + (onaylandi?'var(--accent)':'var(--bg2)') + ';border:2px solid ' + (onaylandi?'var(--accent)':'var(--border)') + ';border-radius:10px;margin-bottom:14px">' +
+    '<div style="font-size:11px;font-weight:600;' + (onaylandi?'color:rgba(255,255,255,0.8)':'color:var(--text-3)') + ';margin-bottom:6px">Hesaplama: Toplam Ciro × ' + s.katsayi + ' × Onaylanan %</div>' +
+    '<div style="font-family:DM Mono,monospace;font-size:11px;' + (onaylandi?'color:rgba(255,255,255,0.7)':'color:var(--text-3)') + ';margin-bottom:8px">' +
+    Math.round(_gbCiroGB).toLocaleString('tr-TR') + ' TL × ' + katsayi.toFixed(4) + ' × %' + yuzde.toFixed(2) +
+    '</div>' +
+    '<div style="font-family:DM Mono,monospace;font-size:24px;font-weight:700;' + (onaylandi?'color:#fff':'color:var(--danger)') + '">' +
+    Math.round(tutar).toLocaleString('tr-TR') + ' TL</div>' +
+    (onaylandi ? '<div style="font-size:11px;color:rgba(255,255,255,0.7);margin-top:4px">🔒 Onaylayan: ' + (kayit.onaylayan||'—') + '</div>' : '') +
+    '</div>';
 }
 
 function gbManuelSatir(onayliKaynak, onaylandi, kayit) {
@@ -3948,6 +3960,12 @@ function gbKaynakSecYuzde(kaynak) {
   var ay = parseInt(document.getElementById('gb-sec-ay').value);
   if (!_gbKayitlarGB[anaBaslik + '|' + ay]) _gbKayitlarGB[anaBaslik + '|' + ay] = {};
   _gbKayitlarGB[anaBaslik + '|' + ay].secilen_kaynak = kaynak;
+  // Manuel seçildiyse yüzdeyi hemen oku
+  if (kaynak === 'manuel') {
+    var manuelEl = document.getElementById('gb-manuel-yuzde');
+    var manuelYuzde = manuelEl ? (parseFloat(manuelEl.value)||0) : 0;
+    _gbKayitlarGB[anaBaslik + '|' + ay].manuel_tutar = manuelYuzde;
+  }
   gbGirisGuncelle();
 }
 
