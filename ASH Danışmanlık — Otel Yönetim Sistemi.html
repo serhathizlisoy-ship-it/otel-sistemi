@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_47.html -->
+<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_48.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -4827,10 +4827,24 @@ async function grDolulukGoster() {
       snapKisi[ay] = aylikKisi[ay] || 0;
     });
 
+    var bugun = new Date();
+    var bugunAy = bugun.getMonth() + 1;
+    var bugunYil = bugun.getFullYear();
+    var bugunGun = bugun.getDate();
+
+    // Ay bazında geçerli gün sayısını hesapla
+    function gecerliGunSayisi(ay) {
+      if (_grYil < bugunYil) return AY_GUNLER[ay]; // Geçmiş yıl → tam ay
+      if (_grYil > bugunYil) return 0; // Gelecek yıl → 0
+      if (ay < bugunAy) return AY_GUNLER[ay]; // Geçmiş ay → tam ay
+      if (ay === bugunAy) return Math.max(bugunGun - 1, 0); // Cari ay → bugüne kadar
+      return 0; // Gelecek ay → 0
+    }
+
     var tToplamOda = GR_AYLAR.reduce(function(s,ay){return s+snapOda[ay];},0);
     var tToplamKisi = GR_AYLAR.reduce(function(s,ay){return s+snapKisi[ay];},0);
-    var tMaxOda = GR_AYLAR.reduce(function(s,ay){return s+_grOdaSayisi*AY_GUNLER[ay];},0);
-    var tMaxKisi = GR_AYLAR.reduce(function(s,ay){return s+_grMaxKisi*AY_GUNLER[ay];},0);
+    var tMaxOda = GR_AYLAR.reduce(function(s,ay){return s+_grOdaSayisi*gecerliGunSayisi(ay);},0);
+    var tMaxKisi = GR_AYLAR.reduce(function(s,ay){return s+_grMaxKisi*gecerliGunSayisi(ay);},0);
 
     // Her satırı ayrı oluştur
     var dolulukSatirlar = [
@@ -4854,13 +4868,15 @@ async function grDolulukGoster() {
         else if (idx === 2) { deger = snapOda[ay]; yillikToplam = tToplamOda.toLocaleString('tr-TR'); }
         else if (idx === 3) { deger = snapKisi[ay]; yillikToplam = tToplamKisi.toLocaleString('tr-TR'); }
         else if (idx === 4) {
-          var max = _grOdaSayisi * gun;
-          deger = max > 0 ? '%' + ((snapOda[ay]/max)*100).toFixed(1) : '%0.0';
+          var gGun = gecerliGunSayisi(ay);
+          var max = _grOdaSayisi * gGun;
+          deger = max > 0 ? '%' + ((snapOda[ay]/max)*100).toFixed(1) : (gGun===0?'—':'%0.0');
           yillikToplam = tMaxOda > 0 ? '%' + ((tToplamOda/tMaxOda)*100).toFixed(1) : '%0.0';
         }
         else if (idx === 5) {
-          var max2 = _grMaxKisi * gun;
-          deger = max2 > 0 ? '%' + ((snapKisi[ay]/max2)*100).toFixed(1) : '%0.0';
+          var gGun2 = gecerliGunSayisi(ay);
+          var max2 = _grMaxKisi * gGun2;
+          deger = max2 > 0 ? '%' + ((snapKisi[ay]/max2)*100).toFixed(1) : (gGun2===0?'—':'%0.0');
           yillikToplam = tMaxKisi > 0 ? '%' + ((tToplamKisi/tMaxKisi)*100).toFixed(1) : '%0.0';
         }
         var gosterge = typeof deger === 'number' ? deger.toLocaleString('tr-TR') : deger;
