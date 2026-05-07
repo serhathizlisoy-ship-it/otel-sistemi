@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_44.html -->
+<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_45.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1031,6 +1031,40 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
           
 
       </div>
+      <!-- GERÇEKLEŞen BÜTÇE SAYFASI -->
+      <div class="pg" id="pg-gerceklesen">
+        <div class="ptitle">Gerçekleşen Bütçe</div>
+        <div class="psub">Günlük kapanış ve gider girişlerinden otomatik derlenen veriler</div>
+
+        <div class="atab" style="margin-bottom:20px">
+          <button class="atab-btn on" id="grtab-gelir" onclick="grSekme(&#39;gelir&#39;)">💰 Gelir Gerçekleşen</button>
+          <button class="atab-btn" id="grtab-gider" onclick="grSekme(&#39;gider&#39;)">💸 Gider Gerçekleşen</button>
+          <button class="atab-btn" id="grtab-doluluk" onclick="grSekme(&#39;doluluk&#39;)">🏨 Doluluk</button>
+        </div>
+
+        <!-- GELİR GERÇEKLEŞen -->
+        <div id="gr-gelir">
+          <div id="gr-gelir-icerik">
+            <div style="text-align:center;padding:30px"><div class="spinner" style="margin:0 auto;border-color:var(--border);border-top-color:var(--accent)"></div></div>
+          </div>
+        </div>
+
+        <!-- GİDER GERÇEKLEŞen -->
+        <div id="gr-gider" style="display:none">
+          <div id="gr-gider-icerik">
+            <div style="text-align:center;padding:30px"><div class="spinner" style="margin:0 auto;border-color:var(--border);border-top-color:var(--accent)"></div></div>
+          </div>
+        </div>
+
+        <!-- DOLULUK -->
+        <div id="gr-doluluk" style="display:none">
+          <div id="gr-doluluk-icerik">
+            <div style="text-align:center;padding:30px"><div class="spinner" style="margin:0 auto;border-color:var(--border);border-top-color:var(--accent)"></div></div>
+          </div>
+        </div>
+
+      </div>
+
       <div class="pg" id="pg-rapor"><div class="ptitle">Raporlar &amp; Analiz</div><div class="psub">Finansal analiz ve dönem raporları</div><div class="cs"><div class="csi">📈</div><div class="cst">Raporlama Modülü</div><div class="css">Aylık/yıllık finansal analiz, bütçe karşılaştırma grafikleri ve PDF export.</div><span class="csb">⏳ Geliştiriliyor</span></div></div>
       <div class="pg" id="pg-fiyat"><div class="ptitle">Fiyat Hesaplama</div><div class="psub">Oda ve kişi fiyatlandırma modülü</div><div class="cs"><div class="csi">🏷️</div><div class="cst">Fiyat Hesaplama Modülü</div><div class="css">Gider kalemleri ve reçete verileri üzerinden oda/kişi başı fiyat hesaplama.</div><span class="csb">⏳ Geliştiriliyor</span></div></div>
 
@@ -1095,8 +1129,8 @@ async function sbDelete(tablo, filtre) {
 
 // ── ROL YETKİLERİ ────────────────────────────────────
 var ROL_MODULLER = {
-  admin:      ['dashboard','recete','gider','kapanis','aksaklik','gelir-butce','gider-butce','stok','rapor','fiyat','cari','ayarlar'],
-  yonetici:   ['dashboard','recete','gider','kapanis','aksaklik','gelir-butce','gider-butce','stok','rapor','cari'],
+  admin:      ['dashboard','recete','gider','kapanis','aksaklik','gelir-butce','gider-butce','gerceklesen','stok','rapor','fiyat','cari','ayarlar'],
+  yonetici:   ['dashboard','recete','gider','kapanis','aksaklik','gelir-butce','gider-butce','gerceklesen','stok','rapor','cari'],
   resepsiyon: ['dashboard','gider','kapanis','aksaklik','stok']
 };
 
@@ -1107,8 +1141,9 @@ var MENU = [
   { id:'stok',      ad:'Stok Girişi',     ikon:'📦', bolum:'Veri Girişi' },
   { id:'recete',    ad:'Reçeteler',       ikon:'📋', bolum:'Tanımlamalar' },
   { id:'cari',      ad:'Cari Hesaplar',   ikon:'🗂️', bolum:'Tanımlamalar' },
-  { id:'gelir-butce', ad:'Gelir Bütçesi',  ikon:'💰', bolum:'Analiz' },
-  { id:'gider-butce', ad:'Gider Bütçesi',  ikon:'💸', bolum:'Analiz' },
+  { id:'gelir-butce', ad:'Tasarı Gelir',   ikon:'💰', bolum:'Analiz' },
+  { id:'gider-butce', ad:'Tasarı Gider',   ikon:'💸', bolum:'Analiz' },
+  { id:'gerceklesen',  ad:'Gerçekleşen',    ikon:'📈', bolum:'Analiz' },
   { id:'rapor',     ad:'Raporlar',        ikon:'📈', bolum:'Analiz' },
   { id:'fiyat',     ad:'Fiyat Hesaplama', ikon:'🏷️', bolum:'Analiz' },
   { id:'kapanis',   ad:'Günlük Kapanış',  ikon:'🌙', bolum:'Veri Girişi' },
@@ -1331,6 +1366,7 @@ function git(sayfaId) {
   if (sayfaId === 'aksaklik') { aksaklikListesiYukle(); }
   if (sayfaId === 'gelir-butce') { butceModuluBaslat(); butceSekme(butceAktifSekme); }
   if (sayfaId === 'gider-butce') { giderButceSayfasiYukle(); }
+  if (sayfaId === 'gerceklesen') { gerceklesenYukle(); }
   if (sayfaId === 'cari') { cariSekme(cariAktifSekme); }
 }
 
@@ -4506,6 +4542,310 @@ async function gbRevizyonGoster() {
     html += '</div>';
     el.innerHTML = html;
 
+  } catch(e) {
+    el.innerHTML = '<div style="color:var(--danger);padding:20px">Hata: ' + e.message + '</div>';
+  }
+}
+
+
+// ── GERÇEKLEŞen BÜTÇE ────────────────────────────────
+var grAktifSekme = 'gelir';
+var _grYil = 2026;
+var _grOdaSayisi = 13;
+var _grMaxKisi = 26;
+
+var GR_AYLAR = [1,2,3,4,5,6,7,8,9,10,11,12];
+
+var GR_GELIR_KALEMLERI = [
+  'Konaklama Cirosu',
+  'F&B Cirosu',
+  'Minibar',
+  'Çamaşırhane',
+  'Oda Servis',
+  'Diğer'
+];
+
+var GR_GELIR_ALANLAR = {
+  'Konaklama Cirosu': 'konaklama_ciro',
+  'F&B Cirosu':       'fb_ciro',
+  'Minibar':          'minibar_ciro',
+  'Çamaşırhane':      'camasir_ciro',
+  'Oda Servis':       'oda_servis_ciro',
+  'Diğer':            'diger_ciro'
+};
+
+var SEKTOREL_GIDER_LISTE = [
+  ['Personel Giderleri',        'Sezon Personel'],
+  ['Satış&Pazarlama Giderleri', 'İlan Reklam Giderleri'],
+  ['Satış&Pazarlama Giderleri', 'Acenta Satış & Komisyon Gideri'],
+  ['Satış&Pazarlama Giderleri', 'Reklam Malzemeleri Gideri'],
+  ['Satış&Pazarlama Giderleri', 'Katalog Katkı Payı Gideri'],
+  ['Genel Yönetim Giderleri',   'Basılı Evrak & Kırtasiye Gideri'],
+  ['Genel Yönetim Giderleri',   'Müşavirlik Gideri'],
+  ['Genel Yönetim Giderleri',   'Matrah, KDV, Beyanname Gideri'],
+  ['Genel Yönetim Giderleri',   'İnternet, Telefon Gideri'],
+  ['Genel Yönetim Giderleri',   'Banka Masraf Gideri'],
+  ['Genel Yönetim Giderleri',   'Kargo, Posta Gideri'],
+  ['Genel Yönetim Giderleri',   'Dernek, Aidat Gideri'],
+  ['Genel Yönetim Giderleri',   'Sigorta Gideri'],
+  ['Operasyon Giderleri',       'Pansiyon F&B Gideri'],
+  ['Operasyon Giderleri',       'Ekstra F&B Gideri'],
+  ['Operasyon Giderleri',       'Minibar Gideri'],
+  ['Operasyon Giderleri',       'Buklet Malzemeleri Gideri'],
+  ['Operasyon Giderleri',       'Linen Yıkama Gideri'],
+  ['Operasyon Giderleri',       'Temizlik Malzemeleri Gideri'],
+  ['Operasyon Giderleri',       'İkram Ödenmez Gideri'],
+  ['Operasyon Giderleri',       'Kitap & Gazete Gideri'],
+  ['Enerji Giderleri',          'Elektrik Gideri'],
+  ['Enerji Giderleri',          'Su Gideri'],
+  ['Enerji Giderleri',          'LPG & LNG & Gaz Gideri'],
+  ['Bakım-Onarım Giderleri',    'Peyzaj, Bahçe Bakım Gideri'],
+  ['Bakım-Onarım Giderleri',    'Çöp ve İlaçlama Gideri'],
+  ['Bakım-Onarım Giderleri',    'Bina Bakım Gideri'],
+  ['Bakım-Onarım Giderleri',    'Demirbaş Bakım-Onarım Giderleri'],
+  ['Bakım-Onarım Giderleri',    'Elektrik-Su Tesisat Bakım Giderleri'],
+  ['Bakım-Onarım Giderleri',    'Bilgi İşlem Gideri'],
+  ['Demirbaş Giderleri',        'Porselen Servis Malzemesi Gideri'],
+  ['Demirbaş Giderleri',        'Cam Malzemeleri Gideri'],
+  ['Demirbaş Giderleri',        'Linen Malzemeleri Gideri'],
+  ['Demirbaş Giderleri',        'Üniforma Gideri'],
+  ['Demirbaş Giderleri',        'Kayıp Zaiyat Gideri'],
+  ['Tesis Kullanım Bedeli',     'Kira Gideri']
+];
+
+async function gerceklesenYukle() {
+  _grYil = parseInt(document.getElementById('but-yil')?.value) || new Date().getFullYear();
+
+  // Oda ve kişi kapasitesini al
+  try {
+    var odalar = await sbGet('odalar', '');
+    if (odalar && odalar.length > 0) {
+      _grOdaSayisi = odalar.length;
+      _grMaxKisi = odalar.reduce(function(s,o){ return s + (o.kapasite||2); }, 0);
+    }
+  } catch(e) {}
+
+  grSekme(grAktifSekme);
+}
+
+function grSekme(sekme) {
+  grAktifSekme = sekme;
+  ['gelir','gider','doluluk'].forEach(function(s) {
+    var el = document.getElementById('gr-' + s);
+    var btn = document.getElementById('grtab-' + s);
+    if (el) el.style.display = s === sekme ? 'block' : 'none';
+    if (btn) btn.className = 'atab-btn' + (s === sekme ? ' on' : '');
+  });
+  if (sekme === 'gelir') grGelirGoster();
+  if (sekme === 'gider') grGiderGoster();
+  if (sekme === 'doluluk') grDolulukGoster();
+}
+
+async function grGelirGoster() {
+  var el = document.getElementById('gr-gelir-icerik');
+  el.innerHTML = '<div style="text-align:center;padding:30px"><div class="spinner" style="margin:0 auto;border-color:var(--border);border-top-color:var(--accent)"></div></div>';
+
+  try {
+    // Günlük kapanıştan ay bazında topla
+    var kapanis = await sbGet('gunluk_kapanis', 'order=tarih.asc');
+    var aylikGelir = {};
+    GR_AYLAR.forEach(function(ay) { aylikGelir[ay] = {}; });
+
+    if (kapanis) {
+      kapanis.forEach(function(k) {
+        var tarih = new Date(k.tarih);
+        var ay = tarih.getMonth() + 1;
+        if (tarih.getFullYear() !== _grYil) return;
+        if (!aylikGelir[ay]) aylikGelir[ay] = {};
+        Object.keys(GR_GELIR_ALANLAR).forEach(function(kalem) {
+          var alan = GR_GELIR_ALANLAR[kalem];
+          aylikGelir[ay][kalem] = (aylikGelir[ay][kalem]||0) + (k[alan]||0);
+        });
+      });
+    }
+
+    // Tablo oluştur
+    var html = '<div style="overflow-x:auto"><table class="tbl"><thead><tr>' +
+      '<th style="min-width:160px">Gelir Kalemi</th>';
+    GR_AYLAR.forEach(function(ay) {
+      html += '<th style="text-align:right;min-width:90px">' + AY_ADLARI[ay].substring(0,3) + '</th>';
+    });
+    html += '<th style="text-align:right;background:var(--accent-l);min-width:110px">Yıllık Toplam</th></tr></thead><tbody>';
+
+    var ayToplamlar = {};
+    GR_AYLAR.forEach(function(ay) { ayToplamlar[ay] = 0; });
+    var genelToplam = 0;
+
+    GR_GELIR_KALEMLERI.forEach(function(kalem) {
+      var satirToplam = 0;
+      html += '<tr><td style="font-weight:600;font-size:12px">' + kalem + '</td>';
+      GR_AYLAR.forEach(function(ay) {
+        var deger = aylikGelir[ay][kalem] || 0;
+        ayToplamlar[ay] += deger;
+        satirToplam += deger;
+        html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:11px;color:' + (deger>0?'var(--accent)':'var(--text-3)') + '">' + (deger>0?deger.toLocaleString('tr-TR'):'—') + '</td>';
+      });
+      genelToplam += satirToplam;
+      html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px;font-weight:600;color:var(--accent);background:var(--accent-l)">' + (satirToplam>0?satirToplam.toLocaleString('tr-TR')+' TL':'—') + '</td></tr>';
+    });
+
+    // Toplam satırı
+    html += '<tr style="background:var(--bg);font-weight:700"><td>TOPLAM CİRO</td>';
+    GR_AYLAR.forEach(function(ay) {
+      html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:11px;color:var(--accent)">' + (ayToplamlar[ay]>0?ayToplamlar[ay].toLocaleString('tr-TR'):'—') + '</td>';
+    });
+    html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:13px;font-weight:700;color:var(--accent);background:var(--accent-l)">' + genelToplam.toLocaleString('tr-TR') + ' TL</td></tr>';
+    html += '</tbody></table></div>';
+
+    el.innerHTML = html;
+  } catch(e) {
+    el.innerHTML = '<div style="color:var(--danger);padding:20px">Hata: ' + e.message + '</div>';
+  }
+}
+
+async function grGiderGoster() {
+  var el = document.getElementById('gr-gider-icerik');
+  el.innerHTML = '<div style="text-align:center;padding:30px"><div class="spinner" style="margin:0 auto;border-color:var(--border);border-top-color:var(--accent)"></div></div>';
+
+  try {
+    // Gider girişinden ay bazında topla
+    var giderler = await sbGet('gider_girisi', 'order=tarih.asc');
+    var aylikGider = {};
+    SEKTOREL_GIDER_LISTE.forEach(function(row) {
+      var key = row[0] + '|' + row[1];
+      aylikGider[key] = {};
+      GR_AYLAR.forEach(function(ay) { aylikGider[key][ay] = 0; });
+    });
+
+    if (giderler) {
+      giderler.forEach(function(g) {
+        var tarih = new Date(g.tarih);
+        if (tarih.getFullYear() !== _grYil) return;
+        var ay = tarih.getMonth() + 1;
+        var key = g.ana_baslik + '|' + g.alt_kirilim;
+        if (aylikGider[key]) {
+          aylikGider[key][ay] = (aylikGider[key][ay]||0) + (g.tutar||0);
+        }
+      });
+    }
+
+    // Grupla - ana başlık bazında
+    var anaBasliklar = {};
+    SEKTOREL_GIDER_LISTE.forEach(function(row) {
+      if (!anaBasliklar[row[0]]) anaBasliklar[row[0]] = [];
+      anaBasliklar[row[0]].push(row[1]);
+    });
+
+    var html = '<div style="overflow-x:auto"><table class="tbl"><thead><tr>' +
+      '<th style="min-width:160px">Ana Başlık</th>' +
+      '<th style="min-width:200px">Alt Kırılım</th>';
+    GR_AYLAR.forEach(function(ay) {
+      html += '<th style="text-align:right;min-width:80px">' + AY_ADLARI[ay].substring(0,3) + '</th>';
+    });
+    html += '<th style="text-align:right;background:var(--danger-l);min-width:110px">Toplam</th></tr></thead><tbody>';
+
+    var ayGenelToplamlar = {};
+    GR_AYLAR.forEach(function(ay) { ayGenelToplamlar[ay] = 0; });
+    var genelToplam = 0;
+
+    Object.keys(anaBasliklar).forEach(function(anaBaslik) {
+      var altlar = anaBasliklar[anaBaslik];
+      var anaAyToplamlar = {};
+      GR_AYLAR.forEach(function(ay) { anaAyToplamlar[ay] = 0; });
+      var anaYillikToplam = 0;
+
+      altlar.forEach(function(altKirilim, idx) {
+        var key = anaBaslik + '|' + altKirilim;
+        var satirToplam = 0;
+        html += '<tr>' +
+          '<td style="font-size:11px;color:var(--text-3)">' + (idx===0?anaBaslik:'') + '</td>' +
+          '<td style="font-size:12px;font-weight:600">' + altKirilim + '</td>';
+
+        GR_AYLAR.forEach(function(ay) {
+          var deger = aylikGider[key] ? (aylikGider[key][ay]||0) : 0;
+          anaAyToplamlar[ay] += deger;
+          satirToplam += deger;
+          html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:11px;color:' + (deger>0?'var(--danger)':'var(--text-3)') + '">' + (deger>0?deger.toLocaleString('tr-TR'):'—') + '</td>';
+        });
+
+        anaYillikToplam += satirToplam;
+        html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:11px;font-weight:600;color:var(--danger);background:var(--danger-l)">' + (satirToplam>0?satirToplam.toLocaleString('tr-TR')+' TL':'—') + '</td></tr>';
+      });
+
+      // Ana başlık toplam satırı
+      html += '<tr style="background:var(--bg2);font-weight:700"><td colspan="2" style="font-size:12px;color:var(--danger)">' + anaBaslik + ' Toplam</td>';
+      GR_AYLAR.forEach(function(ay) {
+        ayGenelToplamlar[ay] += anaAyToplamlar[ay];
+        html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:11px;color:var(--danger)">' + (anaAyToplamlar[ay]>0?anaAyToplamlar[ay].toLocaleString('tr-TR'):'—') + '</td>';
+      });
+      genelToplam += anaYillikToplam;
+      html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px;font-weight:700;color:var(--danger);background:var(--danger-l)">' + anaYillikToplam.toLocaleString('tr-TR') + ' TL</td></tr>';
+    });
+
+    // Genel toplam
+    html += '<tr style="background:var(--danger);font-weight:700"><td colspan="2" style="color:#fff">GENEL TOPLAM</td>';
+    GR_AYLAR.forEach(function(ay) {
+      html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:11px;color:#fff">' + (ayGenelToplamlar[ay]>0?ayGenelToplamlar[ay].toLocaleString('tr-TR'):'—') + '</td>';
+    });
+    html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:13px;font-weight:700;color:#fff;background:rgba(0,0,0,0.1)">' + genelToplam.toLocaleString('tr-TR') + ' TL</td></tr>';
+    html += '</tbody></table></div>';
+
+    el.innerHTML = html;
+  } catch(e) {
+    el.innerHTML = '<div style="color:var(--danger);padding:20px">Hata: ' + e.message + '</div>';
+  }
+}
+
+async function grDolulukGoster() {
+  var el = document.getElementById('gr-doluluk-icerik');
+  el.innerHTML = '<div style="text-align:center;padding:30px"><div class="spinner" style="margin:0 auto;border-color:var(--border);border-top-color:var(--accent)"></div></div>';
+
+  try {
+    var kapanis = await sbGet('gunluk_kapanis', 'order=tarih.asc');
+    var aylikOda = {}, aylikKisi = {};
+    GR_AYLAR.forEach(function(ay) { aylikOda[ay] = 0; aylikKisi[ay] = 0; });
+
+    if (kapanis) {
+      kapanis.forEach(function(k) {
+        var tarih = new Date(k.tarih);
+        if (tarih.getFullYear() !== _grYil) return;
+        var ay = tarih.getMonth() + 1;
+        aylikOda[ay] += (k.dolu_oda||0);
+        aylikKisi[ay] += (k.kisi_sayisi||0);
+      });
+    }
+
+    var html = '<div style="overflow-x:auto"><table class="tbl"><thead><tr>' +
+      '<th style="min-width:200px">Gösterge</th>';
+    GR_AYLAR.forEach(function(ay) {
+      html += '<th style="text-align:right;min-width:80px">' + AY_ADLARI[ay].substring(0,3) + '</th>';
+    });
+    html += '<th style="text-align:right;background:var(--accent-l)">Yıllık</th></tr></thead><tbody>';
+
+    // Kapasite satırları
+    var satirlar = [
+      { ad: 'Tesis Kapasitesi (Oda)', fn: function(ay) { return _grOdaSayisi; }, renk: 'var(--text-2)', toplam: function() { return _grOdaSayisi; } },
+      { ad: 'Tesis Kapasitesi (Kişi)', fn: function(ay) { return _grMaxKisi; }, renk: 'var(--text-2)', toplam: function() { return _grMaxKisi; } },
+      { ad: 'Gerçekleşen Oda Gecesi', fn: function(ay) { return aylikOda[ay]; }, renk: 'var(--accent)', toplam: function() { return GR_AYLAR.reduce(function(s,ay){return s+aylikOda[ay];},0); } },
+      { ad: 'Gerçekleşen Kişi Gecesi', fn: function(ay) { return aylikKisi[ay]; }, renk: 'var(--mgr)', toplam: function() { return GR_AYLAR.reduce(function(s,ay){return s+aylikKisi[ay];},0); } },
+      { ad: 'Oda Doluluk %', fn: function(ay) { var max=_grOdaSayisi*AY_GUNLER[ay]; return max>0?((aylikOda[ay]/max)*100).toFixed(1)+'%':'—'; }, renk: 'var(--warn)', toplam: function() { var tOda=GR_AYLAR.reduce(function(s,ay){return s+aylikOda[ay];},0); var tMax=GR_AYLAR.reduce(function(s,ay){return s+_grOdaSayisi*AY_GUNLER[ay];},0); return tMax>0?((tOda/tMax)*100).toFixed(1)+'%':'—'; } },
+      { ad: 'Kişi Doluluk %', fn: function(ay) { var max=_grMaxKisi*AY_GUNLER[ay]; return max>0?((aylikKisi[ay]/max)*100).toFixed(1)+'%':'—'; }, renk: 'var(--danger)', toplam: function() { var tKisi=GR_AYLAR.reduce(function(s,ay){return s+aylikKisi[ay];},0); var tMax=GR_AYLAR.reduce(function(s,ay){return s+_grMaxKisi*AY_GUNLER[ay];},0); return tMax>0?((tKisi/tMax)*100).toFixed(1)+'%':'—'; } }
+    ];
+
+    satirlar.forEach(function(satir, idx) {
+      var bg = idx < 2 ? 'background:var(--bg2)' : '';
+      html += '<tr style="' + bg + '"><td style="font-weight:600;font-size:12px;color:' + satir.renk + '">' + satir.ad + '</td>';
+      GR_AYLAR.forEach(function(ay) {
+        var val = satir.fn(ay);
+        var sayi = typeof val === 'number' ? val : val;
+        html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px;color:' + satir.renk + '">' + (typeof sayi === 'number' ? (sayi>0?sayi.toLocaleString('tr-TR'):'0') : sayi) + '</td>';
+      });
+      var top = satir.toplam();
+      html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px;font-weight:700;color:' + satir.renk + ';background:var(--accent-l)">' + (typeof top === 'number'?top.toLocaleString('tr-TR'):top) + '</td></tr>';
+    });
+
+    html += '</tbody></table></div>';
+    el.innerHTML = html;
   } catch(e) {
     el.innerHTML = '<div style="color:var(--danger);padding:20px">Hata: ' + e.message + '</div>';
   }
