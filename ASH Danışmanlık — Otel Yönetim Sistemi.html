@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_36.html -->
+<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_38.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -523,6 +523,19 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
         </div>
       </div>
 
+      <!-- GİDER BÜTÇESİ SAYFASI -->
+      <div class="pg" id="pg-gider-butce">
+        <div class="ptitle">Gider Bütçesi</div>
+        <div class="psub">Yıllık gider bütçesi planlama ve takibi</div>
+        <div id="gider-butce-icerik">
+          <div style="text-align:center;padding:60px;color:var(--text-3)">
+            <div style="font-size:48px;margin-bottom:16px">💸</div>
+            <div style="font-size:16px;font-weight:600;margin-bottom:8px">Gider Bütçesi Modülü</div>
+            <div style="font-size:13px">Yakında aktif olacak. Önce Gelir Bütçesini tamamlayın.</div>
+          </div>
+        </div>
+      </div>
+
       <!-- AKSAKLIK TAKİP SAYFASI -->
       <div class="pg" id="pg-aksaklik">
         <div class="ptitle">Aksaklık Takibi</div>
@@ -731,25 +744,17 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
         </div>
       </div>
       <!-- BÜTÇE MODÜLÜ -->
-      <div class="pg" id="pg-butce">
+      <div class="pg" id="pg-gelir-butce">
         <div class="ptitle">Bütçe Yönetimi</div>
         <div class="psub">Tasarı bütçe, fiyat hesaplama ve gerçekleşen karşılaştırma</div>
 
-        <!-- Ana Bütçe Sekmeleri -->
-        <div class="atab" style="margin-bottom:12px">
-          <button class="atab-btn on" id="butab-ana-tasari" onclick="butceAnaSekme(&#39;tasari&#39;)">📋 Tasarı Bütçe</button>
-          <button class="atab-btn" id="butab-ana-gerceklesen" onclick="butceAnaSekme(&#39;gerceklesen&#39;)">📈 Gerçekleşen Bütçe</button>
-          <button class="atab-btn" id="butab-ana-revizyon" onclick="butceAnaSekme(&#39;revizyon&#39;)">🔄 Revizyon Geçmişi</button>
+        <!-- Gelir Bütçesi Sekmeleri -->
+        <div class="atab" style="margin-bottom:20px">
+          <button class="atab-btn on" id="butab-parametreler" onclick="butceSekme(&#39;parametreler&#39;)">⚙️ Parametreler</button>
+          <button class="atab-btn" id="butab-fiyat" onclick="butceSekme(&#39;fiyat&#39;)">💰 Gelir &amp; Fiyat</button>
+          <button class="atab-btn" id="butab-dfc" onclick="butceSekme(&#39;dfc&#39;)">📊 DFC Tablosu</button>
+          <button class="atab-btn" id="butab-revizyon" onclick="butceSekme(&#39;revizyon&#39;)">🔄 Revizyon</button>
         </div>
-
-        <!-- Tasarı Bütçe Alt Sekmeleri -->
-        <div id="butce-ana-tasari">
-          <div class="atab" style="margin-bottom:20px;border-top:1px solid var(--border);padding-top:12px">
-            <button class="atab-btn on" id="butab-parametreler" onclick="butceSekme(&#39;parametreler&#39;)">⚙️ Parametreler</button>
-            <button class="atab-btn" id="butab-fiyat" onclick="butceSekme(&#39;fiyat&#39;)">💰 Gelir Bütçesi</button>
-            <button class="atab-btn" id="butab-dfc" onclick="butceSekme(&#39;dfc&#39;)">📊 DFC Tablosu</button>
-            <button class="atab-btn" id="butab-gider" onclick="butceSekme(&#39;gider&#39;)">💸 Gider Bütçesi</button>
-          </div>
 
         <!-- PARAMETRELER SEKMESİ -->
         <div id="butce-parametreler">
@@ -958,27 +963,12 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
           </div>
         </div>
 
-        </div><!-- tasari butce sonu -->
-
-        <!-- GERÇEKLEŞEN BÜTÇE -->
-        <div id="butce-ana-gerceklesen" style="display:none">
-          <div class="cs">
-            <div class="csi">📈</div>
-            <div class="cst">Gerçekleşen Bütçe</div>
-            <div class="css">Tasarı vs Gerçekleşen karşılaştırması günlük kapanış verileri birikmesiyle aktif olacak.</div>
-            <span class="csb">⏳ Veri birikince aktif olacak</span>
-          </div>
-        </div>
-
         <!-- REVİZYON GEÇMİŞİ -->
-        <div id="butce-ana-revizyon" style="display:none">
+        <div id="butce-revizyon" style="display:none">
           <div id="revizyon-icerik">
             <div style="text-align:center;padding:30px"><div class="spinner" style="margin:0 auto"></div></div>
           </div>
         </div>
-
-        <!-- GİDER BÜTÇESİ SEKMESİ -->
-        <div id="butce-gider" style="display:none">
           
           <!-- Seçim alanı -->
           <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:14px;margin-bottom:18px;align-items:flex-end">
@@ -1047,7 +1037,7 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
           </div>
         </div>
 
-      </div>
+      </main></div>
       <div class="pg" id="pg-rapor"><div class="ptitle">Raporlar &amp; Analiz</div><div class="psub">Finansal analiz ve dönem raporları</div><div class="cs"><div class="csi">📈</div><div class="cst">Raporlama Modülü</div><div class="css">Aylık/yıllık finansal analiz, bütçe karşılaştırma grafikleri ve PDF export.</div><span class="csb">⏳ Geliştiriliyor</span></div></div>
       <div class="pg" id="pg-fiyat"><div class="ptitle">Fiyat Hesaplama</div><div class="psub">Oda ve kişi fiyatlandırma modülü</div><div class="cs"><div class="csi">🏷️</div><div class="cst">Fiyat Hesaplama Modülü</div><div class="css">Gider kalemleri ve reçete verileri üzerinden oda/kişi başı fiyat hesaplama.</div><span class="csb">⏳ Geliştiriliyor</span></div></div>
 
@@ -1058,9 +1048,9 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
         <div id="ayarlar-ic"></div>
       </div>
 
-    </main>
+    
   </div>
-</div>
+
 
 <div class="toast" id="toast"></div>
 
@@ -1112,8 +1102,8 @@ async function sbDelete(tablo, filtre) {
 
 // ── ROL YETKİLERİ ────────────────────────────────────
 var ROL_MODULLER = {
-  admin:      ['dashboard','recete','gider','kapanis','aksaklik','butce','stok','rapor','fiyat','cari','ayarlar'],
-  yonetici:   ['dashboard','recete','gider','kapanis','aksaklik','stok','rapor','cari'],
+  admin:      ['dashboard','recete','gider','kapanis','aksaklik','gelir-butce','gider-butce','stok','rapor','fiyat','cari','ayarlar'],
+  yonetici:   ['dashboard','recete','gider','kapanis','aksaklik','gelir-butce','gider-butce','stok','rapor','cari'],
   resepsiyon: ['dashboard','gider','kapanis','aksaklik','stok']
 };
 
@@ -1124,7 +1114,8 @@ var MENU = [
   { id:'stok',      ad:'Stok Girişi',     ikon:'📦', bolum:'Veri Girişi' },
   { id:'recete',    ad:'Reçeteler',       ikon:'📋', bolum:'Tanımlamalar' },
   { id:'cari',      ad:'Cari Hesaplar',   ikon:'🗂️', bolum:'Tanımlamalar' },
-  { id:'butce',     ad:'Bütçe',           ikon:'🎯', bolum:'Analiz' },
+  { id:'gelir-butce', ad:'Gelir Bütçesi',  ikon:'💰', bolum:'Analiz' },
+  { id:'gider-butce', ad:'Gider Bütçesi',  ikon:'💸', bolum:'Analiz' },
   { id:'rapor',     ad:'Raporlar',        ikon:'📈', bolum:'Analiz' },
   { id:'fiyat',     ad:'Fiyat Hesaplama', ikon:'🏷️', bolum:'Analiz' },
   { id:'kapanis',   ad:'Günlük Kapanış',  ikon:'🌙', bolum:'Veri Girişi' },
@@ -1280,7 +1271,7 @@ async function dashboard() {
     {id:'stok',i:'📦',n:'Stok Gir',s:'Ürün girişi'},
     {id:'recete',i:'📋',n:'Reçeteler',s:'Kahvaltı reçetesi'},
     {id:'rapor',i:'📈',n:'Raporlar',s:'Analiz'},
-    {id:'butce',i:'🎯',n:'Bütçe',s:'Tasarı vs gerçek'}
+    {id:'gelir-butce',i:'💰',n:'Gelir Bütçesi',s:'Hedef & Fiyat'}
   ];
   var mh = '';
   qm.forEach(function(m){
@@ -1345,7 +1336,8 @@ function git(sayfaId) {
   if (sayfaId === 'gider') { giderModuluBaslat(); giderSekme(giderAktifSekme); }
   if (sayfaId === 'kapanis') { kapanisModuluBaslat(); kapanisSekme(kapanisAktifSekme); }
   if (sayfaId === 'aksaklik') { aksaklikListesiYukle(); }
-  if (sayfaId === 'butce') { butceModuluBaslat(); butceSekme(butceAktifSekme); }
+  if (sayfaId === 'gelir-butce') { butceModuluBaslat(); butceSekme(butceAktifSekme); }
+  if (sayfaId === 'gider-butce') { giderButceSayfasiYukle(); }
   if (sayfaId === 'cari') { cariSekme(cariAktifSekme); }
 }
 
@@ -2959,7 +2951,7 @@ function parametreleriDoldur(p) {
 
 function butceSekme(sekme) {
   butceAktifSekme = sekme;
-  ['parametreler','fiyat','dfc','gider'].forEach(function(s) {
+  ['parametreler','fiyat','dfc','revizyon'].forEach(function(s) {
     var el = document.getElementById('butce-' + s);
     var btn = document.getElementById('butab-' + s);
     if (el) el.style.display = s === sekme ? 'block' : 'none';
@@ -3637,6 +3629,12 @@ function mobilMenuKapat() {
 
 
 
+
+
+function giderButceSayfasiYukle() {
+  // İleride doldurulacak
+  console.log("Gider bütçesi sayfası yüklendi");
+}
 
 // ── BÜTÇE ANA SEKMELER ───────────────────────────────
 function butceAnaSekme(sekme) {
