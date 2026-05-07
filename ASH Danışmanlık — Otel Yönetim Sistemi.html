@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_34.html -->
+<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_35.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -735,14 +735,21 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
         <div class="ptitle">Bütçe Yönetimi</div>
         <div class="psub">Tasarı bütçe, fiyat hesaplama ve gerçekleşen karşılaştırma</div>
 
-        <div class="atab" style="margin-bottom:20px">
-          <button class="atab-btn on" id="butab-parametreler" onclick="butceSekme(&#39;parametreler&#39;)">⚙️ Parametreler</button>
-          <button class="atab-btn" id="butab-fiyat" onclick="butceSekme(&#39;fiyat&#39;)">💰 Fiyat Hesaplama</button>
-          <button class="atab-btn" id="butab-dfc" onclick="butceSekme(&#39;dfc&#39;)">📊 DFC Tablosu</button>
-          <button class="atab-btn" id="butab-karsilastirma" onclick="butceSekme(&#39;karsilastirma&#39;)">📈 Karşılaştırma</button>
-          <button class="atab-btn" id="butab-revizyon" onclick="butceSekme(&#39;revizyon&#39;)">🔄 Revizyon Geçmişi</button>
-          <button class="atab-btn" id="butab-gider" onclick="butceSekme(&#39;gider&#39;)">📊 Gider Bütçesi</button>
+        <!-- Ana Bütçe Sekmeleri -->
+        <div class="atab" style="margin-bottom:12px">
+          <button class="atab-btn on" id="butab-ana-tasari" onclick="butceAnaSekme(&#39;tasari&#39;)">📋 Tasarı Bütçe</button>
+          <button class="atab-btn" id="butab-ana-gerceklesen" onclick="butceAnaSekme(&#39;gerceklesen&#39;)">📈 Gerçekleşen Bütçe</button>
+          <button class="atab-btn" id="butab-ana-revizyon" onclick="butceAnaSekme(&#39;revizyon&#39;)">🔄 Revizyon Geçmişi</button>
         </div>
+
+        <!-- Tasarı Bütçe Alt Sekmeleri -->
+        <div id="butce-ana-tasari">
+          <div class="atab" style="margin-bottom:20px;border-top:1px solid var(--border);padding-top:12px">
+            <button class="atab-btn on" id="butab-parametreler" onclick="butceSekme(&#39;parametreler&#39;)">⚙️ Parametreler</button>
+            <button class="atab-btn" id="butab-fiyat" onclick="butceSekme(&#39;fiyat&#39;)">💰 Gelir Bütçesi</button>
+            <button class="atab-btn" id="butab-dfc" onclick="butceSekme(&#39;dfc&#39;)">📊 DFC Tablosu</button>
+            <button class="atab-btn" id="butab-gider" onclick="butceSekme(&#39;gider&#39;)">💸 Gider Bütçesi</button>
+          </div>
 
         <!-- PARAMETRELER SEKMESİ -->
         <div id="butce-parametreler">
@@ -951,18 +958,20 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
           </div>
         </div>
 
-        <!-- KARŞILAŞTIRMA SEKMESİ -->
-        <div id="butce-karsilastirma" style="display:none">
+        </div><!-- tasari butce sonu -->
+
+        <!-- GERÇEKLEŞEN BÜTÇE -->
+        <div id="butce-ana-gerceklesen" style="display:none">
           <div class="cs">
             <div class="csi">📈</div>
-            <div class="cst">Karşılaştırma Modülü</div>
+            <div class="cst">Gerçekleşen Bütçe</div>
             <div class="css">Tasarı vs Gerçekleşen karşılaştırması günlük kapanış verileri birikmesiyle aktif olacak.</div>
             <span class="csb">⏳ Veri birikince aktif olacak</span>
           </div>
         </div>
 
-        <!-- REVİZYON GEÇMİŞİ SEKMESİ -->
-        <div id="butce-revizyon" style="display:none">
+        <!-- REVİZYON GEÇMİŞİ -->
+        <div id="butce-ana-revizyon" style="display:none">
           <div id="revizyon-icerik">
             <div style="text-align:center;padding:30px"><div class="spinner" style="margin:0 auto"></div></div>
           </div>
@@ -970,37 +979,76 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
 
         <!-- GİDER BÜTÇESİ SEKMESİ -->
         <div id="butce-gider" style="display:none">
-          <div style="margin-bottom:16px;padding:12px 16px;background:var(--warn-l);border:1px solid #E0C87A;border-radius:8px;font-size:12px;color:var(--warn)">
-            💡 Gider bütçesi 3 tipte tanımlanır: <strong>Sabit</strong> (her ay aynı tutar), <strong>Değişken</strong> (dolulukla orantılı, kişi/oda başı), <strong>Ciroya Bağlı</strong> (o ayın cirosunun %X'i).
-          </div>
-
-          <!-- Ana başlık parametreleri -->
-          <div class="dc" style="margin-bottom:16px">
-            <div class="dct"><div class="dot"></div>Gider Tipi Tanımlamaları</div>
-            <div style="overflow-x:auto">
-              <table class="tbl">
-                <thead>
-                  <tr>
-                    <th>Ana Başlık</th>
-                    <th>Gider Tipi</th>
-                    <th>Birim / Oran</th>
-                    <th>Birim Türü</th>
-                    <th>Açıklama</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody id="gider-tip-tablo">
-                  <tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-3)">Yükleniyor...</td></tr>
-                </tbody>
-              </table>
+          
+          <!-- Seçim alanı -->
+          <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:14px;margin-bottom:18px;align-items:flex-end">
+            <div class="sfield">
+              <label>Ana Başlık</label>
+              <select id="gb-ana" onchange="gbAltKirilimDoldur()">
+                <option value="">— Seçiniz —</option>
+              </select>
+            </div>
+            <div class="sfield">
+              <label>Alt Kırılım</label>
+              <select id="gb-alt" onchange="gbKalemYukle()">
+                <option value="">— Önce ana başlık seçin —</option>
+              </select>
+            </div>
+            <div style="display:flex;gap:8px">
+              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1.5px solid var(--accent-b);border-radius:7px;background:var(--accent-l);cursor:pointer;font-size:12px;font-weight:600;color:var(--accent)">
+                <input type="radio" name="gb-tip" value="sabit" id="gb-sabit" checked="" onchange="gbTipDegisti()"> Sabit
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1.5px solid var(--border);border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text-2)">
+                <input type="radio" name="gb-tip" value="degisken" id="gb-degisken" onchange="gbTipDegisti()"> Değişken
+              </label>
             </div>
           </div>
 
-          <!-- Aylık gider tablosu -->
+          <!-- 12 Aylık giriş tablosu -->
+          <div id="gb-form" style="display:none">
+            <div class="dc" style="margin-bottom:16px">
+              <div class="dct">
+                <div class="dot w"></div>
+                <span id="gb-baslik-yazi">Aylık Gider Girişi</span>
+                <div style="margin-left:auto;display:flex;gap:8px">
+                  <button onclick="gbTumunaKopyala()" id="gb-kopyala-btn" style="padding:5px 12px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text-2);font-family:Instrument Sans,sans-serif;font-size:11px;cursor:pointer">📋 Ocak'ı Tüm Aylara Kopyala</button>
+                  <button onclick="gbKaydet()" style="padding:5px 14px;border:none;border-radius:6px;background:var(--accent);color:#fff;font-family:Instrument Sans,sans-serif;font-size:11px;font-weight:600;cursor:pointer">💾 Kaydet</button>
+                </div>
+              </div>
+              <div id="gb-degisken-bilgi" style="display:none;margin-bottom:12px;padding:10px 12px;background:var(--mgr-l);border:1px solid var(--mgr-b);border-radius:8px;font-size:12px;color:var(--mgr)">
+                💡 Değişken gider: Sistem doluluk hedefinden otomatik hesaplar. Elle de düzenleyebilirsiniz.
+              </div>
+              <div style="overflow-x:auto">
+                <table class="tbl">
+                  <thead>
+                    <tr>
+                      <th>Ay</th><th>Durum</th><th style="text-align:right">Tutar (TL)</th><th style="text-align:right">Tahmini (Değişken)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="gb-aylar-tablo"></tbody>
+                  <tfoot>
+                    <tr style="background:var(--bg);font-weight:700">
+                      <td colspan="2">Yıllık Toplam</td>
+                      <td style="text-align:right;font-family:DM Mono,monospace;color:var(--danger)" id="gb-yillik-toplam">0 TL</td>
+                      <td></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Özet liste -->
           <div class="dc">
-            <div class="dct"><div class="dot w"></div>Aylık Gider Bütçesi</div>
-            <div id="gider-aylik-tablo">
-              <div style="text-align:center;padding:30px;color:var(--text-3)">Önce gider tiplerini tanımlayın.</div>
+            <div class="dct"><div class="dot"></div>Girilen Gider Kalemleri
+              <div style="margin-left:auto">
+                <select id="gb-filtre-ana" onchange="gbOzetYukle()" style="padding:4px 8px;border:1px solid var(--border);border-radius:5px;font-family:Instrument Sans,sans-serif;font-size:11px;background:var(--bg)">
+                  <option value="">Tüm Başlıklar</option>
+                </select>
+              </div>
+            </div>
+            <div id="gb-ozet-liste">
+              <div style="text-align:center;padding:30px;color:var(--text-3)">Yükleniyor...</div>
             </div>
           </div>
         </div>
@@ -2917,7 +2965,7 @@ function parametreleriDoldur(p) {
 
 function butceSekme(sekme) {
   butceAktifSekme = sekme;
-  ['parametreler','fiyat','dfc','karsilastirma','revizyon','gider'].forEach(function(s) {
+  ['parametreler','fiyat','dfc','gider'].forEach(function(s) {
     var el = document.getElementById('butce-' + s);
     var btn = document.getElementById('butab-' + s);
     if (el) el.style.display = s === sekme ? 'block' : 'none';
@@ -2927,6 +2975,7 @@ function butceSekme(sekme) {
   if (sekme === 'fiyat') fiyatHesaplamaYukle();
   if (sekme === 'revizyon') revizyonGecmisiYukle();
   if (sekme === 'gider') giderButcesiYukle();
+  if (sekme === 'karsilastirma') return;
 }
 
 function butceTipDegisti() {
@@ -3594,277 +3643,255 @@ function mobilMenuKapat() {
 }
 
 
-// ── GİDER BÜTÇESİ ───────────────────────────────────
-var GIDER_BASLIKLAR = [
-  'Personel Giderleri',
-  'Satış & Pazarlama Giderleri',
-  'Genel Yönetim Giderleri',
-  'Operasyon Giderleri',
-  'Enerji Giderleri',
-  'Bakım-Onarım Giderleri',
-  'Demirbaş Giderleri',
-  'Kira & Amortisman Giderleri'
-];
 
-var GIDER_TIP_VARSAYILAN = {
-  'Personel Giderleri':          { tip: 'sabit',       birim: 0, birimTipi: 'ay' },
-  'Satış & Pazarlama Giderleri': { tip: 'sabit',       birim: 0, birimTipi: 'ay' },
-  'Genel Yönetim Giderleri':     { tip: 'sabit',       birim: 0, birimTipi: 'ay' },
-  'Operasyon Giderleri':         { tip: 'degisken',    birim: 0, birimTipi: 'kisi' },
-  'Enerji Giderleri':            { tip: 'degisken',    birim: 0, birimTipi: 'oda' },
-  'Bakım-Onarım Giderleri':      { tip: 'sabit',       birim: 0, birimTipi: 'ay' },
-  'Demirbaş Giderleri':          { tip: 'sabit',       birim: 0, birimTipi: 'ay' },
-  'Kira & Amortisman Giderleri': { tip: 'sabit',       birim: 0, birimTipi: 'ay' }
-};
+// ── BÜTÇE ANA SEKMELER ───────────────────────────────
+function butceAnaSekme(sekme) {
+  ['tasari','gerceklesen','revizyon'].forEach(function(s) {
+    var el = document.getElementById('butce-ana-' + s);
+    var btn = document.getElementById('butab-ana-' + s);
+    if (el) el.style.display = s === sekme ? 'block' : 'none';
+    if (btn) btn.className = 'atab-btn' + (s === sekme ? ' on' : '');
+  });
+  if (sekme === 'revizyon') revizyonGecmisiYukle();
+}
 
-var _giderParams = {};
+// ── GİDER BÜTÇESİ ────────────────────────────────────
+var _gbYil = 2026;
+var _gbAylikDoluluk = {};
 
 async function giderButcesiYukle() {
-  var yil = parseInt(document.getElementById('but-yil').value) || 2026;
+  _gbYil = parseInt(document.getElementById('but-yil').value) || 2026;
 
-  // Mevcut parametreleri yükle
+  // Ana başlık seçeneklerini doldur
+  var anaSelect = document.getElementById('gb-ana');
+  var filtreSelect = document.getElementById('gb-filtre-ana');
+  if (anaSelect) {
+    anaSelect.innerHTML = '<option value="">— Seçiniz —</option>';
+    Object.keys(GIDER_YAPISI).forEach(function(baslik) {
+      anaSelect.innerHTML += '<option value="' + baslik + '">' + baslik + '</option>';
+      if (filtreSelect) filtreSelect.innerHTML += '<option value="' + baslik + '">' + baslik + '</option>';
+    });
+  }
+
+  // Doluluk verilerini yükle
   try {
-    var params = await sbGet('butce_gider_parametreler', 'yil=eq.' + yil);
-    if (params) params.forEach(function(p) { _giderParams[p.ana_baslik] = p; });
+    var dl = await sbGet('butce_aylik', 'yil=eq.' + _gbYil);
+    if (dl) dl.forEach(function(d) { _gbAylikDoluluk[d.ay] = d; });
   } catch(e) {}
 
-  giderTipTablosuGoster(yil);
-  await giderAylikTablosuGoster(yil);
+  gbOzetYukle();
 }
 
-function giderTipTablosuGoster(yil) {
-  var tbody = document.getElementById('gider-tip-tablo');
-  var html = '';
+function gbAltKirilimDoldur() {
+  var ana = document.getElementById('gb-ana').value;
+  var altSelect = document.getElementById('gb-alt');
+  document.getElementById('gb-form').style.display = 'none';
 
-  GIDER_BASLIKLAR.forEach(function(baslik) {
-    var p = _giderParams[baslik] || GIDER_TIP_VARSAYILAN[baslik];
-    var tip = p.gider_tipi || p.tip || 'sabit';
-    var birim = p.birim_maliyet || p.birim || 0;
-    var birimTipi = p.birim_tipi || p.birimTipi || 'ay';
-
-    var tipRenk = { sabit: 'var(--accent)', degisken: 'var(--mgr)', ciro_bazli: 'var(--warn)' };
-    var tipAd = { sabit: 'Sabit', degisken: 'Değişken', ciro_bazli: 'Ciroya Bağlı' };
-
-    html += '<tr>' +
-      '<td style="font-size:12px;font-weight:600">' + baslik + '</td>' +
-      '<td>' +
-        '<select id="gt-tip-' + GIDER_BASLIKLAR.indexOf(baslik) + '" onchange="giderTipDegisti(' + GIDER_BASLIKLAR.indexOf(baslik) + ')" style="padding:4px 8px;border:1px solid var(--border);border-radius:5px;font-family:Instrument Sans,sans-serif;font-size:12px;background:var(--bg)">' +
-          '<option value="sabit"' + (tip==='sabit'?' selected':'') + '>Sabit</option>' +
-          '<option value="degisken"' + (tip==='degisken'?' selected':'') + '>Değişken</option>' +
-          '<option value="ciro_bazli"' + (tip==='ciro_bazli'?' selected':'') + '>Ciroya Bağlı</option>' +
-        '</select>' +
-      '</td>' +
-      '<td>' +
-        '<input type="number" id="gt-birim-' + GIDER_BASLIKLAR.indexOf(baslik) + '" value="' + birim + '" min="0" step="0.01" placeholder="0" style="width:90px;padding:4px 8px;border:1px solid var(--border);border-radius:5px;font-family:DM Mono,monospace;font-size:12px;background:var(--bg)">' +
-      '</td>' +
-      '<td id="gt-birimtipi-' + GIDER_BASLIKLAR.indexOf(baslik) + '">' +
-        giderBirimTipiHtml(tip, birimTipi, GIDER_BASLIKLAR.indexOf(baslik)) +
-      '</td>' +
-      '<td><input type="text" id="gt-acik-' + GIDER_BASLIKLAR.indexOf(baslik) + '" value="' + (p.aciklama||'') + '" placeholder="Açıklama..." style="width:140px;padding:4px 8px;border:1px solid var(--border);border-radius:5px;font-family:Instrument Sans,sans-serif;font-size:11px;background:var(--bg)"></td>' +
-      '<td><button onclick="giderParamKaydet(' + GIDER_BASLIKLAR.indexOf(baslik) + ',' + yil + ')" style="padding:4px 10px;border:1px solid var(--accent-b);border-radius:5px;background:var(--accent-l);color:var(--accent);font-family:Instrument Sans,sans-serif;font-size:11px;cursor:pointer">Kaydet</button></td>' +
-      '</tr>';
+  if (!ana) {
+    altSelect.innerHTML = '<option value="">— Önce ana başlık seçin —</option>';
+    return;
+  }
+  altSelect.innerHTML = '<option value="">— Alt kırılım seçin —</option>';
+  GIDER_YAPISI[ana].altlar.forEach(function(alt) {
+    altSelect.innerHTML += '<option value="' + alt + '">' + alt + '</option>';
   });
+}
+
+async function gbKalemYukle() {
+  var ana = document.getElementById('gb-ana').value;
+  var alt = document.getElementById('gb-alt').value;
+  if (!ana || !alt) { document.getElementById('gb-form').style.display = 'none'; return; }
+
+  document.getElementById('gb-baslik-yazi').textContent = ana + ' → ' + alt;
+  document.getElementById('gb-form').style.display = 'block';
+
+  // Mevcut veriyi yükle
+  var mevcut = null;
+  try {
+    var r = await sbGet('butce_gider', 'yil=eq.' + _gbYil + '&ana_baslik=eq.' + encodeURIComponent(ana) + '&alt_kirilim=eq.' + encodeURIComponent(alt));
+    if (r && r.length > 0) {
+      mevcut = r[0];
+      // Tipi set et
+      var tipEl = document.getElementById(mevcut.gider_tipi === 'degisken' ? 'gb-degisken' : 'gb-sabit');
+      if (tipEl) { tipEl.checked = true; gbTipDegisti(); }
+    }
+  } catch(e) {}
+
+  gbAylarTablosunuGoster(mevcut);
+}
+
+function gbTipDegisti() {
+  var tip = document.querySelector('input[name="gb-tip"]:checked')?.value || 'sabit';
+  var bilgiEl = document.getElementById('gb-degisken-bilgi');
+  var kopyalaBtn = document.getElementById('gb-kopyala-btn');
+
+  if (bilgiEl) bilgiEl.style.display = tip === 'degisken' ? 'block' : 'none';
+  if (kopyalaBtn) kopyalaBtn.style.display = tip === 'sabit' ? 'inline-flex' : 'none';
+
+  // Etiketleri güncelle
+  document.getElementById('gb-sabit').parentElement.style.borderColor = tip === 'sabit' ? 'var(--accent)' : 'var(--border)';
+  document.getElementById('gb-sabit').parentElement.style.background = tip === 'sabit' ? 'var(--accent-l)' : '';
+  document.getElementById('gb-sabit').parentElement.style.color = tip === 'sabit' ? 'var(--accent)' : 'var(--text-2)';
+  document.getElementById('gb-degisken').parentElement.style.borderColor = tip === 'degisken' ? 'var(--mgr)' : 'var(--border)';
+  document.getElementById('gb-degisken').parentElement.style.background = tip === 'degisken' ? 'var(--mgr-l)' : '';
+  document.getElementById('gb-degisken').parentElement.style.color = tip === 'degisken' ? 'var(--mgr)' : 'var(--text-2)';
+
+  // Tabloyu yenile
+  var ana = document.getElementById('gb-ana').value;
+  var alt = document.getElementById('gb-alt').value;
+  if (ana && alt) gbAylarTablosunuGoster(null);
+}
+
+function gbAylarTablosunuGoster(mevcut) {
+  var tip = document.querySelector('input[name="gb-tip"]:checked')?.value || 'sabit';
+  var tbody = document.getElementById('gb-aylar-tablo');
+  var html = '';
+  var yillikToplam = 0;
+  var acikAylar = window._acikAylar || [5,6,7,8,9,10];
+
+  for (var ay = 1; ay <= 12; ay++) {
+    var acik = acikAylar.indexOf(ay) >= 0;
+    var mevcutTutar = mevcut ? (mevcut['ay_' + ay] || 0) : 0;
+    var dl = _gbAylikDoluluk[ay];
+    var odaGecesi = dl ? (dl.hedef_oda_gecesi || 0) : 0;
+    var kisiGecesi = odaGecesi * 2;
+    var tahmin = 0; // Değişken için sistem tahmini
+
+    var renk = acik ? 'var(--text)' : 'var(--text-3)';
+    var bgRenk = acik ? '' : 'background:var(--bg2)';
+
+    html += '<tr style="' + bgRenk + '">' +
+      '<td style="font-weight:600;color:' + renk + '">' + AY_ADLARI[ay] + '</td>' +
+      '<td>' + (acik ?
+        '<span style="font-size:11px;padding:2px 7px;border-radius:10px;background:var(--accent-l);color:var(--accent)">Açık</span>' :
+        '<span style="font-size:11px;padding:2px 7px;border-radius:10px;background:var(--bg2);color:var(--text-3)">Kapalı</span>'
+      ) + '</td>' +
+      '<td style="text-align:right">' +
+        '<input type="number" id="gb-ay-' + ay + '" value="' + mevcutTutar + '" min="0" step="100" ' +
+        (acik ? '' : 'disabled style="opacity:0.4;"') +
+        ' oninput="gbYillikTopla()" style="width:110px;text-align:right;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-family:DM Mono,monospace;font-size:13px;background:var(--bg)">' +
+      '</td>' +
+      '<td style="text-align:right;font-size:12px;color:var(--mgr);font-family:DM Mono,monospace">' +
+        (tip === 'degisken' && acik ? kisiGecesi + ' kişi × birim' : '—') +
+      '</td>' +
+      '</tr>';
+
+    if (acik) yillikToplam += mevcutTutar;
+  }
 
   tbody.innerHTML = html;
+  document.getElementById('gb-yillik-toplam').textContent = yillikToplam.toLocaleString('tr-TR') + ' TL';
 }
 
-function giderBirimTipiHtml(tip, secili, idx) {
-  if (tip === 'sabit') {
-    return '<span style="font-size:11px;color:var(--text-3)">TL/ay</span>';
-  } else if (tip === 'degisken') {
-    return '<select id="gt-bt-' + idx + '" style="padding:4px 8px;border:1px solid var(--border);border-radius:5px;font-family:Instrument Sans,sans-serif;font-size:12px;background:var(--bg)">' +
-      '<option value="kisi"' + (secili==='kisi'?' selected':'') + '>TL/kişi</option>' +
-      '<option value="oda"' + (secili==='oda'?' selected':'') + '>TL/oda</option>' +
-      '</select>';
-  } else {
-    return '<span style="font-size:11px;color:var(--text-3)">% ciro</span>';
+function gbYillikTopla() {
+  var acikAylar = window._acikAylar || [5,6,7,8,9,10];
+  var toplam = 0;
+  for (var ay = 1; ay <= 12; ay++) {
+    if (acikAylar.indexOf(ay) >= 0) {
+      var el = document.getElementById('gb-ay-' + ay);
+      if (el) toplam += parseFloat(el.value) || 0;
+    }
   }
+  document.getElementById('gb-yillik-toplam').textContent = toplam.toLocaleString('tr-TR') + ' TL';
 }
 
-function giderTipDegisti(idx) {
-  var tip = document.getElementById('gt-tip-' + idx).value;
-  var el = document.getElementById('gt-birimtipi-' + idx);
-  var secili = 'kisi';
-  el.innerHTML = giderBirimTipiHtml(tip, secili, idx);
-  
-  // Birim placeholder güncelle
-  var birimEl = document.getElementById('gt-birim-' + idx);
-  if (birimEl) {
-    birimEl.placeholder = tip === 'ciro_bazli' ? '% (örn: 15)' : '0';
+function gbTumunaKopyala() {
+  var ilkDeger = parseFloat(document.getElementById('gb-ay-1')?.value) || 0;
+  if (ilkDeger === 0) { showToast('Önce Ocak ayına değer girin!', true); return; }
+  var acikAylar = window._acikAylar || [5,6,7,8,9,10];
+  for (var ay = 1; ay <= 12; ay++) {
+    var el = document.getElementById('gb-ay-' + ay);
+    if (el && !el.disabled && acikAylar.indexOf(ay) >= 0) el.value = ilkDeger;
   }
+  gbYillikTopla();
+  showToast('✓ Tüm açık aylara kopyalandı');
 }
 
-async function giderParamKaydet(idx, yil) {
-  var baslik = GIDER_BASLIKLAR[idx];
-  var tip = document.getElementById('gt-tip-' + idx).value;
-  var birim = parseFloat(document.getElementById('gt-birim-' + idx).value) || 0;
-  var birimTipiEl = document.getElementById('gt-bt-' + idx);
-  var birimTipi = birimTipiEl ? birimTipiEl.value : (tip === 'sabit' ? 'ay' : tip === 'ciro_bazli' ? 'ciro_yuzdesi' : 'kisi');
-  var aciklama = document.getElementById('gt-acik-' + idx).value;
+async function gbKaydet() {
+  var ana = document.getElementById('gb-ana').value;
+  var alt = document.getElementById('gb-alt').value;
+  var tip = document.querySelector('input[name="gb-tip"]:checked')?.value || 'sabit';
+  if (!ana || !alt) { showToast('Ana başlık ve alt kırılım seçin!', true); return; }
 
-  var data = {
-    yil: yil, ana_baslik: baslik,
-    gider_tipi: tip, birim_maliyet: birim,
-    birim_tipi: birimTipi, aciklama: aciklama
-  };
+  var data = { yil: _gbYil, ana_baslik: ana, alt_kirilim: alt, gider_tipi: tip, giren_kullanici: oturum.kullanici_adi };
+  var yillikToplam = 0;
+  for (var ay = 1; ay <= 12; ay++) {
+    var el = document.getElementById('gb-ay-' + ay);
+    var tutar = el && !el.disabled ? (parseFloat(el.value) || 0) : 0;
+    data['ay_' + ay] = tutar;
+    yillikToplam += tutar;
+  }
+  data.yillik_toplam = yillikToplam;
 
   try {
-    var mevcut = await sbGet('butce_gider_parametreler', 'yil=eq.' + yil + '&ana_baslik=eq.' + encodeURIComponent(baslik));
+    var mevcut = await sbGet('butce_gider', 'yil=eq.' + _gbYil + '&ana_baslik=eq.' + encodeURIComponent(ana) + '&alt_kirilim=eq.' + encodeURIComponent(alt));
     if (mevcut && mevcut.length > 0) {
-      await sbPatch('butce_gider_parametreler', 'yil=eq.' + yil + '&ana_baslik=eq.' + encodeURIComponent(baslik), data);
+      await sbPatch('butce_gider', 'yil=eq.' + _gbYil + '&ana_baslik=eq.' + encodeURIComponent(ana) + '&alt_kirilim=eq.' + encodeURIComponent(alt), data);
     } else {
-      await sbPost('butce_gider_parametreler', data);
+      await sbPost('butce_gider', data);
     }
-    _giderParams[baslik] = data;
-    showToast('✓ ' + baslik + ' parametresi kaydedildi');
-    await giderAylikTablosuGoster(yil);
+    showToast('✓ ' + alt + ' gider bütçesi kaydedildi');
+    gbOzetYukle();
   } catch(e) { showToast('Hata: ' + e.message, true); }
 }
 
-async function giderAylikTablosuGoster(yil) {
-  var el = document.getElementById('gider-aylik-tablo');
-  var acikAylar = window._acikAylar || [5,6,7,8,9,10];
+async function gbOzetYukle() {
+  var el = document.getElementById('gb-ozet-liste');
+  if (!el) return;
+  var filtre = document.getElementById('gb-filtre-ana')?.value || '';
+  el.innerHTML = '<div style="text-align:center;padding:20px"><div class="spinner" style="margin:0 auto;border-color:var(--border);border-top-color:var(--accent)"></div></div>';
 
-  // Mevcut aylık gider verilerini yükle
-  var aylikVeriler = {};
   try {
-    var aylik = await sbGet('butce_gider', 'yil=eq.' + yil);
-    if (aylik) aylik.forEach(function(a) {
-      if (!aylikVeriler[a.ana_baslik]) aylikVeriler[a.ana_baslik] = {};
-      aylikVeriler[a.ana_baslik][a.ay] = a;
-    });
-  } catch(e) {}
+    var q = 'yil=eq.' + _gbYil + '&order=ana_baslik.asc,alt_kirilim.asc';
+    if (filtre) q += '&ana_baslik=eq.' + encodeURIComponent(filtre);
+    var liste = await sbGet('butce_gider', q);
 
-  // Aylık doluluk verilerini al
-  var doluluklar = {};
-  try {
-    var dl = await sbGet('butce_aylik', 'yil=eq.' + yil);
-    if (dl) dl.forEach(function(d) { doluluklar[d.ay] = d; });
-  } catch(e) {}
-
-  // Tablo başlığı
-  var html = '<div style="overflow-x:auto"><table class="tbl"><thead><tr>' +
-    '<th style="min-width:160px">Ana Başlık</th>' +
-    '<th>Tip</th>';
-
-  acikAylar.forEach(function(ay) {
-    html += '<th style="text-align:right;min-width:100px">' + AY_ADLARI[ay] + '</th>';
-  });
-  html += '<th style="text-align:right;background:var(--accent-l)">Yıllık Toplam</th>' +
-    '</tr></thead><tbody>';
-
-  var ayToplamlar = {};
-  acikAylar.forEach(function(ay) { ayToplamlar[ay] = 0; });
-  var genelToplam = 0;
-
-  GIDER_BASLIKLAR.forEach(function(baslik) {
-    var p = _giderParams[baslik] || GIDER_TIP_VARSAYILAN[baslik];
-    var tip = p.gider_tipi || p.tip || 'sabit';
-    var birim = parseFloat(p.birim_maliyet || p.birim || 0);
-    var birimTipi = p.birim_tipi || p.birimTipi || 'ay';
-    var tipRenk = { sabit: 'var(--accent)', degisken: 'var(--mgr)', ciro_bazli: 'var(--warn)' };
-    var tipAd = { sabit: 'Sabit', degisken: 'Değişken', ciro_bazli: 'Ciroya Bağlı' };
-
-    html += '<tr>' +
-      '<td style="font-size:12px;font-weight:600">' + baslik + '</td>' +
-      '<td><span style="font-size:10px;padding:2px 7px;border-radius:10px;background:' + (tipRenk[tip]||'var(--bg2)') + '20;color:' + (tipRenk[tip]||'var(--text-3)') + ';font-weight:600">' + (tipAd[tip]||tip) + '</span></td>';
-
-    var yillikToplam = 0;
-    acikAylar.forEach(function(ay) {
-      var tutar = 0;
-      var gun = AY_GUNLER[ay];
-      var dl = doluluklar[ay];
-      var odaGecesi = dl ? (dl.hedef_oda_gecesi || 0) : 0;
-      var kisiGecesi = odaGecesi * 2; // Ortalama 2 kişi/oda
-
-      if (tip === 'sabit') {
-        // Elle giriş - input göster
-        var mevcutTutar = (aylikVeriler[baslik] && aylikVeriler[baslik][ay]) ? aylikVeriler[baslik][ay].hedef_tutar : birim;
-        tutar = mevcutTutar;
-        html += '<td style="text-align:right"><input type="number" id="ga-' + GIDER_BASLIKLAR.indexOf(baslik) + '-' + ay + '" value="' + mevcutTutar + '" min="0" step="100" oninput="giderAylikGuncelle()" style="width:90px;text-align:right;padding:3px 5px;border:1px solid var(--border);border-radius:5px;font-family:DM Mono,monospace;font-size:11px;background:var(--bg)"></td>';
-      } else if (tip === 'degisken') {
-        if (birimTipi === 'kisi') tutar = birim * kisiGecesi;
-        else tutar = birim * odaGecesi;
-        html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px;color:var(--mgr)">' + Math.round(tutar).toLocaleString('tr-TR') + ' TL</td>';
-      } else if (tip === 'ciro_bazli') {
-        var ciroHedef = 0;
-        if (window._butceCiro && acikAylar.length > 0) {
-          // Aylık ciro tahmini - doluluk oranına göre
-          var dlData = doluluklar[ay];
-          if (dlData) ciroHedef = dlData.tahmini_gelir_orta || 0;
-        }
-        tutar = ciroHedef * birim / 100;
-        html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px;color:var(--warn)">' + Math.round(tutar).toLocaleString('tr-TR') + ' TL</td>';
-      }
-
-      yillikToplam += tutar;
-      ayToplamlar[ay] = (ayToplamlar[ay] || 0) + tutar;
-    });
-
-    genelToplam += yillikToplam;
-    html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px;font-weight:700;color:var(--danger);background:var(--accent-l)">' + Math.round(yillikToplam).toLocaleString('tr-TR') + ' TL</td></tr>';
-  });
-
-  // Toplam satırı
-  html += '<tr style="background:var(--bg);font-weight:700"><td colspan="2">TOPLAM GİDER</td>';
-  acikAylar.forEach(function(ay) {
-    html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px;color:var(--danger)">' + Math.round(ayToplamlar[ay]||0).toLocaleString('tr-TR') + ' TL</td>';
-  });
-  html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:14px;font-weight:700;color:var(--danger);background:var(--accent-l)">' + Math.round(genelToplam).toLocaleString('tr-TR') + ' TL</td></tr>';
-
-  html += '</tbody></table></div>';
-
-  // Bütçe karşılaştırma
-  var hedefCiro = window._butceCiro || (_butceParametreler?.hedef_ciro) || 0;
-  var hedefKar = hedefCiro - genelToplam;
-  var gercekMarj = hedefCiro > 0 ? (hedefKar / hedefCiro * 100) : 0;
-
-  if (hedefCiro > 0) {
-    html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px">' +
-      '<div style="padding:12px;background:var(--accent-l);border:1px solid var(--accent-b);border-radius:8px;text-align:center"><div style="font-size:10px;color:var(--accent);font-weight:600;margin-bottom:4px">HEDEF CİRO</div><div style="font-family:DM Mono,monospace;font-size:15px;font-weight:600;color:var(--accent)">' + Math.round(hedefCiro).toLocaleString('tr-TR') + ' TL</div></div>' +
-      '<div style="padding:12px;background:var(--danger-l);border:1px solid #e0baba;border-radius:8px;text-align:center"><div style="font-size:10px;color:var(--danger);font-weight:600;margin-bottom:4px">TOPLAM GİDER</div><div style="font-family:DM Mono,monospace;font-size:15px;font-weight:600;color:var(--danger)">' + Math.round(genelToplam).toLocaleString('tr-TR') + ' TL</div></div>' +
-      '<div style="padding:12px;background:var(--mgr-l);border:1px solid var(--mgr-b);border-radius:8px;text-align:center"><div style="font-size:10px;color:var(--mgr);font-weight:600;margin-bottom:4px">HEDEF KAR</div><div style="font-family:DM Mono,monospace;font-size:15px;font-weight:600;color:var(--mgr)">' + Math.round(hedefKar).toLocaleString('tr-TR') + ' TL</div></div>' +
-      '<div style="padding:12px;background:' + (gercekMarj>=18&&gercekMarj<=25?'var(--accent-l)':gercekMarj<18?'var(--danger-l)':'var(--warn-l)') + ';border-radius:8px;text-align:center"><div style="font-size:10px;font-weight:600;margin-bottom:4px;color:' + (gercekMarj>=18&&gercekMarj<=25?'var(--accent)':gercekMarj<18?'var(--danger)':'var(--warn)') + '">GERÇEK MARJ</div><div style="font-family:DM Mono,monospace;font-size:15px;font-weight:600;color:' + (gercekMarj>=18&&gercekMarj<=25?'var(--accent)':gercekMarj<18?'var(--danger)':'var(--warn)') + '">%' + gercekMarj.toFixed(1) + '</div></div>' +
-      '</div>';
-  }
-
-  html += '<div style="display:flex;justify-content:flex-end;margin-top:14px">' +
-    '<button class="sbtn" style="width:auto;padding:10px 24px" onclick="giderAylikKaydet(' + yil + ')">💾 Sabit Giderleri Kaydet</button>' +
-    '</div>';
-
-  el.innerHTML = html;
-}
-
-function giderAylikGuncelle() {
-  // Toplam satırını güncelle (canlı hesaplama)
-  // Şimdilik sadece kaydet butonu ile kaydediliyor
-}
-
-async function giderAylikKaydet(yil) {
-  var acikAylar = window._acikAylar || [5,6,7,8,9,10];
-  try {
-    for (var i = 0; i < GIDER_BASLIKLAR.length; i++) {
-      var baslik = GIDER_BASLIKLAR[i];
-      var p = _giderParams[baslik] || GIDER_TIP_VARSAYILAN[baslik];
-      var tip = p.gider_tipi || p.tip || 'sabit';
-      if (tip !== 'sabit') continue; // Sadece sabit giderleri kaydet
-
-      for (var j = 0; j < acikAylar.length; j++) {
-        var ay = acikAylar[j];
-        var inputEl = document.getElementById('ga-' + i + '-' + ay);
-        if (!inputEl) continue;
-        var tutar = parseFloat(inputEl.value) || 0;
-
-        var data = { yil: yil, ay: ay, ana_baslik: baslik, gider_tipi: tip, hedef_tutar: tutar };
-        var mevcut = await sbGet('butce_gider', 'yil=eq.' + yil + '&ay=eq.' + ay + '&ana_baslik=eq.' + encodeURIComponent(baslik));
-        if (mevcut && mevcut.length > 0) {
-          await sbPatch('butce_gider', 'yil=eq.' + yil + '&ay=eq.' + ay + '&ana_baslik=eq.' + encodeURIComponent(baslik), data);
-        } else {
-          await sbPost('butce_gider', data);
-        }
-      }
+    if (!liste || liste.length === 0) {
+      el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-3)">Henüz gider bütçesi girilmedi.</div>';
+      return;
     }
-    showToast('✓ Sabit giderler kaydedildi');
+
+    var toplamYillik = liste.reduce(function(s,k){ return s+(k.yillik_toplam||0); }, 0);
+    var html = '<div style="margin-bottom:12px;padding:10px 14px;background:var(--danger-l);border:1px solid #e0baba;border-radius:8px;display:flex;justify-content:space-between;align-items:center">' +
+      '<span style="font-size:12px;font-weight:600;color:var(--danger)">Toplam Yıllık Gider Bütçesi</span>' +
+      '<span style="font-family:DM Mono,monospace;font-size:16px;font-weight:700;color:var(--danger)">' + toplamYillik.toLocaleString('tr-TR') + ' TL</span>' +
+      '</div>';
+
+    html += '<div style="overflow-x:auto"><table class="tbl"><thead><tr>' +
+      '<th>Ana Başlık</th><th>Alt Kırılım</th><th>Tip</th>';
+    var acikAylar = window._acikAylar || [5,6,7,8,9,10];
+    acikAylar.forEach(function(ay) { html += '<th style="text-align:right">' + AY_ADLARI[ay].substring(0,3) + '</th>'; });
+    html += '<th style="text-align:right;background:var(--accent-l)">Yıllık</th><th></th></tr></thead><tbody>';
+
+    liste.forEach(function(k) {
+      var tipRenk = k.gider_tipi === 'sabit' ? 'var(--accent)' : 'var(--mgr)';
+      var tipBg = k.gider_tipi === 'sabit' ? 'var(--accent-l)' : 'var(--mgr-l)';
+      html += '<tr>' +
+        '<td style="font-size:12px;color:var(--text-2)">' + k.ana_baslik + '</td>' +
+        '<td style="font-size:12px;font-weight:600">' + k.alt_kirilim + '</td>' +
+        '<td><span style="font-size:10px;padding:2px 7px;border-radius:10px;background:' + tipBg + ';color:' + tipRenk + ';font-weight:600">' + (k.gider_tipi==='sabit'?'Sabit':'Değişken') + '</span></td>';
+      acikAylar.forEach(function(ay) {
+        html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:11px">' + ((k['ay_'+ay]||0)>0?(k['ay_'+ay]||0).toLocaleString('tr-TR'):'—') + '</td>';
+      });
+      html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px;font-weight:600;color:var(--danger);background:var(--accent-l)">' + (k.yillik_toplam||0).toLocaleString('tr-TR') + ' TL</td>' +
+        '<td><button data-gid="' + k.id + '" onclick="gbSilBtn(this)" style="padding:3px 8px;border:1px solid #e0baba;border-radius:5px;background:var(--danger-l);color:var(--danger);font-size:11px;cursor:pointer">Sil</button></td>' +
+        '</tr>';
+    });
+
+    html += '</tbody></table></div>';
+    el.innerHTML = html;
+  } catch(e) {
+    el.innerHTML = '<div style="color:var(--danger);padding:20px">Hata: ' + e.message + '</div>';
+  }
+}
+
+function gbSilBtn(btn) { gbSil(btn.getAttribute("data-gid")); }
+async function gbSil(id) {
+  if (!confirm('Bu gider kalemi silinecek. Emin misiniz?')) return;
+  try {
+    await sbDelete('butce_gider', 'id=eq.' + id);
+    showToast('✓ Silindi');
+    gbOzetYukle();
   } catch(e) { showToast('Hata: ' + e.message, true); }
 }
 
