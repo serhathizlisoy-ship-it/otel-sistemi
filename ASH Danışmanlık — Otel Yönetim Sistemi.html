@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_45.html -->
+<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_46.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -4574,7 +4574,7 @@ var GR_GELIR_ALANLAR = {
   'Diğer':            'diger_ciro'
 };
 
-var SEKTOREL_GIDER_LISTE = [
+var SEKTOREL_GIDER_LISTE = [ // Artık kullanılmıyor - GIDER_YAPISI kullanılıyor
   ['Personel Giderleri',        'Sezon Personel'],
   ['Satış&Pazarlama Giderleri', 'İlan Reklam Giderleri'],
   ['Satış&Pazarlama Giderleri', 'Acenta Satış & Komisyon Gideri'],
@@ -4710,11 +4710,15 @@ async function grGiderGoster() {
   try {
     // Gider girişinden ay bazında topla
     var giderler = await sbGet('gider_girisi', 'order=tarih.asc');
+    
+    // GIDER_YAPISI'ndan dinamik yapı oluştur
     var aylikGider = {};
-    SEKTOREL_GIDER_LISTE.forEach(function(row) {
-      var key = row[0] + '|' + row[1];
-      aylikGider[key] = {};
-      GR_AYLAR.forEach(function(ay) { aylikGider[key][ay] = 0; });
+    Object.keys(GIDER_YAPISI).forEach(function(ana) {
+      GIDER_YAPISI[ana].altlar.forEach(function(alt) {
+        var key = ana + '|' + alt;
+        aylikGider[key] = {};
+        GR_AYLAR.forEach(function(ay) { aylikGider[key][ay] = 0; });
+      });
     });
 
     if (giderler) {
@@ -4723,71 +4727,65 @@ async function grGiderGoster() {
         if (tarih.getFullYear() !== _grYil) return;
         var ay = tarih.getMonth() + 1;
         var key = g.ana_baslik + '|' + g.alt_kirilim;
-        if (aylikGider[key]) {
+        if (aylikGider[key] !== undefined) {
           aylikGider[key][ay] = (aylikGider[key][ay]||0) + (g.tutar||0);
         }
       });
     }
 
-    // Grupla - ana başlık bazında
-    var anaBasliklar = {};
-    SEKTOREL_GIDER_LISTE.forEach(function(row) {
-      if (!anaBasliklar[row[0]]) anaBasliklar[row[0]] = [];
-      anaBasliklar[row[0]].push(row[1]);
-    });
-
     var html = '<div style="overflow-x:auto"><table class="tbl"><thead><tr>' +
       '<th style="min-width:160px">Ana Başlık</th>' +
       '<th style="min-width:200px">Alt Kırılım</th>';
     GR_AYLAR.forEach(function(ay) {
-      html += '<th style="text-align:right;min-width:80px">' + AY_ADLARI[ay].substring(0,3) + '</th>';
+      html += '<th style="text-align:right;min-width:75px">' + AY_ADLARI[ay].substring(0,3) + '</th>';
     });
-    html += '<th style="text-align:right;background:var(--danger-l);min-width:110px">Toplam</th></tr></thead><tbody>';
+    html += '<th style="text-align:right;background:var(--danger-l);min-width:100px">Toplam</th></tr></thead><tbody>';
 
     var ayGenelToplamlar = {};
     GR_AYLAR.forEach(function(ay) { ayGenelToplamlar[ay] = 0; });
     var genelToplam = 0;
 
-    Object.keys(anaBasliklar).forEach(function(anaBaslik) {
-      var altlar = anaBasliklar[anaBaslik];
+    Object.keys(GIDER_YAPISI).forEach(function(ana) {
+      var altlar = GIDER_YAPISI[ana].altlar;
       var anaAyToplamlar = {};
       GR_AYLAR.forEach(function(ay) { anaAyToplamlar[ay] = 0; });
       var anaYillikToplam = 0;
 
-      altlar.forEach(function(altKirilim, idx) {
-        var key = anaBaslik + '|' + altKirilim;
+      altlar.forEach(function(alt, idx) {
+        var key = ana + '|' + alt;
         var satirToplam = 0;
+        
         html += '<tr>' +
-          '<td style="font-size:11px;color:var(--text-3)">' + (idx===0?anaBaslik:'') + '</td>' +
-          '<td style="font-size:12px;font-weight:600">' + altKirilim + '</td>';
+          '<td style="font-size:11px;color:var(--text-3);vertical-align:top">' + (idx===0?'<span style="font-weight:600;color:var(--text-2)">' + ana + '</span>':'') + '</td>' +
+          '<td style="font-size:12px;font-weight:600">' + alt + '</td>';
 
         GR_AYLAR.forEach(function(ay) {
           var deger = aylikGider[key] ? (aylikGider[key][ay]||0) : 0;
           anaAyToplamlar[ay] += deger;
           satirToplam += deger;
-          html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:11px;color:' + (deger>0?'var(--danger)':'var(--text-3)') + '">' + (deger>0?deger.toLocaleString('tr-TR'):'—') + '</td>';
+          html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:11px;color:' + (deger>0?'var(--danger)':'var(--text-3)') + '">' + (deger>0?deger.toLocaleString('tr-TR'):'0') + '</td>';
         });
 
         anaYillikToplam += satirToplam;
-        html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:11px;font-weight:600;color:var(--danger);background:var(--danger-l)">' + (satirToplam>0?satirToplam.toLocaleString('tr-TR')+' TL':'—') + '</td></tr>';
+        html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:11px;font-weight:600;color:' + (satirToplam>0?'var(--danger)':'var(--text-3)') + ';background:var(--danger-l)">' + (satirToplam>0?satirToplam.toLocaleString('tr-TR')+' TL':'0') + '</td></tr>';
       });
 
       // Ana başlık toplam satırı
-      html += '<tr style="background:var(--bg2);font-weight:700"><td colspan="2" style="font-size:12px;color:var(--danger)">' + anaBaslik + ' Toplam</td>';
+      html += '<tr style="background:var(--bg2)"><td colspan="2" style="font-size:12px;font-weight:700;color:var(--danger)">' + ana + ' — TOPLAM</td>';
       GR_AYLAR.forEach(function(ay) {
         ayGenelToplamlar[ay] += anaAyToplamlar[ay];
-        html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:11px;color:var(--danger)">' + (anaAyToplamlar[ay]>0?anaAyToplamlar[ay].toLocaleString('tr-TR'):'—') + '</td>';
+        html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:11px;font-weight:700;color:var(--danger)">' + (anaAyToplamlar[ay]>0?anaAyToplamlar[ay].toLocaleString('tr-TR'):'0') + '</td>';
       });
       genelToplam += anaYillikToplam;
       html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px;font-weight:700;color:var(--danger);background:var(--danger-l)">' + anaYillikToplam.toLocaleString('tr-TR') + ' TL</td></tr>';
     });
 
     // Genel toplam
-    html += '<tr style="background:var(--danger);font-weight:700"><td colspan="2" style="color:#fff">GENEL TOPLAM</td>';
+    html += '<tr style="background:var(--danger)"><td colspan="2" style="color:#fff;font-weight:700">GENEL TOPLAM</td>';
     GR_AYLAR.forEach(function(ay) {
-      html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:11px;color:#fff">' + (ayGenelToplamlar[ay]>0?ayGenelToplamlar[ay].toLocaleString('tr-TR'):'—') + '</td>';
+      html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:11px;font-weight:700;color:#fff">' + (ayGenelToplamlar[ay]>0?ayGenelToplamlar[ay].toLocaleString('tr-TR'):'0') + '</td>';
     });
-    html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:13px;font-weight:700;color:#fff;background:rgba(0,0,0,0.1)">' + genelToplam.toLocaleString('tr-TR') + ' TL</td></tr>';
+    html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:13px;font-weight:700;color:#fff;background:rgba(0,0,0,0.15)">' + genelToplam.toLocaleString('tr-TR') + ' TL</td></tr>';
     html += '</tbody></table></div>';
 
     el.innerHTML = html;
