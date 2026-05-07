@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_46.html -->
+<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_47.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -4809,7 +4809,7 @@ async function grDolulukGoster() {
         if (tarih.getFullYear() !== _grYil) return;
         var ay = tarih.getMonth() + 1;
         aylikOda[ay] += (k.dolu_oda||0);
-        aylikKisi[ay] += (k.kisi_sayisi||0);
+        aylikKisi[ay] += (k.konaklayan_kisi||0);
       });
     }
 
@@ -4820,26 +4820,54 @@ async function grDolulukGoster() {
     });
     html += '<th style="text-align:right;background:var(--accent-l)">Yıllık</th></tr></thead><tbody>';
 
-    // Kapasite satırları
-    var satirlar = [
-      { ad: 'Tesis Kapasitesi (Oda)', fn: function(ay) { return _grOdaSayisi; }, renk: 'var(--text-2)', toplam: function() { return _grOdaSayisi; } },
-      { ad: 'Tesis Kapasitesi (Kişi)', fn: function(ay) { return _grMaxKisi; }, renk: 'var(--text-2)', toplam: function() { return _grMaxKisi; } },
-      { ad: 'Gerçekleşen Oda Gecesi', fn: function(ay) { return aylikOda[ay]; }, renk: 'var(--accent)', toplam: function() { return GR_AYLAR.reduce(function(s,ay){return s+aylikOda[ay];},0); } },
-      { ad: 'Gerçekleşen Kişi Gecesi', fn: function(ay) { return aylikKisi[ay]; }, renk: 'var(--mgr)', toplam: function() { return GR_AYLAR.reduce(function(s,ay){return s+aylikKisi[ay];},0); } },
-      { ad: 'Oda Doluluk %', fn: function(ay) { var max=_grOdaSayisi*AY_GUNLER[ay]; return max>0?((aylikOda[ay]/max)*100).toFixed(1)+'%':'—'; }, renk: 'var(--warn)', toplam: function() { var tOda=GR_AYLAR.reduce(function(s,ay){return s+aylikOda[ay];},0); var tMax=GR_AYLAR.reduce(function(s,ay){return s+_grOdaSayisi*AY_GUNLER[ay];},0); return tMax>0?((tOda/tMax)*100).toFixed(1)+'%':'—'; } },
-      { ad: 'Kişi Doluluk %', fn: function(ay) { var max=_grMaxKisi*AY_GUNLER[ay]; return max>0?((aylikKisi[ay]/max)*100).toFixed(1)+'%':'—'; }, renk: 'var(--danger)', toplam: function() { var tKisi=GR_AYLAR.reduce(function(s,ay){return s+aylikKisi[ay];},0); var tMax=GR_AYLAR.reduce(function(s,ay){return s+_grMaxKisi*AY_GUNLER[ay];},0); return tMax>0?((tKisi/tMax)*100).toFixed(1)+'%':'—'; } }
+    // Kapasite satırları - closure sorununu önlemek için snapshot al
+    var snapOda = {}, snapKisi = {};
+    GR_AYLAR.forEach(function(ay) {
+      snapOda[ay] = aylikOda[ay] || 0;
+      snapKisi[ay] = aylikKisi[ay] || 0;
+    });
+
+    var tToplamOda = GR_AYLAR.reduce(function(s,ay){return s+snapOda[ay];},0);
+    var tToplamKisi = GR_AYLAR.reduce(function(s,ay){return s+snapKisi[ay];},0);
+    var tMaxOda = GR_AYLAR.reduce(function(s,ay){return s+_grOdaSayisi*AY_GUNLER[ay];},0);
+    var tMaxKisi = GR_AYLAR.reduce(function(s,ay){return s+_grMaxKisi*AY_GUNLER[ay];},0);
+
+    // Her satırı ayrı oluştur
+    var dolulukSatirlar = [
+      { ad: 'Tesis Kapasitesi (Oda)', renk: 'var(--text-2)', bg: 'var(--bg2)' },
+      { ad: 'Tesis Kapasitesi (Kişi)', renk: 'var(--text-2)', bg: 'var(--bg2)' },
+      { ad: 'Gerçekleşen Oda Gecesi', renk: 'var(--accent)', bg: '' },
+      { ad: 'Gerçekleşen Kişi Gecesi', renk: 'var(--mgr)', bg: '' },
+      { ad: 'Oda Doluluk %', renk: 'var(--warn)', bg: '' },
+      { ad: 'Kişi Doluluk %', renk: 'var(--danger)', bg: '' }
     ];
 
-    satirlar.forEach(function(satir, idx) {
-      var bg = idx < 2 ? 'background:var(--bg2)' : '';
-      html += '<tr style="' + bg + '"><td style="font-weight:600;font-size:12px;color:' + satir.renk + '">' + satir.ad + '</td>';
+    dolulukSatirlar.forEach(function(satir, idx) {
+      html += '<tr style="' + (satir.bg?'background:'+satir.bg:'') + '"><td style="font-weight:600;font-size:12px;color:' + satir.renk + '">' + satir.ad + '</td>';
+      var yillikToplam = '';
+
       GR_AYLAR.forEach(function(ay) {
-        var val = satir.fn(ay);
-        var sayi = typeof val === 'number' ? val : val;
-        html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px;color:' + satir.renk + '">' + (typeof sayi === 'number' ? (sayi>0?sayi.toLocaleString('tr-TR'):'0') : sayi) + '</td>';
+        var deger = '';
+        var gun = AY_GUNLER[parseInt(ay)];
+        if (idx === 0) { deger = _grOdaSayisi; yillikToplam = _grOdaSayisi + ''; }
+        else if (idx === 1) { deger = _grMaxKisi; yillikToplam = _grMaxKisi + ''; }
+        else if (idx === 2) { deger = snapOda[ay]; yillikToplam = tToplamOda.toLocaleString('tr-TR'); }
+        else if (idx === 3) { deger = snapKisi[ay]; yillikToplam = tToplamKisi.toLocaleString('tr-TR'); }
+        else if (idx === 4) {
+          var max = _grOdaSayisi * gun;
+          deger = max > 0 ? '%' + ((snapOda[ay]/max)*100).toFixed(1) : '%0.0';
+          yillikToplam = tMaxOda > 0 ? '%' + ((tToplamOda/tMaxOda)*100).toFixed(1) : '%0.0';
+        }
+        else if (idx === 5) {
+          var max2 = _grMaxKisi * gun;
+          deger = max2 > 0 ? '%' + ((snapKisi[ay]/max2)*100).toFixed(1) : '%0.0';
+          yillikToplam = tMaxKisi > 0 ? '%' + ((tToplamKisi/tMaxKisi)*100).toFixed(1) : '%0.0';
+        }
+        var gosterge = typeof deger === 'number' ? deger.toLocaleString('tr-TR') : deger;
+        html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px;color:' + satir.renk + '">' + gosterge + '</td>';
       });
-      var top = satir.toplam();
-      html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px;font-weight:700;color:' + satir.renk + ';background:var(--accent-l)">' + (typeof top === 'number'?top.toLocaleString('tr-TR'):top) + '</td></tr>';
+
+      html += '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px;font-weight:700;color:' + satir.renk + ';background:var(--accent-l)">' + yillikToplam + '</td></tr>';
     });
 
     html += '</tbody></table></div>';
