@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_43.html -->
+<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_44.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -533,6 +533,7 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
           <button class="atab-btn" id="gbtab-zecsec" onclick="gbSekme(&#39;zecsec&#39;)">⚡ ZEC / SEC</button>
           <button class="atab-btn" id="gbtab-giris" onclick="gbSekme(&#39;giris&#39;)">💸 Gider Girişi</button>
           <button class="atab-btn" id="gbtab-analiz" onclick="gbSekme(&#39;analiz&#39;)">📊 Gider Analizi</button>
+          <button class="atab-btn" id="gbtab-revizyon" onclick="gbSekme(&#39;revizyon&#39;)">🔄 Revizyon</button>
         </div>
 
         <!-- ARAŞTIRMA VERİLERİ -->
@@ -582,6 +583,13 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
         <div id="gb-analiz" style="display:none">
           <div id="gb-analiz-icerik">
             <div style="text-align:center;padding:30px"><div class="spinner" style="margin:0 auto"></div></div>
+          </div>
+        </div>
+
+        <!-- REVİZYON GEÇMİŞİ -->
+        <div id="gb-revizyon" style="display:none">
+          <div id="gb-revizyon-icerik">
+            <div style="text-align:center;padding:30px"><div class="spinner" style="margin:0 auto;border-color:var(--border);border-top-color:var(--accent)"></div></div>
           </div>
         </div>
 
@@ -3731,7 +3739,7 @@ async function giderButceSayfasiYukle() {
 
 function gbSekme(sekme) {
   gbAktifSekme = sekme;
-  ['arastirma','zecsec','giris','analiz'].forEach(function(s) {
+  ['arastirma','zecsec','giris','analiz','revizyon'].forEach(function(s) {
     var el = document.getElementById('gb-' + s);
     var btn = document.getElementById('gbtab-' + s);
     if (el) el.style.display = s === sekme ? 'block' : 'none';
@@ -3740,6 +3748,7 @@ function gbSekme(sekme) {
   if (sekme === 'arastirma') gbArastirmaGoster();
   if (sekme === 'zecsec') gbZecSecGoster();
   if (sekme === 'analiz') gbAnalizGoster();
+  if (sekme === 'revizyon') gbRevizyonGoster();
 }
 
 function gbArastirmaGoster() {
@@ -3930,13 +3939,15 @@ function gbHesapKutusu(onayliKaynak, onaylandi, kayit, s, zec, sec, ciroYuzde, g
 function gbManuelSatir(onayliKaynak, onaylandi, kayit) {
   var secili = onayliKaynak === 'manuel';
   var mevcutYuzde = secili && kayit ? (kayit.manuel_tutar||0) : 0;
-  return '<div style="padding:12px 16px;background:' + (secili?'var(--warn-l)':'var(--bg)') + ';border:1.5px solid ' + (secili?'var(--warn)':'var(--border)') + ';border-radius:8px">' +
+  return '<div style="padding:12px 16px;background:' + (secili?'var(--warn-l)':'var(--bg)') + ';border:1.5px solid ' + (secili?'var(--warn)':'var(--border)') + ';border-radius:8px;display:flex;align-items:center;justify-content:space-between">' +
+    '<div>' +
     '<div style="font-size:11px;color:var(--text-3);margin-bottom:8px">✏️ Manuel Giriş</div>' +
-    '<div style="display:flex;align-items:center;gap:10px">' +
+    '<div style="display:flex;align-items:center;gap:8px">' +
     '<span style="font-size:13px;color:var(--text-2)">%</span>' +
-    '<input type="number" id="gb-manuel-yuzde" value="' + mevcutYuzde + '" min="0" max="100" step="0.01" ' + (onaylandi?'disabled':'') + ' placeholder="0.00" style="width:100px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-family:DM Mono,monospace;font-size:14px;background:var(--bg)">' +
+    '<input type="number" id="gb-manuel-yuzde" value="' + mevcutYuzde + '" min="0" max="100" step="0.01" ' + (onaylandi?'disabled':'') + ' placeholder="0.00" style="width:120px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-family:DM Mono,monospace;font-size:14px;background:var(--bg)">' +
+    '</div></div>' +
     (!onaylandi ? '<button onclick="gbKaynakSecYuzde(\'manuel\')" style="padding:7px 16px;border:none;border-radius:7px;background:var(--warn);color:#fff;font-family:Instrument Sans,sans-serif;font-size:12px;font-weight:600;cursor:pointer">' + (secili?'✅ Seçildi':'Onayla') + '</button>' : '') +
-    '</div></div>';
+    '</div>';
 }
 
 function gbVeriSatiri(kaynak, baslik, yuzde, onayliKaynak, onaylandi) {
@@ -4442,6 +4453,62 @@ async function gbTumunuKaydet() {
     await gbSatirKaydet(butonlar[i]);
   }
   showToast('✓ Tüm gider bütçesi kaydedildi');
+}
+
+
+async function gbRevizyonGoster() {
+  var el = document.getElementById('gb-revizyon-icerik');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:30px"><div class="spinner" style="margin:0 auto;border-color:var(--border);border-top-color:var(--accent)"></div></div>';
+
+  try {
+    var liste = await sbGet('butce_gider_aylik', 'yil=eq.' + _gbYilGB + '&order=ana_baslik.asc,ay.asc');
+    if (!liste || liste.length === 0) {
+      el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-3)"><div style="font-size:32px;margin-bottom:12px">📋</div><div>Henüz gider bütçesi girişi yok.</div><div style="font-size:12px;margin-top:8px">Gider Girişi sekmesinden veri girdikten sonra burada görünecek.</div></div>';
+      return;
+    }
+
+    var kaynakRenk = { arastirma: 'var(--accent)', gecen_yil: 'var(--mgr)', manuel: 'var(--warn)' };
+    var kaynakBg = { arastirma: 'var(--accent-l)', gecen_yil: 'var(--mgr-l)', manuel: 'var(--warn-l)' };
+    var kaynakAd = { arastirma: '🔬 Araştırma', gecen_yil: '📅 Geçen Yıl', manuel: '✏️ Manuel' };
+
+    var html = '<div style="display:flex;flex-direction:column;gap:12px">';
+
+    liste.forEach(function(k) {
+      var renk = kaynakRenk[k.secilen_kaynak] || 'var(--text-3)';
+      var bg = kaynakBg[k.secilen_kaynak] || 'var(--bg2)';
+      var onaylandi = k.onaylandi;
+
+      html += '<div style="background:var(--surface);border:1px solid var(--border);border-left:4px solid ' + renk + ';border-radius:10px;padding:16px 18px">' +
+        '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">' +
+        '<div>' +
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">' +
+        '<span style="font-size:14px;font-weight:700">' + k.ana_baslik + '</span>' +
+        '<span style="font-size:13px;color:var(--text-3)">—</span>' +
+        '<span style="font-size:13px;font-weight:600;color:' + renk + '">' + AY_ADLARI[k.ay] + '</span>' +
+        '<span style="padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600;background:' + (onaylandi?'var(--accent-l)':'var(--warn-l)') + ';color:' + (onaylandi?'var(--accent)':'var(--warn)') + '">' + (onaylandi?'🔒 Onaylı':'📝 Taslak') + '</span>' +
+        '</div>' +
+        (k.revizyon_nedeni ? '<div style="font-size:12px;color:var(--warn);margin-bottom:4px">🔄 Revizyon nedeni: <em>' + k.revizyon_nedeni + '</em></div>' : '') +
+        '</div></div>' +
+        '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:8px">' +
+        '<div style="padding:8px 10px;background:var(--bg);border-radius:7px"><div style="font-size:10px;color:var(--text-3)">Kaynak</div><div style="font-size:12px;font-weight:600">' + (kaynakAd[k.secilen_kaynak]||'—') + '</div></div>' +
+        '<div style="padding:8px 10px;background:var(--bg);border-radius:7px"><div style="font-size:10px;color:var(--text-3)">Yüzde</div><div style="font-size:12px;font-weight:600;font-family:DM Mono,monospace">%' + (k.arastirma_yuzdesi||0).toFixed(2) + '</div></div>' +
+        (k.onaylayan ? '<div style="padding:8px 10px;background:var(--bg);border-radius:7px"><div style="font-size:10px;color:var(--text-3)">Onaylayan</div><div style="font-size:12px;font-weight:600">' + k.onaylayan + '</div></div>' : '<div></div>') +
+        (k.onay_tarihi ? '<div style="padding:8px 10px;background:var(--bg);border-radius:7px"><div style="font-size:10px;color:var(--text-3)">Onay Tarihi</div><div style="font-size:12px;font-weight:600">' + new Date(k.onay_tarihi).toLocaleDateString('tr-TR') + '</div></div>' : '<div></div>') +
+        '</div>' +
+        '<div style="margin-top:10px;padding:8px 12px;background:var(--bg);border-radius:7px;font-size:12px;display:flex;justify-content:space-between">' +
+        '<span style="color:var(--text-3)">Hesaplanan Tutar:</span>' +
+        '<strong style="font-family:DM Mono,monospace;color:var(--danger)">' + Math.round(k.hesaplanan_tutar||0).toLocaleString('tr-TR') + ' TL</strong>' +
+        '</div>' +
+        '</div>';
+    });
+
+    html += '</div>';
+    el.innerHTML = html;
+
+  } catch(e) {
+    el.innerHTML = '<div style="color:var(--danger);padding:20px">Hata: ' + e.message + '</div>';
+  }
 }
 
 // ── TOAST ─────────────────────────────────────────────
