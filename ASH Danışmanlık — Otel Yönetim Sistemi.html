@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_38.html -->
+<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_39.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -970,74 +970,8 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
           </div>
         </div>
           
-          <!-- Seçim alanı -->
-          <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:14px;margin-bottom:18px;align-items:flex-end">
-            <div class="sfield">
-              <label>Ana Başlık</label>
-              <select id="gb-ana" onchange="gbAltKirilimDoldur()">
-                <option value="">— Seçiniz —</option>
-              </select>
-            </div>
-            <div class="sfield">
-              <label>Alt Kırılım</label>
-              <select id="gb-alt" onchange="gbKalemYukle()">
-                <option value="">— Önce ana başlık seçin —</option>
-              </select>
-            </div>
-            <div style="display:flex;gap:8px">
-              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1.5px solid var(--accent-b);border-radius:7px;background:var(--accent-l);cursor:pointer;font-size:12px;font-weight:600;color:var(--accent)">
-                <input type="radio" name="gb-tip" value="sabit" id="gb-sabit" checked="" onchange="gbTipDegisti()"> Sabit
-              </label>
-              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1.5px solid var(--border);border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text-2)">
-                <input type="radio" name="gb-tip" value="degisken" id="gb-degisken" onchange="gbTipDegisti()"> Değişken
-              </label>
-            </div>
-          </div>
 
-          <!-- 12 Aylık giriş tablosu -->
-          <div id="gb-form" style="display:none">
-            <div class="dc" style="margin-bottom:16px">
-              <div class="dct">
-                <div class="dot w"></div>
-                <span id="gb-baslik-yazi">Aylık Gider Girişi</span>
-                <div style="margin-left:auto;display:flex;gap:8px">
-                  <button onclick="gbTumunaKopyala()" id="gb-kopyala-btn" style="padding:5px 12px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text-2);font-family:Instrument Sans,sans-serif;font-size:11px;cursor:pointer">📋 Ocak'ı Tüm Aylara Kopyala</button>
-                  <button onclick="gbKaydet()" style="padding:5px 14px;border:none;border-radius:6px;background:var(--accent);color:#fff;font-family:Instrument Sans,sans-serif;font-size:11px;font-weight:600;cursor:pointer">💾 Kaydet</button>
-                </div>
-              </div>
-              <div id="gb-degisken-bilgi" style="display:none;margin-bottom:12px;padding:10px 12px;background:var(--mgr-l);border:1px solid var(--mgr-b);border-radius:8px;font-size:12px;color:var(--mgr)">
-                💡 Değişken gider: Sistem doluluk hedefinden otomatik hesaplar. Elle de düzenleyebilirsiniz.
-              </div>
-              <div style="overflow-x:auto">
-                <table class="tbl">
-                  <thead>
-                    <tr>
-                      <th>Ay</th><th>Durum</th><th style="text-align:right">Tutar (TL)</th><th style="text-align:right">Tahmini (Değişken)</th>
-                    </tr>
-                  </thead>
-                  <tbody id="gb-aylar-tablo"></tbody>
-                  <tfoot>
-                    <tr style="background:var(--bg);font-weight:700">
-                      <td colspan="2">Yıllık Toplam</td>
-                      <td style="text-align:right;font-family:DM Mono,monospace;color:var(--danger)" id="gb-yillik-toplam">0 TL</td>
-                      <td></td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          <!-- Gider Bütçesi Tablosu -->
-          <div id="gb-ozet-liste">
-            <div style="text-align:center;padding:30px;color:var(--text-3)">
-              <div class="spinner" style="margin:0 auto;border-color:var(--border);border-top-color:var(--accent)"></div>
-              <div style="margin-top:10px">Yükleniyor...</div>
-            </div>
-          </div>
-        </div>
-
-      </main></div>
+      </div>
       <div class="pg" id="pg-rapor"><div class="ptitle">Raporlar &amp; Analiz</div><div class="psub">Finansal analiz ve dönem raporları</div><div class="cs"><div class="csi">📈</div><div class="cst">Raporlama Modülü</div><div class="css">Aylık/yıllık finansal analiz, bütçe karşılaştırma grafikleri ve PDF export.</div><span class="csb">⏳ Geliştiriliyor</span></div></div>
       <div class="pg" id="pg-fiyat"><div class="ptitle">Fiyat Hesaplama</div><div class="psub">Oda ve kişi fiyatlandırma modülü</div><div class="cs"><div class="csi">🏷️</div><div class="cst">Fiyat Hesaplama Modülü</div><div class="css">Gider kalemleri ve reçete verileri üzerinden oda/kişi başı fiyat hesaplama.</div><span class="csb">⏳ Geliştiriliyor</span></div></div>
 
@@ -1048,9 +982,9 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
         <div id="ayarlar-ic"></div>
       </div>
 
-    
+    </main>
   </div>
-
+</div>
 
 <div class="toast" id="toast"></div>
 
