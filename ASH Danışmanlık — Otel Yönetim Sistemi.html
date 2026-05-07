@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_40.html -->
+<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_41.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -3640,13 +3640,35 @@ var SEKTOREL_ANA = {
 
 async function giderButceSayfasiYukle() {
   _gbYilGB = parseInt(document.getElementById('but-yil')?.value) || 2026;
+
+  // Gelir bütçesinden parametreleri çek
+  try {
+    var params = await sbGet('butce_parametreler', 'yil=eq.' + _gbYilGB);
+    if (params && params.length > 0) {
+      _butceParametreler = params[0];
+    }
+  } catch(e) {}
+
   _gbCiroGB = window._butHesap?.ciro || _butceParametreler?.hedef_ciro || 0;
   var karMarji = window._butHesap?.marj || _butceParametreler?.kar_marji || 20;
   _gbGiderOraniGB = (100 - karMarji) / 100;
 
-  // Açık ayları al
+  // Açık ayları gelir bütçesinden al
+  if (_butceParametreler?.acik_aylar) {
+    try { window._acikAylar = JSON.parse(_butceParametreler.acik_aylar); } catch(e) {}
+  }
   var acikAylar = window._acikAylar || [5,6,7,8,9,10];
+
+  // Sadece açık ayların gün toplamı (ZEC için)
   var toplamGun = acikAylar.reduce(function(s,ay){ return s+AY_GUNLER[ay]; }, 0);
+
+  // Tüm ayları sıfırla
+  for (var i = 1; i <= 12; i++) {
+    _gbZECGB[i] = 0;
+    _gbSECGB[i] = 0;
+  }
+
+  // Sadece açık aylar için hesapla
   var toplamOdaGecesi = 0;
   var aylikDoluluk = {};
 
@@ -3654,13 +3676,16 @@ async function giderButceSayfasiYukle() {
     var dl = await sbGet('butce_aylik', 'yil=eq.' + _gbYilGB);
     if (dl) {
       dl.forEach(function(d) {
-        aylikDoluluk[d.ay] = d;
-        toplamOdaGecesi += (d.hedef_oda_gecesi||0);
+        // Sadece açık ayları dahil et
+        if (acikAylar.indexOf(d.ay) >= 0) {
+          aylikDoluluk[d.ay] = d;
+          toplamOdaGecesi += (d.hedef_oda_gecesi||0);
+        }
       });
     }
   } catch(e) {}
 
-  // ZEC ve SEC hesapla
+  // ZEC ve SEC sadece açık aylar için hesapla
   acikAylar.forEach(function(ay) {
     _gbZECGB[ay] = toplamGun > 0 ? AY_GUNLER[ay]/toplamGun : 0;
     var og = aylikDoluluk[ay] ? (aylikDoluluk[ay].hedef_oda_gecesi||0) : 0;
@@ -3716,8 +3741,7 @@ function gbArastirmaGoster() {
   var html = '<div style="overflow-x:auto"><table class="tbl"><thead><tr>' +
     '<th>Ana Başlık</th><th>Katsayı</th>' +
     '<th style="text-align:right">Sektör Yüzdesi<br><small style="font-weight:400;color:var(--text-3)">(Gider içi pay)</small></th>' +
-    '<th style="text-align:right">Ciro Yüzdesi<br><small style="font-weight:400;color:var(--text-3)">× (1-%' + karMarji.toFixed(1) + ')</small></th>' +
-    '<th style="text-align:right">Yıllık Tutar<br><small style="font-weight:400;color:var(--text-3)">(' + (_gbCiroGB>0?Math.round(_gbCiroGB).toLocaleString('tr-TR')+' TL':'Ciro girilmedi') + ')</small></th>' +
+    '<th style="text-align:right">Ciro Yüzdesi<br><small style="font-weight:400;color:var(--text-3)">Gider %' + (_gbGiderOraniGB*100).toFixed(1) + ' × Sektör</small></th>' +
     '</tr></thead><tbody>';
 
   var toplamCiro = 0;
@@ -3734,14 +3758,13 @@ function gbArastirmaGoster() {
       '<td><span style="font-size:11px;padding:2px 8px;border-radius:10px;background:' + tipBg + ';color:' + tipRenk + ';font-weight:600">' + s.katsayi + '</span></td>' +
       '<td style="text-align:right;font-family:DM Mono,monospace;font-size:13px">%' + s.yuzde.toFixed(2) + '</td>' +
       '<td style="text-align:right;font-family:DM Mono,monospace;font-size:13px;font-weight:600;color:var(--danger)">%' + ciroYuzde.toFixed(2) + '</td>' +
-      '<td style="text-align:right;font-family:DM Mono,monospace;font-size:13px;font-weight:600;color:var(--danger)">' + (_gbCiroGB>0?Math.round(yillikTutar).toLocaleString('tr-TR')+' TL':'—') + '</td>' +
       '</tr>';
   });
 
   html += '<tr style="background:var(--bg);font-weight:700">' +
-    '<td colspan="3">TOPLAM</td>' +
+    '<td colspan="2">TOPLAM</td>' +
+    '<td style="text-align:right;font-family:DM Mono,monospace;color:var(--danger)">%100.00</td>' +
     '<td style="text-align:right;font-family:DM Mono,monospace;color:var(--danger)">%' + toplamCiro.toFixed(2) + '</td>' +
-    '<td style="text-align:right;font-family:DM Mono,monospace;color:var(--danger)">' + (_gbCiroGB>0?Math.round(_gbCiroGB*toplamCiro/100).toLocaleString('tr-TR')+' TL':'—') + '</td>' +
     '</tr>';
 
   html += '</tbody></table></div>';
@@ -3934,13 +3957,13 @@ async function gbOnayla() {
   try {
     var mevcut = await sbGet('butce_gider_aylik', 'yil=eq.' + _gbYilGB + '&ay=eq.' + ay + '&ana_baslik=eq.' + encodeURIComponent(anaBaslik));
     if (mevcut && mevcut.length > 0) {
-      await sbPatch('butce_gider_aylik', 'yil=eq.' + _gbYilGB + '&ay=eq.' + ay + '&ana_baslik=eq.' + encodeURIComponent(anaBaslik), data);
+      await sbPatch('butce_gider_aylik', 'id=eq.' + mevcut[0].id, data);
     } else {
       await sbPost('butce_gider_aylik', data);
     }
-    _gbKayitlarGB[anaBaslik + '|' + ay] = data;
+    _gbKayitlarGB[anaBaslik + '|' + ay] = Object.assign(data, {onaylandi: true});
     showToast('✅ ' + anaBaslik + ' ' + AY_ADLARI[ay] + ' gider bütçesi onaylandı');
-    gbGirisGuncelle();
+    await gbGirisGuncelle();
   } catch(e) { showToast('Hata: ' + e.message, true); }
 }
 
