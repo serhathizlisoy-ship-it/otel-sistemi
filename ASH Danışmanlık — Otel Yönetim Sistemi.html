@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_57.html -->
+<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_58.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -5467,17 +5467,54 @@ async function urunListesiGoster() {
 
   _stokUrunler.forEach(function(u) {
     var kat = _stokKategoriler.find(function(k){ return k.id === u.kategori_id; });
-    html += '<tr>' +
+    html += '<tr id="urun-satir-' + u.id + '">' +
       '<td style="color:var(--text-3);font-size:12px">' + (kat?kat.ad:'—') + '</td>' +
       '<td style="font-weight:600">' + u.ad + '</td>' +
       '<td>' + u.birim + '</td>' +
       '<td class="mono">' + (u.minimum_stok||0) + '</td>' +
-      '<td><button data-uid="' + u.id + '" onclick="urunSil(this)" style="padding:3px 8px;border:1px solid #e0baba;border-radius:5px;background:var(--danger-l);color:var(--danger);font-size:11px;cursor:pointer">Sil</button></td>' +
+      '<td style="display:flex;gap:6px">' +
+        '<button data-uid="' + u.id + '" data-ad="' + u.ad + '" data-min="' + (u.minimum_stok||0) + '" onclick="urunDuzenle(this)" style="padding:3px 8px;border:1px solid var(--accent-b);border-radius:5px;background:var(--accent-l);color:var(--accent);font-size:11px;cursor:pointer">Düzenle</button>' +
+        '<button data-uid="' + u.id + '" onclick="urunSil(this)" style="padding:3px 8px;border:1px solid #e0baba;border-radius:5px;background:var(--danger-l);color:var(--danger);font-size:11px;cursor:pointer">Sil</button>' +
+      '</td>' +
       '</tr>';
   });
 
   html += '</tbody></table></div>';
   el.innerHTML = html;
+}
+
+function urunDuzenle(btn) {
+  var id = btn.getAttribute('data-uid');
+  var mevcutAd = btn.getAttribute('data-ad');
+  var mevcutMin = btn.getAttribute('data-min');
+  var satir = document.getElementById('urun-satir-' + id);
+  if (!satir) return;
+
+  // Satırı düzenleme moduna al
+  satir.innerHTML =
+    '<td style="color:var(--text-3);font-size:12px">' + satir.cells[0].textContent + '</td>' +
+    '<td><input type="text" id="edit-ad-' + id + '" value="' + mevcutAd + '" style="padding:4px 8px;border:1px solid var(--accent-b);border-radius:5px;font-size:13px;width:100%;background:var(--bg)"></td>' +
+    '<td>' + satir.cells[2].textContent + '</td>' +
+    '<td><input type="number" id="edit-min-' + id + '" value="' + mevcutMin + '" min="0" style="padding:4px 8px;border:1px solid var(--accent-b);border-radius:5px;font-size:13px;width:70px;background:var(--bg)"></td>' +
+    '<td style="display:flex;gap:6px">' +
+      '<button data-uid="' + id + '" onclick="urunDuzenleKaydet(this)" style="padding:3px 8px;border:none;border-radius:5px;background:var(--accent);color:#fff;font-size:11px;cursor:pointer;font-weight:600">Kaydet</button>' +
+      '<button onclick="urunListesiGoster()" style="padding:3px 8px;border:1px solid var(--border);border-radius:5px;background:var(--bg);color:var(--text-2);font-size:11px;cursor:pointer">İptal</button>' +
+    '</td>';
+}
+
+async function urunDuzenleKaydet(btn) {
+  var id = btn.getAttribute('data-uid');
+  var yeniAd = document.getElementById('edit-ad-' + id)?.value.trim();
+  var yeniMin = parseFloat(document.getElementById('edit-min-' + id)?.value) || 0;
+  if (!yeniAd) { showToast('Ürün adı boş olamaz!', true); return; }
+
+  try {
+    await sbPatch('stok_urun', 'id=eq.' + id, { ad: yeniAd, minimum_stok: yeniMin });
+    var urun = _stokUrunler.find(function(u){ return u.id === id; });
+    if (urun) { urun.ad = yeniAd; urun.minimum_stok = yeniMin; }
+    showToast('✅ Ürün güncellendi');
+    urunListesiGoster();
+  } catch(e) { showToast('Hata: ' + e.message, true); }
 }
 
 async function urunSil(btn) {
