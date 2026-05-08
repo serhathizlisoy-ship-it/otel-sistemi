@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_60.html -->
+<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_61.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1158,7 +1158,8 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
         <div class="atab" style="margin-bottom:20px">
           <button class="atab-btn on" id="stoktab-durum" onclick="stokSekme(&#39;durum&#39;)">📦 Stok Durumu</button>
           <button class="atab-btn" id="stoktab-urun" onclick="stokSekme(&#39;urun&#39;)">➕ Ürün Ekle</button>
-          <button class="atab-btn" id="stoktab-hareketler" onclick="stokSekme(&#39;hareketler&#39;)">📋 Hareketler</button>
+          <button class="atab-btn" id="stoktab-sayim" onclick="stokSekme(&#39;sayim&#39;)">📋 Sayım</button>
+          <button class="atab-btn" id="stoktab-hareketler" onclick="stokSekme(&#39;hareketler&#39;)">🔄 Hareketler</button>
         </div>
 
         <!-- STOK DURUMU -->
@@ -1208,6 +1209,39 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
             <div class="dct"><div class="dot w"></div>Mevcut Ürünler</div>
             <div id="urun-liste">
               <div style="text-align:center;padding:20px"><div class="spinner" style="margin:0 auto"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SAYIM -->
+        <div id="stok-sayim" style="display:none">
+          <!-- Sayım Girişi -->
+          <div class="dc" style="margin-bottom:16px">
+            <div class="dct"><div class="dot"></div>Stok Sayım Girişi</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:14px;margin-bottom:16px;align-items:flex-end">
+              <div class="sfield">
+                <label>Sayım Tarihi</label>
+                <input type="date" id="sayim-tarih">
+              </div>
+              <div class="sfield">
+                <label>Kategori</label>
+                <select id="sayim-kategori" onchange="sayimUrunleriYukle()">
+                  <option value="">— Seçiniz —</option>
+                </select>
+              </div>
+              <button onclick="sayimUrunleriYukle()" style="padding:9px 18px;border:1px solid var(--border);border-radius:7px;background:var(--bg);font-family:Instrument Sans,sans-serif;font-size:13px;cursor:pointer">🔄 Yükle</button>
+            </div>
+            <div id="sayim-urun-listesi"></div>
+            <div id="sayim-kaydet-btn" style="display:none;margin-top:14px;display:flex;justify-content:flex-end">
+              <button class="sbtn" style="width:auto;padding:10px 24px" onclick="sayimKaydet()">💾 Sayımı Kaydet</button>
+            </div>
+          </div>
+
+          <!-- Sayım Raporu -->
+          <div class="dc">
+            <div class="dct"><div class="dot w"></div>Sayım Geçmişi &amp; Rapor</div>
+            <div id="sayim-rapor">
+              <div style="text-align:center;padding:30px;color:var(--text-3)">Yükleniyor...</div>
             </div>
           </div>
         </div>
@@ -5386,7 +5420,7 @@ async function stokModuluBaslat() {
 
 function stokSekme(sekme) {
   stokAktifSekme = sekme;
-  ['durum','urun','hareketler'].forEach(function(s) {
+  ['durum','urun','sayim','hareketler'].forEach(function(s) {
     var el = document.getElementById('stok-' + s);
     var btn = document.getElementById('stoktab-' + s);
     if (el) el.style.display = s === sekme ? 'block' : 'none';
@@ -5394,6 +5428,7 @@ function stokSekme(sekme) {
   });
   if (sekme === 'durum') stokDurumGoster();
   if (sekme === 'urun') urunListesiGoster();
+  if (sekme === 'sayim') sayimSayfasiYukle();
   if (sekme === 'hareketler') hareketleriYukle();
 }
 
@@ -5998,6 +6033,238 @@ async function tuketimKaydet() {
     });
 
   } catch(e) { showToast('Hata: ' + e.message, true); }
+}
+
+
+// ── STOK SAYIM ────────────────────────────────────────
+async function sayimSayfasiYukle() {
+  // Tarihi bugün yap
+  var tarihEl = document.getElementById('sayim-tarih');
+  if (tarihEl && !tarihEl.value) tarihEl.value = new Date().toISOString().split('T')[0];
+
+  // Kategori select doldur
+  var katSel = document.getElementById('sayim-kategori');
+  if (katSel && _stokKategoriler.length > 0) {
+    katSel.innerHTML = '<option value="">— Seçiniz —</option>';
+    _stokKategoriler.forEach(function(k) {
+      katSel.innerHTML += '<option value="' + k.id + '">' + k.ad + '</option>';
+    });
+  }
+
+  sayimRaporuYukle();
+}
+
+async function sayimUrunleriYukle() {
+  var katId = document.getElementById('sayim-kategori').value;
+  var el = document.getElementById('sayim-urun-listesi');
+  var btnEl = document.getElementById('sayim-kaydet-btn');
+  if (!katId) { el.innerHTML = ''; if (btnEl) btnEl.style.display = 'none'; return; }
+
+  // O kategorinin ürünlerini listele
+  var katUrunler = _stokUrunler.filter(function(u){ return u.kategori_id === katId; });
+  if (katUrunler.length === 0) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-3)">Bu kategoride ürün yok.</div>';
+    if (btnEl) btnEl.style.display = 'none';
+    return;
+  }
+
+  // Mevcut stok bakiyelerini al
+  var bakiye = await sbGet('stok_bakiye', '');
+  var bakiyeMap = {};
+  if (bakiye) bakiye.forEach(function(b) { bakiyeMap[b.urun_id] = b.miktar; });
+
+  var html = '<div style="overflow-x:auto"><table class="tbl"><thead><tr>' +
+    '<th>Ürün</th><th>Birim</th>' +
+    '<th style="text-align:right">Sistem Stoğu</th>' +
+    '<th style="text-align:right;min-width:140px">Gerçek Sayım</th>' +
+    '</tr></thead><tbody>';
+
+  katUrunler.forEach(function(u) {
+    var sistemMiktar = bakiyeMap[u.id] || 0;
+    var renk = sistemMiktar < 0 ? 'var(--danger)' : sistemMiktar === 0 ? 'var(--text-3)' : 'var(--accent)';
+    html += '<tr>' +
+      '<td style="font-weight:600">' + u.ad + '</td>' +
+      '<td style="color:var(--text-3)">' + u.birim + '</td>' +
+      '<td style="text-align:right;font-family:DM Mono,monospace;font-weight:600;color:' + renk + '">' + sistemMiktar.toLocaleString('tr-TR') + ' ' + u.birim + '</td>' +
+      '<td style="text-align:right">' +
+        '<div style="display:flex;align-items:center;gap:6px;justify-content:flex-end">' +
+        '<input type="number" id="sayim-gercek-' + u.id + '" placeholder="0" min="0" step="0.01" ' +
+        'style="width:110px;padding:6px 10px;border:1px solid var(--accent-b);border-radius:6px;font-family:DM Mono,monospace;font-size:13px;text-align:right;background:var(--bg)">' +
+        '<span style="font-size:11px;color:var(--text-3)">' + u.birim + '</span>' +
+        '</div>' +
+      '</td>' +
+      '</tr>';
+  });
+
+  html += '</tbody></table></div>';
+  el.innerHTML = html;
+  if (btnEl) btnEl.style.display = 'flex';
+}
+
+async function sayimKaydet() {
+  var tarih = document.getElementById('sayim-tarih').value;
+  var katId = document.getElementById('sayim-kategori').value;
+  var kat = _stokKategoriler.find(function(k){ return k.id === katId; });
+  if (!tarih || !katId) { showToast('Tarih ve kategori seçin!', true); return; }
+
+  var katUrunler = _stokUrunler.filter(function(u){ return u.kategori_id === katId; });
+  var bakiye = await sbGet('stok_bakiye', '');
+  var bakiyeMap = {};
+  if (bakiye) bakiye.forEach(function(b) { bakiyeMap[b.urun_id] = b.miktar; });
+
+  var kaydedilenSayisi = 0;
+
+  for (var i = 0; i < katUrunler.length; i++) {
+    var u = katUrunler[i];
+    var inputEl = document.getElementById('sayim-gercek-' + u.id);
+    if (!inputEl || inputEl.value === '') continue;
+
+    var gercekMiktar = parseFloat(inputEl.value) || 0;
+    var sistemMiktar = bakiyeMap[u.id] || 0;
+    var fark = gercekMiktar - sistemMiktar;
+    var birimFiyat = u.birim_fiyat || 0;
+    var farkMaliyet = Math.abs(fark) * birimFiyat;
+
+    // Stok hareketi kaydet (sayım tipi)
+    await sbPost('stok_hareket', {
+      urun_id: u.id,
+      hareket_tipi: 'sayim',
+      miktar: fark,
+      birim_fiyat: birimFiyat,
+      toplam_tutar: farkMaliyet,
+      tarih: tarih,
+      aciklama: (kat?kat.ad:'') + ' sayımı — Sistem: ' + sistemMiktar + ', Gerçek: ' + gercekMiktar + ', Fark: ' + fark,
+      giren_kullanici: oturum.kullanici_adi
+    });
+
+    // Stok bakiyesini gerçek sayımla güncelle
+    await sbPatch('stok_bakiye', 'urun_id=eq.' + u.id, {
+      miktar: gercekMiktar,
+      son_guncelleme: new Date().toISOString()
+    });
+
+    // Ürün listesini güncelle
+    var urun = _stokUrunler.find(function(uu){ return uu.id === u.id; });
+    if (urun) urun._bakiye = gercekMiktar;
+    kaydedilenSayisi++;
+  }
+
+  showToast('✅ ' + kaydedilenSayisi + ' ürün sayımı kaydedildi');
+  document.getElementById('sayim-urun-listesi').innerHTML = '';
+  document.getElementById('sayim-kategori').value = '';
+  if (document.getElementById('sayim-kaydet-btn')) document.getElementById('sayim-kaydet-btn').style.display = 'none';
+  sayimRaporuYukle();
+}
+
+async function sayimRaporuYukle() {
+  var el = document.getElementById('sayim-rapor');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:20px"><div class="spinner" style="margin:0 auto;border-color:var(--border);border-top-color:var(--accent)"></div></div>';
+
+  try {
+    var hareketler = await sbGet('stok_hareket', 'hareket_tipi=eq.sayim&order=tarih.desc,olusturma.desc');
+    if (!hareketler || hareketler.length === 0) {
+      el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-3)">Henüz sayım yapılmamış.</div>';
+      return;
+    }
+
+    // Tarih bazında grupla
+    var tarihGruplari = {};
+    hareketler.forEach(function(h) {
+      if (!tarihGruplari[h.tarih]) tarihGruplari[h.tarih] = [];
+      tarihGruplari[h.tarih].push(h);
+    });
+
+    // Mevcut stok bakiyeleri
+    var bakiye = await sbGet('stok_bakiye', '');
+    var bakiyeMap = {};
+    if (bakiye) bakiye.forEach(function(b) { bakiyeMap[b.urun_id] = b.miktar; });
+
+    var html = '';
+
+    Object.keys(tarihGruplari).sort().reverse().forEach(function(tarih) {
+      var grup = tarihGruplari[tarih];
+      var toplamFireMaliyet = 0;
+      var toplamFazlaMaliyet = 0;
+
+      html += '<div style="margin-bottom:16px;border:1px solid var(--border);border-radius:10px;overflow:hidden">' +
+        '<div style="padding:10px 16px;background:var(--accent);display:flex;justify-content:space-between;align-items:center">' +
+        '<span style="color:#fff;font-weight:700;font-size:13px">📋 ' + new Date(tarih).toLocaleDateString("tr-TR") + ' Sayımı</span>' +
+        '</div>' +
+        '<div style="overflow-x:auto"><table class="tbl" style="border-radius:0"><thead><tr>' +
+        '<th>Ürün</th><th style="text-align:right">Sistem</th><th style="text-align:right">Gerçek</th>' +
+        '<th style="text-align:right">Fark</th><th style="text-align:right">Birim Fiyat</th><th style="text-align:right">Fark Maliyeti</th>' +
+        '</tr></thead><tbody>';
+
+      grup.forEach(function(h) {
+        var urun = _stokUrunler.find(function(u){ return u.id === h.urun_id; });
+        var fark = h.miktar;
+        var sistemMiktar = (bakiyeMap[h.urun_id]||0) - fark; // Gerçek - Fark = Sistem (eski)
+        var gercekMiktar = bakiyeMap[h.urun_id] || 0;
+        var farkRenk = fark < 0 ? 'var(--danger)' : fark > 0 ? 'var(--accent)' : 'var(--text-3)';
+        var farkIkon = fark < 0 ? '▼' : fark > 0 ? '▲' : '—';
+
+        if (fark < 0) toplamFireMaliyet += h.toplam_tutar || 0;
+        else toplamFazlaMaliyet += h.toplam_tutar || 0;
+
+        html += '<tr>' +
+          '<td style="font-weight:600;font-size:12px">' + (urun?urun.ad:'Silinmiş ürün') + '</td>' +
+          '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px">' + sistemMiktar.toLocaleString('tr-TR') + ' ' + (urun?urun.birim:'') + '</td>' +
+          '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px;font-weight:600">' + gercekMiktar.toLocaleString('tr-TR') + ' ' + (urun?urun.birim:'') + '</td>' +
+          '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px;font-weight:700;color:' + farkRenk + '">' + farkIkon + ' ' + Math.abs(fark).toLocaleString('tr-TR') + '</td>' +
+          '<td style="text-align:right;font-family:DM Mono,monospace;font-size:11px;color:var(--text-3)">' + (h.birim_fiyat>0?h.birim_fiyat.toFixed(4)+' TL':'—') + '</td>' +
+          '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px;font-weight:600;color:' + farkRenk + '">' + (h.toplam_tutar>0?(h.toplam_tutar).toFixed(2)+' TL':'—') + '</td>' +
+          '</tr>';
+      });
+
+      html += '</tbody></table></div>';
+
+      // Özet
+      html += '<div style="padding:10px 16px;background:var(--bg);display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">' +
+        '<div style="text-align:center"><div style="font-size:10px;color:var(--text-3);margin-bottom:2px">SAYILAN ÜRÜN</div><div style="font-size:13px;font-weight:600">' + grup.length + ' kalem</div></div>' +
+        '<div style="text-align:center"><div style="font-size:10px;color:var(--danger);margin-bottom:2px">TOPLAM FİRE MALİYETİ</div><div style="font-size:13px;font-weight:700;color:var(--danger)">' + toplamFireMaliyet.toFixed(2) + ' TL</div></div>' +
+        '<div style="text-align:center"><div style="font-size:10px;color:var(--accent);margin-bottom:2px">TOPLAM FAZLA</div><div style="font-size:13px;font-weight:700;color:var(--accent)">' + toplamFazlaMaliyet.toFixed(2) + ' TL</div></div>' +
+        '</div></div>';
+    });
+
+    // Mevcut stok değeri özeti
+    var toplamStokDegeri = 0;
+    var katOzetler = {};
+    _stokKategoriler.forEach(function(k) { katOzetler[k.id] = { ad: k.ad, deger: 0, adet: 0 }; });
+    _stokUrunler.forEach(function(u) {
+      var mevcut = bakiyeMap[u.id] || 0;
+      if (mevcut > 0 && u.birim_fiyat > 0) {
+        var deger = mevcut * u.birim_fiyat;
+        toplamStokDegeri += deger;
+        if (katOzetler[u.kategori_id]) {
+          katOzetler[u.kategori_id].deger += deger;
+          katOzetler[u.kategori_id].adet++;
+        }
+      }
+    });
+
+    html += '<div style="margin-top:16px;padding:14px 18px;background:var(--bg2);border:1px solid var(--border);border-radius:10px">' +
+      '<div style="font-size:13px;font-weight:700;margin-bottom:12px">📊 Mevcut Stok Değeri (Devir)</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px">';
+
+    Object.values(katOzetler).forEach(function(k) {
+      if (k.adet === 0 && k.deger === 0) return;
+      html += '<div style="padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;text-align:center">' +
+        '<div style="font-size:11px;color:var(--text-3);margin-bottom:4px">' + k.ad + '</div>' +
+        '<div style="font-family:DM Mono,monospace;font-size:14px;font-weight:600;color:var(--accent)">' + k.deger.toFixed(2) + ' TL</div>' +
+        '</div>';
+    });
+
+    html += '</div>' +
+      '<div style="padding:10px 14px;background:var(--accent);border-radius:8px;display:flex;justify-content:space-between;align-items:center">' +
+      '<span style="color:#fff;font-weight:700">TOPLAM DEVIR STOK DEĞERİ</span>' +
+      '<span style="font-family:DM Mono,monospace;font-size:18px;font-weight:700;color:#fff">' + toplamStokDegeri.toFixed(2) + ' TL</span>' +
+      '</div></div>';
+
+    el.innerHTML = html;
+  } catch(e) {
+    el.innerHTML = '<div style="color:var(--danger);padding:20px">Hata: ' + e.message + '</div>';
+  }
 }
 
 // ── TOAST ─────────────────────────────────────────────
