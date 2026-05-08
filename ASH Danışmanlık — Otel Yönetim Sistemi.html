@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_58.html -->
+<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_60.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -432,6 +432,7 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
 
         <div class="atab" style="margin-bottom:20px">
           <button class="atab-btn on" id="kaptab-giris" onclick="kapanisSekme(&#39;giris&#39;)">🌙 Günlük Kapanış</button>
+          <button class="atab-btn" id="kaptab-tuketim" onclick="kapanisSekme(&#39;tuketim&#39;)">🍳 Tüketim Girişi</button>
           <button class="atab-btn" id="kaptab-liste" onclick="kapanisSekme(&#39;liste&#39;)">📋 Kayıtlar</button>
         </div>
 
@@ -574,6 +575,28 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
         </div><!-- kapanis-giris sonu -->
 
         <!-- KAYITLAR -->
+        <!-- TÜKETİM GİRİŞİ -->
+        <div id="kapanis-tuketim" style="display:none">
+          <div style="margin-bottom:14px;padding:10px 14px;background:var(--accent-l);border:1px solid var(--accent-b);border-radius:8px;font-size:12px;color:var(--accent)">
+            💡 Gün içinde tüketilen reçeteleri girin. Buklet ve Kimyasal reçeteler oda sayısından otomatik hesaplanır.
+          </div>
+
+          <div style="margin-bottom:14px">
+            <div class="sfield" style="max-width:200px">
+              <label>Tarih</label>
+              <input type="date" id="tuk-tarih">
+            </div>
+          </div>
+
+          <div id="tuketim-receteler">
+            <div style="text-align:center;padding:30px"><div class="spinner" style="margin:0 auto;border-color:var(--border);border-top-color:var(--accent)"></div></div>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;margin-top:16px">
+            <button class="sbtn" style="width:auto;padding:11px 28px" onclick="tuketimKaydet()">💾 Tüketimi Kaydet &amp; Stok Düş</button>
+          </div>
+        </div>
+
         <div id="kapanis-liste" style="display:none">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
             <div class="sfield"><label>Başlangıç Tarihi</label><input type="date" id="kap-liste-bas" onchange="kapanisListesiYukle()"></div>
@@ -2961,12 +2984,13 @@ var kapanisAktifSekme = 'giris';
 
 function kapanisSekme(sekme) {
   kapanisAktifSekme = sekme;
-  ['giris','liste'].forEach(function(s) {
+  ['giris','tuketim','liste'].forEach(function(s) {
     var el = document.getElementById('kapanis-' + s);
     var btn = document.getElementById('kaptab-' + s);
     if (el) el.style.display = s === sekme ? 'block' : 'none';
     if (btn) btn.className = 'atab-btn' + (s === sekme ? ' on' : '');
   });
+  if (sekme === 'tuketim') tuketimSayfasiYukle();
   if (sekme === 'liste') {
     // Tarih aralığını ayarla
     var bugun = new Date().toISOString().split('T')[0];
@@ -5398,13 +5422,15 @@ async function stokDurumGoster() {
 
       katUrunler.forEach(function(u) {
         var miktar = bakiyeMap[u.id] || 0;
-        var kritik = miktar <= u.minimum_stok && u.minimum_stok > 0;
-        var uyari = miktar <= u.minimum_stok * 1.2 && !kritik && u.minimum_stok > 0;
-        var durum = kritik ? '<span style="color:var(--danger);font-weight:600">⚠️ Kritik</span>' :
+        var negatif = miktar < 0;
+        var kritik = !negatif && miktar <= u.minimum_stok && u.minimum_stok > 0;
+        var uyari = !negatif && !kritik && miktar <= u.minimum_stok * 1.2 && u.minimum_stok > 0;
+        var durum = negatif ? '<span style="color:var(--danger);font-weight:700">🔴 Negatif Stok</span>' :
+                    kritik ? '<span style="color:var(--danger);font-weight:600">⚠️ Kritik</span>' :
                     uyari ? '<span style="color:var(--warn);font-weight:600">⚡ Az</span>' :
                     '<span style="color:var(--accent)">✅ Normal</span>';
 
-        html += '<tr style="' + (kritik?'background:var(--danger-l)':uyari?'background:var(--warn-l)':'') + '">' +
+        html += '<tr style="' + (negatif?'background:var(--danger-l)':kritik?'background:var(--danger-l)':uyari?'background:var(--warn-l)':'') + '">' +
           '<td style="font-weight:600">' + u.ad + '</td>' +
           '<td style="color:var(--text-3)">' + u.birim + '</td>' +
           '<td style="text-align:right;font-family:DM Mono,monospace;font-weight:700;color:' + (kritik?'var(--danger)':uyari?'var(--warn)':'var(--accent)') + '">' + miktar.toLocaleString('tr-TR') + ' ' + u.birim + '</td>' +
@@ -5803,6 +5829,174 @@ async function receteSil(btn) {
     await sbPatch('recete', 'id=eq.' + id, { aktif: false });
     showToast('✅ Reçete silindi');
     receteListesiGoster();
+  } catch(e) { showToast('Hata: ' + e.message, true); }
+}
+
+
+// ── TÜKETİM GİRİŞİ ───────────────────────────────────
+var _tuketimReceteler = [];
+var _tuketimKategoriler = [];
+
+async function tuketimSayfasiYukle() {
+  // Tarihi bugün yap
+  var tarihEl = document.getElementById('tuk-tarih');
+  if (tarihEl && !tarihEl.value) {
+    tarihEl.value = new Date().toISOString().split('T')[0];
+  }
+
+  // Stok ve reçete verilerini yükle
+  try {
+    if (!_stokKategoriler || _stokKategoriler.length === 0) {
+      var kat = await sbGet('stok_kategori', 'order=sira.asc');
+      if (kat) _stokKategoriler = kat;
+    }
+    if (!_stokUrunler || _stokUrunler.length === 0) {
+      var urunler = await sbGet('stok_urun', 'aktif=eq.true&order=ad.asc');
+      if (urunler) _stokUrunler = urunler;
+    }
+  } catch(e) {}
+
+  // Reçete kategorilerini yükle
+  try {
+    var recKat = await sbGet('recete_kategori', 'order=sira.asc');
+    if (recKat) _tuketimKategoriler = recKat;
+    var receteler = await sbGet('recete', 'aktif=eq.true&order=ad.asc');
+    if (receteler) _tuketimReceteler = receteler;
+  } catch(e) {}
+
+  // Oda sayısını al (buklet ve kimyasal için)
+  var odaSayisi = sistemOdaSayisi || 13;
+  var tarih = tarihEl ? tarihEl.value : new Date().toISOString().split('T')[0];
+
+  tuketimListesiGoster(odaSayisi);
+}
+
+function tuketimListesiGoster(odaSayisi) {
+  var el = document.getElementById('tuketim-receteler');
+  if (!el) return;
+
+  if (_tuketimKategoriler.length === 0) {
+    el.innerHTML = "<div style=\"text-align:center;padding:30px;color:var(--text-3)\">Henüz reçete kategorisi yok. Reçete Yonetiminden ekleyin.</div>";
+    return;
+  }
+
+  var html = '';
+
+  _tuketimKategoriler.forEach(function(kat) {
+    var katReceteler = _tuketimReceteler.filter(function(r){ return r.kategori_id === kat.id; });
+    if (katReceteler.length === 0) return;
+
+    var otomatik = kat.tetikleyici === 'oda';
+
+    html += '<div class="dc" style="margin-bottom:14px">' +
+      '<div class="dct"><div class="dot' + (otomatik?' w':'') + '"></div>' + kat.ad +
+      (otomatik ? ' <span style="font-size:11px;padding:2px 8px;border-radius:10px;background:var(--mgr-l);color:var(--mgr);margin-left:6px">🤖 Otomatik (' + odaSayisi + ' oda)</span>' : '') +
+      '</div>' +
+      '<div style="display:flex;flex-direction:column;gap:8px">';
+
+    katReceteler.forEach(function(rec) {
+      if (otomatik) {
+        // Oda bazlı - sadece göster, adet sabit
+        html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--mgr-l);border:1px solid var(--mgr-b);border-radius:8px">' +
+          '<span style="font-size:13px;font-weight:600">' + rec.ad + '</span>' +
+          '<div style="display:flex;align-items:center;gap:8px">' +
+          '<span style="font-size:12px;color:var(--text-3)">' + odaSayisi + ' oda</span>' +
+          '<input type="hidden" id="tuk-' + rec.id + '" value="' + odaSayisi + '">' +
+          '</div></div>';
+      } else {
+        // Kişi bazlı - adet giriş
+        html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px">' +
+          '<span style="font-size:13px;font-weight:600">' + rec.ad + '</span>' +
+          '<div style="display:flex;align-items:center;gap:8px">' +
+          '<label style="font-size:12px;color:var(--text-3)">Adet:</label>' +
+          '<input type="number" id="tuk-' + rec.id + '" value="0" min="0" step="1" ' +
+          'style="width:80px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-family:DM Mono,monospace;font-size:14px;text-align:center;background:var(--bg)">' +
+          '</div></div>';
+      }
+    });
+
+    html += '</div></div>';
+  });
+
+  el.innerHTML = html;
+}
+
+async function tuketimKaydet() {
+  var tarih = document.getElementById('tuk-tarih')?.value;
+  if (!tarih) { showToast('Tarih seçin!', true); return; }
+
+  var odaSayisi = sistemOdaSayisi || 13;
+  var toplamIslem = 0;
+
+  try {
+    for (var ki = 0; ki < _tuketimKategoriler.length; ki++) {
+      var kat = _tuketimKategoriler[ki];
+      var katReceteler = _tuketimReceteler.filter(function(r){ return r.kategori_id === kat.id; });
+
+      for (var ri = 0; ri < katReceteler.length; ri++) {
+        var rec = katReceteler[ri];
+        var adet = parseFloat(document.getElementById('tuk-' + rec.id)?.value) || 0;
+        if (adet <= 0) continue;
+
+        // Reçete detaylarını çek
+        var detaylar = await sbGet('recete_detay', 'recete_id=eq.' + rec.id);
+        if (!detaylar || detaylar.length === 0) continue;
+
+        var toplamMaliyet = 0;
+
+        // Her ürün için stok düş
+        for (var di = 0; di < detaylar.length; di++) {
+          var d = detaylar[di];
+          var kullanilanMiktar = d.miktar * adet;
+          var urun = _stokUrunler ? _stokUrunler.find(function(u){ return u.id === d.urun_id; }) : null;
+          var birimFiyat = urun ? (urun.birim_fiyat||0) : 0;
+          var maliyet = kullanilanMiktar * birimFiyat;
+          toplamMaliyet += maliyet;
+
+          // Stok hareketi kaydet
+          await sbPost('stok_hareket', {
+            urun_id: d.urun_id,
+            hareket_tipi: 'cikis',
+            miktar: kullanilanMiktar,
+            birim_fiyat: birimFiyat,
+            toplam_tutar: maliyet,
+            tarih: tarih,
+            aciklama: rec.ad + ' × ' + adet,
+            giren_kullanici: oturum.kullanici_adi
+          });
+
+          // Stok bakiyesini düş
+          var bakiye = await sbGet('stok_bakiye', 'urun_id=eq.' + d.urun_id);
+          if (bakiye && bakiye.length > 0) {
+            var yeniMiktar = (bakiye[0].miktar||0) - kullanilanMiktar;
+            await sbPatch('stok_bakiye', 'urun_id=eq.' + d.urun_id, {
+              miktar: yeniMiktar,
+              son_guncelleme: new Date().toISOString()
+            });
+          }
+        }
+
+        // Tüketim kaydı
+        await sbPost('gunluk_tuketim', {
+          tarih: tarih,
+          recete_id: rec.id,
+          adet: adet,
+          toplam_maliyet: toplamMaliyet,
+          giren_kullanici: oturum.kullanici_adi
+        });
+
+        toplamIslem++;
+      }
+    }
+
+    showToast('✅ ' + toplamIslem + ' reçete kaydedildi, stok güncellendi');
+    // Adetleri sıfırla
+    _tuketimReceteler.forEach(function(rec) {
+      var el = document.getElementById('tuk-' + rec.id);
+      var kat = _tuketimKategoriler.find(function(k){ return k.id === rec.kategori_id; });
+      if (el && kat && kat.tetikleyici !== 'oda') el.value = '0';
+    });
+
   } catch(e) { showToast('Hata: ' + e.message, true); }
 }
 
