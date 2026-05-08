@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_64.html -->
+<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_65.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1267,21 +1267,35 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
 
         <!-- HAREKETLER -->
         <div id="stok-hareketler" style="display:none">
-          <div style="display:flex;gap:12px;margin-bottom:16px;align-items:flex-end">
-            <div class="sfield" style="flex:1">
-              <label>Kategori Filtresi</label>
-              <select id="hareket-filtre-kat" onchange="hareketleriYukle()">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:10px;margin-bottom:16px;align-items:flex-end">
+            <div class="sfield">
+              <label>Başlangıç Tarihi</label>
+              <input type="date" id="hareket-bas" onchange="hareketleriYukle()">
+            </div>
+            <div class="sfield">
+              <label>Bitiş Tarihi</label>
+              <input type="date" id="hareket-bit" onchange="hareketleriYukle()">
+            </div>
+            <div class="sfield">
+              <label>Kategori</label>
+              <select id="hareket-filtre-kat" onchange="hareketKategoriDegisti()">
                 <option value="">Tümü</option>
               </select>
             </div>
-            <div class="sfield" style="flex:1">
-              <label>Tip Filtresi</label>
+            <div class="sfield">
+              <label>Ürün</label>
+              <select id="hareket-filtre-urun" onchange="hareketleriYukle()">
+                <option value="">Tümü</option>
+              </select>
+            </div>
+            <div class="sfield">
+              <label>Tip</label>
               <select id="hareket-filtre-tip" onchange="hareketleriYukle()">
                 <option value="">Tümü</option>
-                <option value="giris">Giriş</option>
-                <option value="cikis">Çıkış</option>
-                <option value="duzeltme">Düzeltme</option>
-                <option value="sayim">Sayım</option>
+                <option value="giris">⬆️ Giriş</option>
+                <option value="cikis">⬇️ Çıkış</option>
+                <option value="sayim">📋 Sayım</option>
+                <option value="devir">🔄 Devir</option>
               </select>
             </div>
           </div>
@@ -5444,7 +5458,23 @@ function stokSekme(sekme) {
   if (sekme === 'durum') stokDurumGoster();
   if (sekme === 'urun') urunListesiGoster();
   if (sekme === 'sayim') sayimSayfasiYukle();
-  if (sekme === 'hareketler') hareketleriYukle();
+  if (sekme === 'hareketler') {
+    // Varsayılan tarih aralığı - bu ay
+    var bugun = new Date().toISOString().split('T')[0];
+    var ayBas = new Date(); ayBas.setDate(1);
+    var bas = document.getElementById('hareket-bas');
+    var bit = document.getElementById('hareket-bit');
+    if (bas && !bas.value) bas.value = ayBas.toISOString().split('T')[0];
+    if (bit && !bit.value) bit.value = bugun;
+    // Ürün listesini doldur
+    var urunSel = document.getElementById('hareket-filtre-urun');
+    if (urunSel && urunSel.options.length <= 1) {
+      _stokUrunler.forEach(function(u) {
+        urunSel.innerHTML += '<option value="' + u.id + '">' + u.ad + '</option>';
+      });
+    }
+    hareketleriYukle();
+  }
 }
 
 async function stokDurumGoster() {
@@ -5605,44 +5635,120 @@ async function urunSil(btn) {
   } catch(e) { showToast('Hata: ' + e.message, true); }
 }
 
+function hareketKategoriDegisti() {
+  var katId = document.getElementById('hareket-filtre-kat')?.value || '';
+  var urunSel = document.getElementById('hareket-filtre-urun');
+  if (!urunSel) return;
+  urunSel.innerHTML = '<option value="">Tümü</option>';
+  if (katId) {
+    _stokUrunler.filter(function(u){ return u.kategori_id === katId; }).forEach(function(u) {
+      urunSel.innerHTML += '<option value="' + u.id + '">' + u.ad + '</option>';
+    });
+  } else {
+    _stokUrunler.forEach(function(u) {
+      urunSel.innerHTML += '<option value="' + u.id + '">' + u.ad + '</option>';
+    });
+  }
+  hareketleriYukle();
+}
+
 async function hareketleriYukle() {
   var el = document.getElementById('hareket-liste');
   if (!el) return;
   el.innerHTML = '<div style="text-align:center;padding:20px"><div class="spinner" style="margin:0 auto"></div></div>';
 
   var katFiltre = document.getElementById('hareket-filtre-kat')?.value || '';
+  var urunFiltre = document.getElementById('hareket-filtre-urun')?.value || '';
   var tipFiltre = document.getElementById('hareket-filtre-tip')?.value || '';
+  var bas = document.getElementById('hareket-bas')?.value || '';
+  var bit = document.getElementById('hareket-bit')?.value || '';
 
   try {
-    var q = 'order=olusturma.desc&limit=100';
+    var q = 'order=tarih.desc,olusturma.desc&limit=500';
     if (tipFiltre) q += '&hareket_tipi=eq.' + tipFiltre;
+    if (urunFiltre) q += '&urun_id=eq.' + urunFiltre;
+    if (bas) q += '&tarih=gte.' + bas;
+    if (bit) q += '&tarih=lte.' + bit;
+
     var hareketler = await sbGet('stok_hareket', q);
 
+    // Kategori filtresi (client side)
+    if (katFiltre && hareketler) {
+      var katUrunIds = _stokUrunler.filter(function(u){ return u.kategori_id === katFiltre; }).map(function(u){ return u.id; });
+      hareketler = hareketler.filter(function(h){ return katUrunIds.indexOf(h.urun_id) >= 0; });
+    }
+
     if (!hareketler || hareketler.length === 0) {
-      el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-3)">Henüz hareket yok.</div>';
+      el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-3)">Seçilen kriterlere uygun hareket yok.</div>';
       return;
     }
 
-    var tipRenk = { giris:'var(--accent)', cikis:'var(--danger)', duzeltme:'var(--warn)', sayim:'var(--mgr)' };
-    var tipAd = { giris:'⬆️ Giriş', cikis:'⬇️ Çıkış', duzeltme:'🔄 Düzeltme', sayim:'📋 Sayım' };
+    // Özet hesapla
+    var toplamGiris = 0, toplamCikis = 0, toplamGirisMiktar = 0, toplamCikisMiktar = 0;
+    var secilenUrun = urunFiltre ? _stokUrunler.find(function(u){ return u.id === urunFiltre; }) : null;
 
-    var html = '<div style="overflow-x:auto"><table class="tbl"><thead><tr>' +
-      '<th>Tarih</th><th>Ürün</th><th>Tip</th>' +
-      '<th style="text-align:right">Miktar</th><th style="text-align:right">Birim Fiyat</th>' +
-      '<th style="text-align:right">Tutar</th><th>Açıklama</th>' +
+    hareketler.forEach(function(h) {
+      if (h.hareket_tipi === 'giris' || h.hareket_tipi === 'devir') {
+        toplamGiris += (h.toplam_tutar||0);
+        toplamGirisMiktar += (h.miktar||0);
+      } else if (h.hareket_tipi === 'cikis') {
+        toplamCikis += (h.toplam_tutar||0);
+        toplamCikisMiktar += (h.miktar||0);
+      }
+    });
+
+    var birim = secilenUrun ? secilenUrun.birim : '';
+
+    // Özet kartlar
+    var html = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">' +
+      '<div style="padding:10px;background:var(--accent-l);border:1px solid var(--accent-b);border-radius:8px;text-align:center">' +
+        '<div style="font-size:10px;color:var(--accent);font-weight:600;margin-bottom:3px">TOPLAM GİRİŞ</div>' +
+        '<div style="font-family:DM Mono,monospace;font-size:14px;font-weight:700;color:var(--accent)">' + toplamGirisMiktar.toLocaleString('tr-TR') + (birim?' '+birim:'') + '</div>' +
+        '<div style="font-size:11px;color:var(--text-3)">' + toplamGiris.toLocaleString('tr-TR') + ' TL</div>' +
+      '</div>' +
+      '<div style="padding:10px;background:var(--danger-l);border:1px solid #e0baba;border-radius:8px;text-align:center">' +
+        '<div style="font-size:10px;color:var(--danger);font-weight:600;margin-bottom:3px">TOPLAM ÇIKIŞ</div>' +
+        '<div style="font-family:DM Mono,monospace;font-size:14px;font-weight:700;color:var(--danger)">' + toplamCikisMiktar.toLocaleString('tr-TR') + (birim?' '+birim:'') + '</div>' +
+        '<div style="font-size:11px;color:var(--text-3)">' + toplamCikis.toLocaleString('tr-TR') + ' TL</div>' +
+      '</div>' +
+      '<div style="padding:10px;background:var(--warn-l);border:1px solid #E0C87A;border-radius:8px;text-align:center">' +
+        '<div style="font-size:10px;color:var(--warn);font-weight:600;margin-bottom:3px">NET KULLANIM</div>' +
+        '<div style="font-family:DM Mono,monospace;font-size:14px;font-weight:700;color:var(--warn)">' + toplamCikisMiktar.toLocaleString('tr-TR') + (birim?' '+birim:'') + '</div>' +
+        '<div style="font-size:11px;color:var(--text-3)">' + toplamCikis.toLocaleString('tr-TR') + ' TL</div>' +
+      '</div>' +
+      '<div style="padding:10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;text-align:center">' +
+        '<div style="font-size:10px;color:var(--text-3);font-weight:600;margin-bottom:3px">KAYIT SAYISI</div>' +
+        '<div style="font-family:DM Mono,monospace;font-size:14px;font-weight:700">' + hareketler.length + '</div>' +
+      '</div>' +
+    '</div>';
+
+    var tipRenk = { giris:'var(--accent)', cikis:'var(--danger)', duzeltme:'var(--warn)', sayim:'var(--mgr)', devir:'var(--admin)' };
+    var tipAd = { giris:'⬆️ Giriş', cikis:'⬇️ Çıkış', duzeltme:'🔄 Düzeltme', sayim:'📋 Sayım', devir:'📦 Devir' };
+
+    html += '<div style="overflow-x:auto"><table class="tbl"><thead><tr>' +
+      '<th>Tarih</th><th>Ürün</th><th>Kategori</th><th>Tip</th>' +
+      '<th style="text-align:right">Miktar</th>' +
+      '<th style="text-align:right">Birim Fiyat</th>' +
+      '<th style="text-align:right">Tutar</th>' +
+      '<th>Açıklama</th>' +
       '</tr></thead><tbody>';
 
     hareketler.forEach(function(h) {
       var urun = _stokUrunler.find(function(u){ return u.id === h.urun_id; });
+      var kat = urun ? _stokKategoriler.find(function(k){ return k.id === urun.kategori_id; }) : null;
       var renk = tipRenk[h.hareket_tipi] || 'var(--text-3)';
+      var miktar = h.miktar || 0;
+      var miktarStr = (h.hareket_tipi==='cikis'?'-':'+') + miktar.toLocaleString('tr-TR') + ' ' + (urun?urun.birim:'');
+
       html += '<tr>' +
         '<td class="mono" style="font-size:12px">' + (h.tarih||'—') + '</td>' +
         '<td style="font-weight:600;font-size:12px">' + (urun?urun.ad:'—') + '</td>' +
+        '<td style="font-size:11px;color:var(--text-3)">' + (kat?kat.ad:'—') + '</td>' +
         '<td><span style="font-size:11px;padding:2px 7px;border-radius:10px;background:' + renk + '20;color:' + renk + ';font-weight:600">' + (tipAd[h.hareket_tipi]||h.hareket_tipi) + '</span></td>' +
-        '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px">' + (h.miktar||0).toLocaleString('tr-TR') + ' ' + (urun?urun.birim:'') + '</td>' +
-        '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px">' + (h.birim_fiyat>0?h.birim_fiyat.toLocaleString('tr-TR')+' TL':'—') + '</td>' +
+        '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px;color:' + renk + ';font-weight:600">' + miktarStr + '</td>' +
+        '<td style="text-align:right;font-family:DM Mono,monospace;font-size:11px;color:var(--text-3)">' + (h.birim_fiyat>0?h.birim_fiyat.toFixed(4)+' TL':'—') + '</td>' +
         '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px;font-weight:600;color:' + renk + '">' + (h.toplam_tutar>0?h.toplam_tutar.toLocaleString('tr-TR')+' TL':'—') + '</td>' +
-        '<td style="font-size:11px;color:var(--text-3)">' + (h.aciklama||'—') + '</td>' +
+        '<td style="font-size:11px;color:var(--text-3);max-width:200px;overflow:hidden;text-overflow:ellipsis">' + (h.aciklama||'—') + '</td>' +
         '</tr>';
     });
 
