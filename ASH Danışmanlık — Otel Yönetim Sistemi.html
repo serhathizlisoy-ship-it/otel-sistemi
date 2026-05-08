@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_66.html -->
+<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_67.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1368,7 +1368,35 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
         </div>
       </div>
 
-      <div class="pg" id="pg-rapor"><div class="ptitle">Raporlar &amp; Analiz</div><div class="psub">Finansal analiz ve dönem raporları</div><div class="cs"><div class="csi">📈</div><div class="cst">Raporlama Modülü</div><div class="css">Aylık/yıllık finansal analiz, bütçe karşılaştırma grafikleri ve PDF export.</div><span class="csb">⏳ Geliştiriliyor</span></div></div>
+      <div class="pg" id="pg-rapor">
+        <div class="ptitle">Genel Tesis Raporu</div>
+        <div class="psub">Finansal analiz, bütçe karşılaştırma ve dönem raporu</div>
+
+        <!-- Dönem Seçimi -->
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;align-items:center">
+          <button onclick="raporDonemSec(&#39;hafta&#39;)" id="rdBtn-hafta" class="atab-btn">Bu Hafta</button>
+          <button onclick="raporDonemSec(&#39;ay&#39;)" id="rdBtn-ay" class="atab-btn on">Bu Ay</button>
+          <button onclick="raporDonemSec(&#39;gecenay&#39;)" id="rdBtn-gecenay" class="atab-btn">Geçen Ay</button>
+          <button onclick="raporDonemSec(&#39;sezon&#39;)" id="rdBtn-sezon" class="atab-btn">Bu Sezon</button>
+          <div style="display:flex;gap:6px;align-items:center;margin-left:8px">
+            <input type="date" id="rapor-bas" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--bg)">
+            <span style="font-size:12px;color:var(--text-3)">—</span>
+            <input type="date" id="rapor-bit" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--bg)">
+            <button onclick="raporYukle()" style="padding:6px 14px;border:none;border-radius:6px;background:var(--accent);color:#fff;font-size:12px;cursor:pointer">Uygula</button>
+          </div>
+          <div style="margin-left:auto">
+            <button onclick="raporYazdir()" style="padding:8px 16px;border:1px solid var(--border);border-radius:7px;background:var(--bg);font-size:12px;cursor:pointer">🖨️ Yazdır / PDF</button>
+          </div>
+        </div>
+
+        <!-- Rapor İçeriği -->
+        <div id="rapor-icerik">
+          <div style="text-align:center;padding:60px;color:var(--text-3)">
+            <div class="spinner" style="margin:0 auto;border-color:var(--border);border-top-color:var(--accent)"></div>
+            <div style="margin-top:12px">Rapor yükleniyor...</div>
+          </div>
+        </div>
+      </div>
       <div class="pg" id="pg-fiyat"><div class="ptitle">Fiyat Hesaplama</div><div class="psub">Oda ve kişi fiyatlandırma modülü</div><div class="cs"><div class="csi">🏷️</div><div class="cst">Fiyat Hesaplama Modülü</div><div class="css">Gider kalemleri ve reçete verileri üzerinden oda/kişi başı fiyat hesaplama.</div><span class="csb">⏳ Geliştiriliyor</span></div></div>
 
       <!-- Ayarlar -->
@@ -1670,6 +1698,7 @@ function git(sayfaId) {
   if (sayfaId === 'gelir-butce') { butceModuluBaslat(); butceSekme(butceAktifSekme); }
   if (sayfaId === 'gider-butce') { giderButceSayfasiYukle(); }
   if (sayfaId === 'gerceklesen') { gerceklesenYukle(); }
+  if (sayfaId === 'rapor') { raporModuluBaslat(); }
   if (sayfaId === 'stok') { stokModuluBaslat(); }
   if (sayfaId === 'recete') { receteModuluBaslat(); }
   if (sayfaId === 'cari') { cariSekme(cariAktifSekme); }
@@ -6557,6 +6586,303 @@ async function sezonKapatmaOnayla(yil, toplamGider, devirStok, netGider) {
     sezonKapatmaRaporuGoster();
 
   } catch(e) { showToast('Hata: ' + e.message, true); }
+}
+
+
+// ── RAPOR MODÜLÜ ──────────────────────────────────────
+var _raporBas = '';
+var _raporBit = '';
+
+function raporModuluBaslat() {
+  raporDonemSec('ay');
+}
+
+function raporDonemSec(donem) {
+  var bugun = new Date();
+  var bas, bit;
+
+  ['hafta','ay','gecenay','sezon'].forEach(function(d) {
+    var btn = document.getElementById('rdBtn-' + d);
+    if (btn) btn.className = 'atab-btn' + (d === donem ? ' on' : '');
+  });
+
+  if (donem === 'hafta') {
+    var gun = bugun.getDay() || 7;
+    bas = new Date(bugun); bas.setDate(bugun.getDate() - gun + 1);
+    bit = new Date(bugun);
+  } else if (donem === 'ay') {
+    bas = new Date(bugun.getFullYear(), bugun.getMonth(), 1);
+    bit = new Date(bugun);
+  } else if (donem === 'gecenay') {
+    bas = new Date(bugun.getFullYear(), bugun.getMonth() - 1, 1);
+    bit = new Date(bugun.getFullYear(), bugun.getMonth(), 0);
+  } else if (donem === 'sezon') {
+    var acikAylar = window._acikAylar || [5,6,7,8,9,10];
+    bas = new Date(bugun.getFullYear(), acikAylar[0]-1, 1);
+    bit = new Date(bugun);
+  }
+
+  _raporBas = bas.toISOString().split('T')[0];
+  _raporBit = bit.toISOString().split('T')[0];
+
+  var basEl = document.getElementById('rapor-bas');
+  var bitEl = document.getElementById('rapor-bit');
+  if (basEl) basEl.value = _raporBas;
+  if (bitEl) bitEl.value = _raporBit;
+
+  raporYukle();
+}
+
+async function raporYukle() {
+  _raporBas = document.getElementById('rapor-bas')?.value || _raporBas;
+  _raporBit = document.getElementById('rapor-bit')?.value || _raporBit;
+
+  var el = document.getElementById('rapor-icerik');
+  el.innerHTML = '<div style="text-align:center;padding:40px"><div class="spinner" style="margin:0 auto;border-color:var(--border);border-top-color:var(--accent)"></div><div style="margin-top:12px;color:var(--text-3)">Veriler yükleniyor...</div></div>';
+
+  try {
+    // 1. Günlük kapanış verilerini çek
+    var kapanis = await sbGet('gunluk_kapanis', 'tarih=gte.' + _raporBas + '&tarih=lte.' + _raporBit + '&order=tarih.asc');
+
+    // 2. Gider verilerini çek
+    var giderler = await sbGet('gider_girisi', 'tarih=gte.' + _raporBas + '&tarih=lte.' + _raporBit);
+
+    // 3. Oda kapasitesini al
+    var odaSayisi = sistemOdaSayisi || 13;
+    var maxKisi = 26;
+    try {
+      var odalar2 = await sbGet('odalar', '');
+      if (odalar2) { odaSayisi = odalar2.length; maxKisi = odalar2.reduce(function(s,o){ return s+(o.kapasite||2); },0); }
+    } catch(e) {}
+
+    // 4. Bütçe verilerini çek
+    var yil = new Date(_raporBas).getFullYear();
+    var butceParams = await sbGet('butce_parametreler', 'yil=eq.' + yil);
+    var butceAylik = await sbGet('butce_aylik', 'yil=eq.' + yil);
+    var butceGider = await sbGet('butce_gider_aylik', 'yil=eq.' + yil + '&onaylandi=eq.true');
+
+    // VERİ HESAPLAMALARI
+    var toplamCiro = 0, toplamKonaklama = 0, toplamFB = 0, toplamMinibar = 0;
+    var toplamCamasir = 0, toplamOdaServis = 0, toplamDiger = 0;
+    var toplamNakit = 0, toplamKredi = 0, toplamHavale = 0, toplamOtherTahsilat = 0;
+    var toplamOdaGecesi = 0, toplamKisiGecesi = 0;
+    var gunSayisi = 0;
+
+    if (kapanis) {
+      kapanis.forEach(function(k) {
+        toplamKonaklama += k.konaklama_ciro||0;
+        toplamFB += k.fb_ciro||0;
+        toplamMinibar += k.minibar_ciro||0;
+        toplamCamasir += k.camasir_ciro||0;
+        toplamOdaServis += k.oda_servis_ciro||0;
+        toplamDiger += k.diger_ciro||0;
+        toplamNakit += k.nakit||0;
+        toplamKredi += k.kredi_karti||0;
+        toplamHavale += k.banka_havale||0;
+        toplamOtherTahsilat += (k.diger_tahsilat||0);
+        toplamOdaGecesi += k.dolu_oda||0;
+        toplamKisiGecesi += k.konaklayan_kisi||0;
+        gunSayisi++;
+      });
+    }
+    toplamCiro = toplamKonaklama + toplamFB + toplamMinibar + toplamCamasir + toplamOdaServis + toplamDiger;
+    var toplamTahsilat = toplamNakit + toplamKredi + toplamHavale + toplamOtherTahsilat;
+
+    // Gider hesapla - ana başlık bazında
+    var giderAnaBaslik = {};
+    if (giderler) {
+      giderler.forEach(function(g) {
+        if (!giderAnaBaslik[g.ana_baslik]) giderAnaBaslik[g.ana_baslik] = 0;
+        giderAnaBaslik[g.ana_baslik] += (g.tutar||0);
+      });
+    }
+    var toplamGider = Object.values(giderAnaBaslik).reduce(function(s,v){ return s+v; }, 0);
+    var netKarZarar = toplamCiro - toplamGider;
+
+    // Doluluk hesapla
+    var basTarih = new Date(_raporBas);
+    var bitTarih = new Date(_raporBit);
+    var toplamGun = Math.ceil((bitTarih - basTarih) / (1000*60*60*24)) + 1;
+    var maxOdaGecesi = odaSayisi * toplamGun;
+    var odaDoluluk = maxOdaGecesi > 0 ? (toplamOdaGecesi / maxOdaGecesi * 100) : 0;
+    var kisiDoluluk = (maxKisi * toplamGun) > 0 ? (toplamKisiGecesi / (maxKisi * toplamGun) * 100) : 0;
+
+    // Metrikler
+    var ADR = toplamOdaGecesi > 0 ? toplamKonaklama / toplamOdaGecesi : 0;
+    var RevPAR = maxOdaGecesi > 0 ? toplamKonaklama / maxOdaGecesi : 0;
+    var GOPPAR = maxOdaGecesi > 0 ? netKarZarar / maxOdaGecesi : 0;
+    var kisiBasiSatis = toplamKisiGecesi > 0 ? toplamCiro / toplamKisiGecesi : 0;
+    var kisiBasiCost = toplamKisiGecesi > 0 ? toplamGider / toplamKisiGecesi : 0;
+    var karMarji = toplamCiro > 0 ? (netKarZarar / toplamCiro * 100) : 0;
+
+    // Bütçe karşılaştırma
+    var butceCiro = 0, butceGiderToplam = 0;
+    if (butceAylik) {
+      butceAylik.forEach(function(b) {
+        var ayTarih = new Date(yil, b.ay-1, 1);
+        if (ayTarih >= basTarih && ayTarih <= bitTarih) {
+          butceCiro += (b.tahmini_gelir_orta||0);
+        }
+      });
+    }
+    if (butceGider) {
+      butceGider.forEach(function(b) {
+        var ayTarih = new Date(yil, b.ay-1, 1);
+        if (ayTarih >= basTarih && ayTarih <= bitTarih) {
+          butceGiderToplam += (b.hesaplanan_tutar||0);
+        }
+      });
+    }
+
+    // RAPOR HTML OLUŞTUR
+    var donemYazi = _raporBas + ' — ' + _raporBit;
+    var html = '<div id="rapor-yazdir-alan">';
+
+    // Başlık
+    html += '<div style="text-align:center;margin-bottom:20px;padding:16px;background:var(--accent);border-radius:10px;color:#fff">' +
+      '<div style="font-size:18px;font-weight:700">Genel Tesis Raporu</div>' +
+      '<div style="font-size:13px;opacity:0.85;margin-top:4px">' + donemYazi + '</div>' +
+      '</div>';
+
+    // 4 Sütunlu Grid
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px">';
+
+    // ── SÜTUN 1: OTELCİLİK ──
+    html += '<div>';
+
+    // Doluluk kartı
+    html += raporKart('🏨 Doluluk', [
+      { label: 'Oda Kapasitesi', value: odaSayisi + ' oda' },
+      { label: 'Maks. Kişi', value: maxKisi + ' kişi' },
+      { label: 'Toplam Gün', value: toplamGun + ' gün' },
+      { label: 'Konaklayan Kişi', value: toplamKisiGecesi.toLocaleString('tr-TR') + ' kişi', bold: true },
+      { label: 'Dolu Oda Gecesi', value: toplamOdaGecesi.toLocaleString('tr-TR') },
+      { label: 'Oda Doluluk', value: '%' + odaDoluluk.toFixed(1), color: odaDoluluk >= 60 ? 'var(--accent)' : odaDoluluk >= 40 ? 'var(--warn)' : 'var(--danger)', bold: true },
+      { label: 'Kişi Doluluk', value: '%' + kisiDoluluk.toFixed(1), color: 'var(--text-2)' }
+    ]);
+
+    // Metrikler kartı
+    html += raporKart('📊 Performans Metrikleri', [
+      { label: 'ADR', value: Math.round(ADR).toLocaleString('tr-TR') + ' TL', bold: true, color: 'var(--accent)' },
+      { label: 'RevPAR', value: Math.round(RevPAR).toLocaleString('tr-TR') + ' TL', bold: true },
+      { label: 'GOPPAR', value: Math.round(GOPPAR).toLocaleString('tr-TR') + ' TL', bold: true, color: netKarZarar >= 0 ? 'var(--accent)' : 'var(--danger)' },
+      { label: 'Kişi Başı Satış', value: Math.round(kisiBasiSatis).toLocaleString('tr-TR') + ' TL' },
+      { label: 'Kişi Başı Maliyet', value: Math.round(kisiBasiCost).toLocaleString('tr-TR') + ' TL' },
+      { label: 'Kar Marjı', value: '%' + karMarji.toFixed(1), bold: true, color: karMarji >= 18 ? 'var(--accent)' : karMarji >= 0 ? 'var(--warn)' : 'var(--danger)' }
+    ]);
+
+    html += '</div>';
+
+    // ── SÜTUN 2: GELİR ──
+    html += '<div>';
+
+    html += raporKart('💰 Gelir Dağılımı', [
+      { label: 'Konaklama', value: toplamKonaklama.toLocaleString('tr-TR') + ' TL', bold: true, color: 'var(--accent)' },
+      { label: 'F&B', value: toplamFB.toLocaleString('tr-TR') + ' TL' },
+      { label: 'Minibar', value: toplamMinibar.toLocaleString('tr-TR') + ' TL' },
+      { label: 'Çamaşırhane', value: toplamCamasir.toLocaleString('tr-TR') + ' TL' },
+      { label: 'Oda Servis', value: toplamOdaServis.toLocaleString('tr-TR') + ' TL' },
+      { label: 'Diğer', value: toplamDiger.toLocaleString('tr-TR') + ' TL' },
+      { label: 'TOPLAM CİRO', value: toplamCiro.toLocaleString('tr-TR') + ' TL', bold: true, color: 'var(--accent)', separator: true }
+    ]);
+
+    html += raporKart('💳 Tahsilat', [
+      { label: 'Nakit', value: toplamNakit.toLocaleString('tr-TR') + ' TL' },
+      { label: 'Kredi Kartı', value: toplamKredi.toLocaleString('tr-TR') + ' TL' },
+      { label: 'Havale/EFT', value: toplamHavale.toLocaleString('tr-TR') + ' TL' },
+      { label: 'Diğer', value: toplamOtherTahsilat.toLocaleString('tr-TR') + ' TL' },
+      { label: 'TOPLAM TAHSİLAT', value: toplamTahsilat.toLocaleString('tr-TR') + ' TL', bold: true, separator: true }
+    ]);
+
+    html += '</div>';
+
+    // ── SÜTUN 3: GİDERLER ──
+    html += '<div>';
+
+    var giderSatirlari = Object.keys(SEKTOREL_ANA).map(function(baslik) {
+      var tutar = giderAnaBaslik[baslik] || 0;
+      var ciroYuzde = toplamCiro > 0 ? (tutar / toplamCiro * 100) : 0;
+      return { label: baslik.replace(' Giderleri','').replace(' Gideri',''), value: tutar.toLocaleString('tr-TR') + ' TL (%' + ciroYuzde.toFixed(1) + ')' };
+    });
+    giderSatirlari.push({ label: 'TOPLAM GİDER', value: toplamGider.toLocaleString('tr-TR') + ' TL', bold: true, color: 'var(--danger)', separator: true });
+
+    html += raporKart('💸 Gider Kalemleri & Ciro %', giderSatirlari);
+
+    html += '</div>';
+
+    // ── SÜTUN 4: KAR/ZARAR & BÜTÇE ──
+    html += '<div>';
+
+    // Kar/Zarar
+    html += raporKart('📈 Kar / Zarar', [
+      { label: 'Toplam Gelir', value: toplamCiro.toLocaleString('tr-TR') + ' TL', color: 'var(--accent)' },
+      { label: 'Toplam Gider', value: toplamGider.toLocaleString('tr-TR') + ' TL', color: 'var(--danger)' },
+      { label: 'NET KAR/ZARAR', value: (netKarZarar >= 0 ? '+' : '') + netKarZarar.toLocaleString('tr-TR') + ' TL', bold: true, color: netKarZarar >= 0 ? 'var(--accent)' : 'var(--danger)', separator: true },
+      { label: 'Kar Marjı', value: '%' + karMarji.toFixed(1), bold: true, color: karMarji >= 18 ? 'var(--accent)' : 'var(--danger)' }
+    ]);
+
+    // Bütçe Karşılaştırma
+    if (butceCiro > 0 || butceGiderToplam > 0) {
+      var ciroFark = toplamCiro - butceCiro;
+      var giderFark = toplamGider - butceGiderToplam;
+      var butceKar = butceCiro - butceGiderToplam;
+      var gercekKar = netKarZarar;
+      var karFark = gercekKar - butceKar;
+
+      html += raporKart('🎯 Bütçe Karşılaştırması', [
+        { label: 'Bütçe Ciro', value: butceCiro.toLocaleString('tr-TR') + ' TL' },
+        { label: 'Gerçek Ciro', value: toplamCiro.toLocaleString('tr-TR') + ' TL' },
+        { label: 'Ciro Farkı', value: (ciroFark >= 0 ? '+' : '') + ciroFark.toLocaleString('tr-TR') + ' TL', bold: true, color: ciroFark >= 0 ? 'var(--accent)' : 'var(--danger)', separator: true },
+        { label: 'Bütçe Gider', value: butceGiderToplam.toLocaleString('tr-TR') + ' TL' },
+        { label: 'Gerçek Gider', value: toplamGider.toLocaleString('tr-TR') + ' TL' },
+        { label: 'Gider Farkı', value: (giderFark <= 0 ? '+' : '') + Math.abs(giderFark).toLocaleString('tr-TR') + ' TL ' + (giderFark <= 0 ? '✅' : '⚠️'), bold: true, color: giderFark <= 0 ? 'var(--accent)' : 'var(--danger)', separator: true },
+        { label: 'Bütçe Kar', value: butceKar.toLocaleString('tr-TR') + ' TL' },
+        { label: 'Gerçek Kar', value: gercekKar.toLocaleString('tr-TR') + ' TL' },
+        { label: 'Kar Farkı', value: (karFark >= 0 ? '+' : '') + karFark.toLocaleString('tr-TR') + ' TL', bold: true, color: karFark >= 0 ? 'var(--accent)' : 'var(--danger)', separator: true }
+      ]);
+    } else {
+      html += '<div style="padding:14px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;font-size:12px;color:var(--text-3);text-align:center">' +
+        '<div style="padding:14px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;font-size:12px;color:var(--text-3);text-align:center">'  +
+        '💡 Bütçe karşılaştırması için Gelir Butcesini doldurun.' +
+        '</div>';
+        '</div>';
+    }
+
+    html += '</div></div></div>'; // grid + rapor-yazdir-alan sonu
+
+    el.innerHTML = html;
+
+  } catch(e) {
+    document.getElementById('rapor-icerik').innerHTML = '<div style="color:var(--danger);padding:20px">Hata: ' + e.message + '</div>';
+  }
+}
+
+function raporKart(baslik, satirlar) {
+  var html = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:12px;overflow:hidden">' +
+    '<div style="padding:8px 12px;background:var(--accent);color:#fff;font-size:12px;font-weight:700">' + baslik + '</div>' +
+    '<div style="padding:10px 12px">';
+
+  satirlar.forEach(function(s) {
+    if (s.separator) html += '<div style="border-top:1px solid var(--border);margin:6px 0"></div>';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">' +
+      '<span style="font-size:11px;color:var(--text-3)">' + s.label + '</span>' +
+      '<span style="font-family:DM Mono,monospace;font-size:' + (s.bold?'13':'12') + 'px;font-weight:' + (s.bold?'700':'400') + ';color:' + (s.color||'var(--text)') + '">' + s.value + '</span>' +
+      '</div>';
+  });
+
+  html += '</div></div>';
+  return html;
+}
+
+function raporYazdir() {
+  var icerik = document.getElementById('rapor-yazdir-alan');
+  if (!icerik) return;
+  var w = window.open('', '_blank');
+  w.document.write('<html><head><title>Genel Tesis Raporu</title>' +
+    '<style>body{font-family:sans-serif;padding:20px} .grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px}</style>' +
+    '</head><body>' + icerik.innerHTML + '</body></html>');
+  w.document.close();
+  w.print();
 }
 
 // ── TOAST ─────────────────────────────────────────────
