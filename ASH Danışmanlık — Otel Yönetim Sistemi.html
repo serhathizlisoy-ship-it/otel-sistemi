@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_83.html -->
+<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_84.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7316,6 +7316,8 @@ async function raporAIAnaliz() {
     'Ayni formati su basliklar icin kullan: FIYAT PERFORMANSI (ADR/RevPAR/GOPPAR degerlerini goster), FINANSAL DURUM, GIDER ANALIZI, BUTCE KARSILASTIRMASI, GENEL DEGERLENDIRME\n\n' +
     'Son olarak: | Gosterge | Deger | Durum | formatinda kisa ozet tablo. Turkce yaz.';
   try {
+    var apiKeyArr = await sbGet('otel_ayarlari','anahtar=eq.claude_api_key');
+    var apiKey = apiKeyArr && apiKeyArr[0] && apiKeyArr[0].deger ? apiKeyArr[0].deger.trim() : '';
     if (!apiKey || apiKey === '') {
       el.innerHTML = '<div style="padding:16px;background:var(--warn-l);border:1px solid #E0C87A;border-radius:8px;font-size:13px;color:var(--warn)">⚠️ Claude API anahtarı tanımlanmamış. <strong>Sistem Ayarları → Sistem</strong> sekmesinden API anahtarınızı girin.</div>';
       return;
