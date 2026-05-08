@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_48.html -->
+<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_50.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1065,6 +1065,157 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
 
       </div>
 
+      <!-- STOK YÖNETİMİ -->
+      <div class="pg" id="pg-stok">
+        <div class="ptitle">Stok Yönetimi</div>
+        <div class="psub">Ürün tanımlama, stok takibi ve hareketler</div>
+
+        <div class="atab" style="margin-bottom:20px">
+          <button class="atab-btn on" id="stoktab-durum" onclick="stokSekme(&#39;durum&#39;)">📦 Stok Durumu</button>
+          <button class="atab-btn" id="stoktab-urun" onclick="stokSekme(&#39;urun&#39;)">➕ Ürün Ekle</button>
+          <button class="atab-btn" id="stoktab-hareketler" onclick="stokSekme(&#39;hareketler&#39;)">📋 Hareketler</button>
+        </div>
+
+        <!-- STOK DURUMU -->
+        <div id="stok-durum">
+          <div id="stok-durum-icerik">
+            <div style="text-align:center;padding:30px"><div class="spinner" style="margin:0 auto;border-color:var(--border);border-top-color:var(--accent)"></div></div>
+          </div>
+        </div>
+
+        <!-- ÜRÜN EKLE -->
+        <div id="stok-urun" style="display:none">
+          <div class="dc">
+            <div class="dct"><div class="dot"></div>Yeni Ürün Ekle</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+              <div class="sfield">
+                <label>Kategori</label>
+                <select id="urun-kategori">
+                  <option value="">— Seçiniz —</option>
+                </select>
+              </div>
+              <div class="sfield">
+                <label>Ürün Adı</label>
+                <input type="text" id="urun-ad" placeholder="Örn: Zeytin">
+              </div>
+              <div class="sfield">
+                <label>Birim</label>
+                <select id="urun-birim">
+                  <option value="gram">gram</option>
+                  <option value="kg">kg</option>
+                  <option value="ml">ml</option>
+                  <option value="litre">litre</option>
+                  <option value="adet">adet</option>
+                </select>
+              </div>
+              <div class="sfield">
+                <label>Minimum Stok Uyarısı</label>
+                <input type="number" id="urun-min-stok" placeholder="0" min="0">
+              </div>
+            </div>
+            <div style="display:flex;justify-content:flex-end;margin-top:14px">
+              <button class="sbtn" style="width:auto;padding:10px 24px" onclick="urunKaydet()">💾 Ürün Kaydet</button>
+            </div>
+          </div>
+
+          <!-- Mevcut ürünler listesi -->
+          <div class="dc" style="margin-top:16px">
+            <div class="dct"><div class="dot w"></div>Mevcut Ürünler</div>
+            <div id="urun-liste">
+              <div style="text-align:center;padding:20px"><div class="spinner" style="margin:0 auto"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- HAREKETLER -->
+        <div id="stok-hareketler" style="display:none">
+          <div style="display:flex;gap:12px;margin-bottom:16px;align-items:flex-end">
+            <div class="sfield" style="flex:1">
+              <label>Kategori Filtresi</label>
+              <select id="hareket-filtre-kat" onchange="hareketleriYukle()">
+                <option value="">Tümü</option>
+              </select>
+            </div>
+            <div class="sfield" style="flex:1">
+              <label>Tip Filtresi</label>
+              <select id="hareket-filtre-tip" onchange="hareketleriYukle()">
+                <option value="">Tümü</option>
+                <option value="giris">Giriş</option>
+                <option value="cikis">Çıkış</option>
+                <option value="duzeltme">Düzeltme</option>
+                <option value="sayim">Sayım</option>
+              </select>
+            </div>
+          </div>
+          <div id="hareket-liste">
+            <div style="text-align:center;padding:30px"><div class="spinner" style="margin:0 auto"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- REÇETE YÖNETİMİ -->
+      <div class="pg" id="pg-recete">
+        <div class="ptitle">Reçete Yönetimi</div>
+        <div class="psub">Kahvaltı, extra ve diğer reçeteleri tanımlayın</div>
+
+        <div class="atab" style="margin-bottom:20px">
+          <button class="atab-btn on" id="rectab-liste" onclick="receteSekme(&#39;liste&#39;)">🍳 Reçeteler</button>
+          <button class="atab-btn" id="rectab-yeni" onclick="receteSekme(&#39;yeni&#39;)">➕ Yeni Reçete</button>
+        </div>
+
+        <!-- REÇETE LİSTESİ -->
+        <div id="recete-liste">
+          <div id="recete-liste-icerik">
+            <div style="text-align:center;padding:30px"><div class="spinner" style="margin:0 auto"></div></div>
+          </div>
+        </div>
+
+        <!-- YENİ REÇETE -->
+        <div id="recete-yeni" style="display:none">
+          <div class="dc">
+            <div class="dct"><div class="dot"></div>Yeni Reçete Oluştur</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
+              <div class="sfield">
+                <label>Reçete Kategorisi</label>
+                <select id="rec-kategori" onchange="receteUrunleriYukle()">
+                  <option value="">— Seçiniz —</option>
+                </select>
+              </div>
+              <div class="sfield">
+                <label>Reçete Adı</label>
+                <input type="text" id="rec-ad" placeholder="Örn: Standart Kahvaltı">
+              </div>
+            </div>
+
+            <!-- Ürün ekleme alanı -->
+            <div style="margin-bottom:14px">
+              <div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:8px">Reçete İçeriği</div>
+              <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px;margin-bottom:8px">
+                <select id="rec-urun" style="padding:8px;border:1px solid var(--border);border-radius:7px;font-family:Instrument Sans,sans-serif;font-size:13px;background:var(--bg)">
+                  <option value="">— Ürün seçin —</option>
+                </select>
+                <input type="number" id="rec-miktar" placeholder="Miktar" min="0" step="0.1" style="padding:8px;border:1px solid var(--border);border-radius:7px;font-family:DM Mono,monospace;font-size:13px;background:var(--bg)">
+                <div id="rec-birim-goster" style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;font-size:13px;color:var(--text-3);display:flex;align-items:center">birim</div>
+                <button onclick="receteUrunEkle()" style="padding:8px 16px;border:none;border-radius:7px;background:var(--accent);color:#fff;font-family:Instrument Sans,sans-serif;font-size:13px;cursor:pointer">+ Ekle</button>
+              </div>
+
+              <!-- Eklenen ürünler -->
+              <div id="rec-urun-listesi" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px"></div>
+
+              <!-- Maliyet özeti -->
+              <div id="rec-maliyet-ozet" style="display:none;padding:10px 14px;background:var(--accent-l);border:1px solid var(--accent-b);border-radius:8px;display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:12px;color:var(--accent);font-weight:600">Tahmini Reçete Maliyeti</span>
+                <span style="font-family:DM Mono,monospace;font-size:16px;font-weight:700;color:var(--accent)" id="rec-toplam-maliyet">0 TL</span>
+              </div>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end">
+              <button class="sbtn" style="width:auto;padding:10px 24px" onclick="receteKaydet()">💾 Reçete Kaydet</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="pg" id="pg-rapor"><div class="ptitle">Raporlar &amp; Analiz</div><div class="psub">Finansal analiz ve dönem raporları</div><div class="cs"><div class="csi">📈</div><div class="cst">Raporlama Modülü</div><div class="css">Aylık/yıllık finansal analiz, bütçe karşılaştırma grafikleri ve PDF export.</div><span class="csb">⏳ Geliştiriliyor</span></div></div>
       <div class="pg" id="pg-fiyat"><div class="ptitle">Fiyat Hesaplama</div><div class="psub">Oda ve kişi fiyatlandırma modülü</div><div class="cs"><div class="csi">🏷️</div><div class="cst">Fiyat Hesaplama Modülü</div><div class="css">Gider kalemleri ve reçete verileri üzerinden oda/kişi başı fiyat hesaplama.</div><span class="csb">⏳ Geliştiriliyor</span></div></div>
 
@@ -1129,8 +1280,8 @@ async function sbDelete(tablo, filtre) {
 
 // ── ROL YETKİLERİ ────────────────────────────────────
 var ROL_MODULLER = {
-  admin:      ['dashboard','recete','gider','kapanis','aksaklik','gelir-butce','gider-butce','gerceklesen','stok','rapor','fiyat','cari','ayarlar'],
-  yonetici:   ['dashboard','recete','gider','kapanis','aksaklik','gelir-butce','gider-butce','gerceklesen','stok','rapor','cari'],
+  admin:      ['dashboard','gider','kapanis','aksaklik','gelir-butce','gider-butce','gerceklesen','stok','recete','rapor','fiyat','cari','ayarlar'],
+  yonetici:   ['dashboard','gider','kapanis','aksaklik','gelir-butce','gider-butce','gerceklesen','stok','recete','rapor','cari'],
   resepsiyon: ['dashboard','gider','kapanis','aksaklik','stok']
 };
 
@@ -1144,6 +1295,8 @@ var MENU = [
   { id:'gelir-butce', ad:'Tasarı Gelir',   ikon:'💰', bolum:'Analiz' },
   { id:'gider-butce', ad:'Tasarı Gider',   ikon:'💸', bolum:'Analiz' },
   { id:'gerceklesen',  ad:'Gerçekleşen',    ikon:'📈', bolum:'Analiz' },
+  { id:'stok',         ad:'Stok Yönetimi',  ikon:'📦', bolum:'Stok & Reçete' },
+  { id:'recete',       ad:'Reçete Yönetimi',ikon:'🍳', bolum:'Stok & Reçete' },
   { id:'rapor',     ad:'Raporlar',        ikon:'📈', bolum:'Analiz' },
   { id:'fiyat',     ad:'Fiyat Hesaplama', ikon:'🏷️', bolum:'Analiz' },
   { id:'kapanis',   ad:'Günlük Kapanış',  ikon:'🌙', bolum:'Veri Girişi' },
@@ -1367,6 +1520,8 @@ function git(sayfaId) {
   if (sayfaId === 'gelir-butce') { butceModuluBaslat(); butceSekme(butceAktifSekme); }
   if (sayfaId === 'gider-butce') { giderButceSayfasiYukle(); }
   if (sayfaId === 'gerceklesen') { gerceklesenYukle(); }
+  if (sayfaId === 'stok') { stokModuluBaslat(); }
+  if (sayfaId === 'recete') { receteModuluBaslat(); }
   if (sayfaId === 'cari') { cariSekme(cariAktifSekme); }
 }
 
@@ -4891,6 +5046,449 @@ async function grDolulukGoster() {
   } catch(e) {
     el.innerHTML = '<div style="color:var(--danger);padding:20px">Hata: ' + e.message + '</div>';
   }
+}
+
+
+// ── STOK MODÜLÜ ───────────────────────────────────────
+var _stokKategoriler = [];
+var _stokUrunler = [];
+var stokAktifSekme = 'durum';
+
+async function stokModuluBaslat() {
+  // Kategorileri yükle
+  try {
+    var kat = await sbGet('stok_kategori', 'order=sira.asc');
+    if (kat) _stokKategoriler = kat;
+    
+    // Kategori select'lerini doldur
+    var selectors = ['urun-kategori', 'hareket-filtre-kat'];
+    selectors.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      var hasAll = id === 'hareket-filtre-kat';
+      el.innerHTML = hasAll ? '<option value="">Tümü</option>' : '<option value="">— Seçiniz —</option>';
+      kat.forEach(function(k) {
+        el.innerHTML += '<option value="' + k.id + '">' + k.ad + '</option>';
+      });
+    });
+  } catch(e) {}
+
+  // Ürünleri yükle
+  try {
+    var urunler = await sbGet('stok_urun', 'aktif=eq.true&order=ad.asc');
+    if (urunler) _stokUrunler = urunler;
+  } catch(e) {}
+
+  stokSekme(stokAktifSekme);
+}
+
+function stokSekme(sekme) {
+  stokAktifSekme = sekme;
+  ['durum','urun','hareketler'].forEach(function(s) {
+    var el = document.getElementById('stok-' + s);
+    var btn = document.getElementById('stoktab-' + s);
+    if (el) el.style.display = s === sekme ? 'block' : 'none';
+    if (btn) btn.className = 'atab-btn' + (s === sekme ? ' on' : '');
+  });
+  if (sekme === 'durum') stokDurumGoster();
+  if (sekme === 'urun') urunListesiGoster();
+  if (sekme === 'hareketler') hareketleriYukle();
+}
+
+async function stokDurumGoster() {
+  var el = document.getElementById('stok-durum-icerik');
+  el.innerHTML = '<div style="text-align:center;padding:30px"><div class="spinner" style="margin:0 auto;border-color:var(--border);border-top-color:var(--accent)"></div></div>';
+
+  try {
+    var bakiye = await sbGet('stok_bakiye', '');
+    var bakiyeMap = {};
+    if (bakiye) bakiye.forEach(function(b) { bakiyeMap[b.urun_id] = b.miktar; });
+
+    var html = '';
+    _stokKategoriler.forEach(function(kat) {
+      var katUrunler = _stokUrunler.filter(function(u) { return u.kategori_id === kat.id; });
+      if (katUrunler.length === 0) return;
+
+      html += '<div style="margin-bottom:20px">' +
+        '<div style="padding:8px 14px;background:var(--accent);border-radius:8px 8px 0 0">' +
+        '<span style="color:#fff;font-size:12px;font-weight:700">' + kat.ad + '</span>' +
+        '</div>' +
+        '<div style="overflow-x:auto"><table class="tbl" style="border-radius:0 0 8px 8px"><thead><tr>' +
+        '<th>Ürün</th><th>Birim</th><th style="text-align:right">Mevcut Stok</th>' +
+        '<th style="text-align:right">Minimum</th><th style="text-align:right">Son Alış Fiyatı</th><th>Durum</th>' +
+        '</tr></thead><tbody>';
+
+      katUrunler.forEach(function(u) {
+        var miktar = bakiyeMap[u.id] || 0;
+        var kritik = miktar <= u.minimum_stok && u.minimum_stok > 0;
+        var uyari = miktar <= u.minimum_stok * 1.2 && !kritik && u.minimum_stok > 0;
+        var durum = kritik ? '<span style="color:var(--danger);font-weight:600">⚠️ Kritik</span>' :
+                    uyari ? '<span style="color:var(--warn);font-weight:600">⚡ Az</span>' :
+                    '<span style="color:var(--accent)">✅ Normal</span>';
+
+        html += '<tr style="' + (kritik?'background:var(--danger-l)':uyari?'background:var(--warn-l)':'') + '">' +
+          '<td style="font-weight:600">' + u.ad + '</td>' +
+          '<td style="color:var(--text-3)">' + u.birim + '</td>' +
+          '<td style="text-align:right;font-family:DM Mono,monospace;font-weight:700;color:' + (kritik?'var(--danger)':uyari?'var(--warn)':'var(--accent)') + '">' + miktar.toLocaleString('tr-TR') + ' ' + u.birim + '</td>' +
+          '<td style="text-align:right;font-family:DM Mono,monospace;color:var(--text-3)">' + (u.minimum_stok||0).toLocaleString('tr-TR') + '</td>' +
+          '<td style="text-align:right;font-family:DM Mono,monospace">' + (u.son_alis_fiyati||0).toLocaleString('tr-TR') + ' TL/' + u.birim + '</td>' +
+          '<td>' + durum + '</td>' +
+          '</tr>';
+      });
+
+      html += '</tbody></table></div></div>';
+    });
+
+    if (!html) html = '<div style="text-align:center;padding:40px;color:var(--text-3)"><div style="font-size:32px;margin-bottom:12px">📦</div><div>Henüz ürün tanımlanmamış.</div><div style="font-size:12px;margin-top:8px">Ürün Ekle sekmesinden başlayın.</div></div>';
+
+    el.innerHTML = html;
+  } catch(e) {
+    el.innerHTML = '<div style="color:var(--danger);padding:20px">Hata: ' + e.message + '</div>';
+  }
+}
+
+async function urunKaydet() {
+  var katId = document.getElementById('urun-kategori').value;
+  var ad = document.getElementById('urun-ad').value.trim();
+  var birim = document.getElementById('urun-birim').value;
+  var minStok = parseFloat(document.getElementById('urun-min-stok').value) || 0;
+
+  if (!katId || !ad) { showToast('Kategori ve ürün adı zorunlu!', true); return; }
+
+  try {
+    var yeniUrun = await sbPost('stok_urun', {
+      kategori_id: katId, ad: ad, birim: birim,
+      minimum_stok: minStok, aktif: true
+    });
+    // Bakiye kaydı oluştur
+    if (yeniUrun && yeniUrun[0]) {
+      await sbPost('stok_bakiye', { urun_id: yeniUrun[0].id, miktar: 0 });
+    }
+    showToast('✅ Ürün eklendi: ' + ad);
+    document.getElementById('urun-ad').value = '';
+    document.getElementById('urun-min-stok').value = '';
+    // Ürünleri yenile
+    var urunler = await sbGet('stok_urun', 'aktif=eq.true&order=ad.asc');
+    if (urunler) _stokUrunler = urunler;
+    urunListesiGoster();
+  } catch(e) { showToast('Hata: ' + e.message, true); }
+}
+
+async function urunListesiGoster() {
+  var el = document.getElementById('urun-liste');
+  if (!el) return;
+
+  if (_stokUrunler.length === 0) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-3)">Henüz ürün yok.</div>';
+    return;
+  }
+
+  var html = '<div style="overflow-x:auto"><table class="tbl"><thead><tr>' +
+    '<th>Kategori</th><th>Ürün Adı</th><th>Birim</th><th>Min. Stok</th><th></th>' +
+    '</tr></thead><tbody>';
+
+  _stokUrunler.forEach(function(u) {
+    var kat = _stokKategoriler.find(function(k){ return k.id === u.kategori_id; });
+    html += '<tr>' +
+      '<td style="color:var(--text-3);font-size:12px">' + (kat?kat.ad:'—') + '</td>' +
+      '<td style="font-weight:600">' + u.ad + '</td>' +
+      '<td>' + u.birim + '</td>' +
+      '<td class="mono">' + (u.minimum_stok||0) + '</td>' +
+      '<td><button data-uid="' + u.id + '" onclick="urunSil(this)" style="padding:3px 8px;border:1px solid #e0baba;border-radius:5px;background:var(--danger-l);color:var(--danger);font-size:11px;cursor:pointer">Sil</button></td>' +
+      '</tr>';
+  });
+
+  html += '</tbody></table></div>';
+  el.innerHTML = html;
+}
+
+async function urunSil(btn) {
+  if (!confirm('Bu ürünü silmek istediğinizden emin misiniz?')) return;
+  var id = btn.getAttribute('data-uid');
+  try {
+    await sbPatch('stok_urun', 'id=eq.' + id, { aktif: false });
+    showToast('✅ Ürün silindi');
+    var urunler = await sbGet('stok_urun', 'aktif=eq.true&order=ad.asc');
+    if (urunler) _stokUrunler = urunler;
+    urunListesiGoster();
+  } catch(e) { showToast('Hata: ' + e.message, true); }
+}
+
+async function hareketleriYukle() {
+  var el = document.getElementById('hareket-liste');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:20px"><div class="spinner" style="margin:0 auto"></div></div>';
+
+  var katFiltre = document.getElementById('hareket-filtre-kat')?.value || '';
+  var tipFiltre = document.getElementById('hareket-filtre-tip')?.value || '';
+
+  try {
+    var q = 'order=olusturma.desc&limit=100';
+    if (tipFiltre) q += '&hareket_tipi=eq.' + tipFiltre;
+    var hareketler = await sbGet('stok_hareket', q);
+
+    if (!hareketler || hareketler.length === 0) {
+      el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-3)">Henüz hareket yok.</div>';
+      return;
+    }
+
+    var tipRenk = { giris:'var(--accent)', cikis:'var(--danger)', duzeltme:'var(--warn)', sayim:'var(--mgr)' };
+    var tipAd = { giris:'⬆️ Giriş', cikis:'⬇️ Çıkış', duzeltme:'🔄 Düzeltme', sayim:'📋 Sayım' };
+
+    var html = '<div style="overflow-x:auto"><table class="tbl"><thead><tr>' +
+      '<th>Tarih</th><th>Ürün</th><th>Tip</th>' +
+      '<th style="text-align:right">Miktar</th><th style="text-align:right">Birim Fiyat</th>' +
+      '<th style="text-align:right">Tutar</th><th>Açıklama</th>' +
+      '</tr></thead><tbody>';
+
+    hareketler.forEach(function(h) {
+      var urun = _stokUrunler.find(function(u){ return u.id === h.urun_id; });
+      var renk = tipRenk[h.hareket_tipi] || 'var(--text-3)';
+      html += '<tr>' +
+        '<td class="mono" style="font-size:12px">' + (h.tarih||'—') + '</td>' +
+        '<td style="font-weight:600;font-size:12px">' + (urun?urun.ad:'—') + '</td>' +
+        '<td><span style="font-size:11px;padding:2px 7px;border-radius:10px;background:' + renk + '20;color:' + renk + ';font-weight:600">' + (tipAd[h.hareket_tipi]||h.hareket_tipi) + '</span></td>' +
+        '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px">' + (h.miktar||0).toLocaleString('tr-TR') + ' ' + (urun?urun.birim:'') + '</td>' +
+        '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px">' + (h.birim_fiyat>0?h.birim_fiyat.toLocaleString('tr-TR')+' TL':'—') + '</td>' +
+        '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px;font-weight:600;color:' + renk + '">' + (h.toplam_tutar>0?h.toplam_tutar.toLocaleString('tr-TR')+' TL':'—') + '</td>' +
+        '<td style="font-size:11px;color:var(--text-3)">' + (h.aciklama||'—') + '</td>' +
+        '</tr>';
+    });
+
+    html += '</tbody></table></div>';
+    el.innerHTML = html;
+  } catch(e) {
+    el.innerHTML = '<div style="color:var(--danger);padding:20px">Hata: ' + e.message + '</div>';
+  }
+}
+
+// ── REÇETE MODÜLÜ ─────────────────────────────────────
+var _receteKategoriler = [];
+var _receteUrunEklendi = [];
+var receteAktifSekme = 'liste';
+
+async function receteModuluBaslat() {
+  try {
+    var kat = await sbGet('recete_kategori', 'order=sira.asc');
+    if (kat) {
+      _receteKategoriler = kat;
+      var recKatSel = document.getElementById('rec-kategori');
+      if (recKatSel) {
+        recKatSel.innerHTML = '<option value="">— Seçiniz —</option>';
+        kat.forEach(function(k) {
+          recKatSel.innerHTML += '<option value="' + k.id + '">' + k.ad + '</option>';
+        });
+      }
+    }
+  } catch(e) {}
+
+  receteSekme(receteAktifSekme);
+}
+
+function receteSekme(sekme) {
+  receteAktifSekme = sekme;
+  ['liste','yeni'].forEach(function(s) {
+    var el = document.getElementById('recete-' + s);
+    var btn = document.getElementById('rectab-' + s);
+    if (el) el.style.display = s === sekme ? 'block' : 'none';
+    if (btn) btn.className = 'atab-btn' + (s === sekme ? ' on' : '');
+  });
+  if (sekme === 'liste') receteListesiGoster();
+  if (sekme === 'yeni') { _receteUrunEklendi = []; receteUrunListesiGoster(); }
+}
+
+async function receteUrunleriYukle() {
+  var recUrunSel = document.getElementById('rec-urun');
+  if (!recUrunSel) return;
+  recUrunSel.innerHTML = '<option value="">— Ürün seçin —</option>';
+  _stokUrunler.forEach(function(u) {
+    recUrunSel.innerHTML += '<option value="' + u.id + '" data-birim="' + u.birim + '" data-fiyat="' + (u.birim_fiyat||0) + '">' + u.ad + ' (' + u.birim + ')</option>';
+  });
+  recUrunSel.onchange = function() {
+    var opt = this.options[this.selectedIndex];
+    var birim = opt.getAttribute('data-birim') || '';
+    var birimEl = document.getElementById('rec-birim-goster');
+    if (birimEl) birimEl.textContent = birim;
+  };
+}
+
+function receteUrunEkle() {
+  var urunSel = document.getElementById('rec-urun');
+  var miktar = parseFloat(document.getElementById('rec-miktar').value) || 0;
+  if (!urunSel.value || miktar <= 0) { showToast('Ürün ve miktar girin!', true); return; }
+
+  var opt = urunSel.options[urunSel.selectedIndex];
+  var birim = opt.getAttribute('data-birim') || '';
+  var fiyat = parseFloat(opt.getAttribute('data-fiyat')) || 0;
+  var urun = _stokUrunler.find(function(u){ return u.id === urunSel.value; });
+
+  _receteUrunEklendi.push({
+    urun_id: urunSel.value,
+    ad: urun ? urun.ad : opt.text,
+    miktar: miktar,
+    birim: birim,
+    birim_fiyat: fiyat,
+    maliyet: miktar * fiyat
+  });
+
+  document.getElementById('rec-miktar').value = '';
+  urunSel.value = '';
+  document.getElementById('rec-birim-goster').textContent = 'birim';
+  receteUrunListesiGoster();
+}
+
+function receteUrunListesiGoster() {
+  var el = document.getElementById('rec-urun-listesi');
+  var ozet = document.getElementById('rec-maliyet-ozet');
+  var toplamEl = document.getElementById('rec-toplam-maliyet');
+  if (!el) return;
+
+  if (_receteUrunEklendi.length === 0) {
+    el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-3);font-size:12px">Henüz ürün eklenmedi</div>';
+    if (ozet) ozet.style.display = 'none';
+    return;
+  }
+
+  var toplam = 0;
+  var html = '';
+  _receteUrunEklendi.forEach(function(item, idx) {
+    toplam += item.maliyet;
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:7px">' +
+      '<div style="font-size:12px"><strong>' + item.ad + '</strong> — ' + item.miktar.toLocaleString('tr-TR') + ' ' + item.birim + '</div>' +
+      '<div style="display:flex;align-items:center;gap:12px">' +
+      '<span style="font-family:DM Mono,monospace;font-size:12px;color:var(--text-3)">' + (item.birim_fiyat>0?item.birim_fiyat.toFixed(4)+' TL/'+item.birim:'Fiyat yok') + '</span>' +
+      '<span style="font-family:DM Mono,monospace;font-size:12px;font-weight:600;color:var(--accent)">' + (item.maliyet>0?item.maliyet.toFixed(2)+' TL':'—') + '</span>' +
+      '<button data-idx="' + idx + '" onclick="receteUrunKaldir(this)" style="padding:2px 8px;border:1px solid #e0baba;border-radius:5px;background:var(--danger-l);color:var(--danger);font-size:11px;cursor:pointer">✕</button>' +
+      '</div></div>';
+  });
+
+  el.innerHTML = html;
+  if (ozet) {
+    ozet.style.display = 'flex';
+    if (toplamEl) toplamEl.textContent = toplam.toFixed(2) + ' TL';
+  }
+}
+
+function receteUrunKaldir(btn) {
+  var idx = parseInt(btn.getAttribute('data-idx'));
+  _receteUrunEklendi.splice(idx, 1);
+  receteUrunListesiGoster();
+}
+
+async function receteKaydet() {
+  var katId = document.getElementById('rec-kategori').value;
+  var ad = document.getElementById('rec-ad').value.trim();
+  if (!katId || !ad) { showToast('Kategori ve reçete adı zorunlu!', true); return; }
+  if (_receteUrunEklendi.length === 0) { showToast('En az bir ürün ekleyin!', true); return; }
+
+  try {
+    var yeniRecete = await sbPost('recete', { kategori_id: katId, ad: ad, aktif: true });
+    if (yeniRecete && yeniRecete[0]) {
+      var recId = yeniRecete[0].id;
+      for (var i = 0; i < _receteUrunEklendi.length; i++) {
+        var item = _receteUrunEklendi[i];
+        await sbPost('recete_detay', {
+          recete_id: recId,
+          urun_id: item.urun_id,
+          miktar: item.miktar,
+          birim: item.birim
+        });
+      }
+    }
+    showToast('✅ Reçete kaydedildi: ' + ad);
+    document.getElementById('rec-ad').value = '';
+    document.getElementById('rec-kategori').value = '';
+    _receteUrunEklendi = [];
+    receteUrunListesiGoster();
+    receteSekme('liste');
+  } catch(e) { showToast('Hata: ' + e.message, true); }
+}
+
+async function receteListesiGoster() {
+  var el = document.getElementById('recete-liste-icerik');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:30px"><div class="spinner" style="margin:0 auto;border-color:var(--border);border-top-color:var(--accent)"></div></div>';
+
+  try {
+    var receteler = await sbGet('recete', 'aktif=eq.true&order=ad.asc');
+    if (!receteler || receteler.length === 0) {
+      el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-3)"><div style="font-size:32px;margin-bottom:12px">🍳</div><div>Henüz reçete tanımlanmamış.</div></div>';
+      return;
+    }
+
+    var html = '<div style="display:flex;flex-direction:column;gap:14px">';
+
+    // Kategoriye göre grupla
+    for (var ki = 0; ki < _receteKategoriler.length; ki++) {
+      var kat = _receteKategoriler[ki];
+      var katReceteler = receteler.filter(function(r){ return r.kategori_id === kat.id; });
+      if (katReceteler.length === 0) continue;
+
+      html += '<div>' +
+        '<div style="padding:8px 14px;background:var(--accent);border-radius:8px 8px 0 0;display:flex;align-items:center;gap:8px">' +
+        '<span style="color:#fff;font-size:12px;font-weight:700">' + kat.ad + '</span>' +
+        '<span style="color:rgba(255,255,255,0.7);font-size:11px">— ' + (kat.tetikleyici==='kisi'?'Kişi bazlı':'Oda bazlı') + '</span>' +
+        '</div>';
+
+      for (var ri = 0; ri < katReceteler.length; ri++) {
+        var rec = katReceteler[ri];
+        var detaylar = await sbGet('recete_detay', 'recete_id=eq.' + rec.id);
+        var toplamMaliyet = 0;
+
+        html += '<div style="background:var(--surface);border:1px solid var(--border);border-top:none;padding:14px 18px">' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">' +
+          '<span style="font-size:14px;font-weight:700">' + rec.ad + '</span>' +
+          '<button data-rid="' + rec.id + '" onclick="receteSil(this)" style="padding:3px 10px;border:1px solid #e0baba;border-radius:5px;background:var(--danger-l);color:var(--danger);font-size:11px;cursor:pointer">Sil</button>' +
+          '</div>';
+
+        if (detaylar && detaylar.length > 0) {
+          html += '<table style="width:100%;border-collapse:collapse"><thead><tr style="border-bottom:1px solid var(--border)">' +
+            '<th style="text-align:left;font-size:11px;color:var(--text-3);padding:4px 8px">Ürün</th>' +
+            '<th style="text-align:right;font-size:11px;color:var(--text-3);padding:4px 8px">Miktar</th>' +
+            '<th style="text-align:right;font-size:11px;color:var(--text-3);padding:4px 8px">Birim Fiyat</th>' +
+            '<th style="text-align:right;font-size:11px;color:var(--text-3);padding:4px 8px">Maliyet</th>' +
+            '</tr></thead><tbody>';
+
+          detaylar.forEach(function(d) {
+            var urun = _stokUrunler.find(function(u){ return u.id === d.urun_id; });
+            var bf = urun ? (urun.birim_fiyat||0) : 0;
+            var maliyet = d.miktar * bf;
+            toplamMaliyet += maliyet;
+            html += '<tr style="border-bottom:1px solid var(--border)">' +
+              '<td style="padding:5px 8px;font-size:12px;font-weight:600">' + (urun?urun.ad:'Silinmiş ürün') + '</td>' +
+              '<td style="padding:5px 8px;text-align:right;font-family:DM Mono,monospace;font-size:12px">' + d.miktar.toLocaleString('tr-TR') + ' ' + d.birim + '</td>' +
+              '<td style="padding:5px 8px;text-align:right;font-family:DM Mono,monospace;font-size:11px;color:var(--text-3)">' + (bf>0?bf.toFixed(4)+' TL/'+d.birim:'—') + '</td>' +
+              '<td style="padding:5px 8px;text-align:right;font-family:DM Mono,monospace;font-size:12px;color:var(--accent)">' + (maliyet>0?maliyet.toFixed(2)+' TL':'—') + '</td>' +
+              '</tr>';
+          });
+
+          html += '</tbody></table>';
+          if (toplamMaliyet > 0) {
+            html += '<div style="text-align:right;margin-top:8px;padding:6px 8px;background:var(--accent-l);border-radius:6px;font-size:12px;font-weight:700;color:var(--accent)">Toplam Maliyet: ' + toplamMaliyet.toFixed(2) + ' TL / porsiyon</div>';
+          }
+        }
+
+        html += '</div>';
+      }
+
+      html += '</div>';
+    }
+
+    html += '</div>';
+    el.innerHTML = html;
+  } catch(e) {
+    el.innerHTML = '<div style="color:var(--danger);padding:20px">Hata: ' + e.message + '</div>';
+  }
+}
+
+async function receteSil(btn) {
+  if (!confirm('Bu reçeteyi silmek istediğinizden emin misiniz?')) return;
+  var id = btn.getAttribute('data-rid');
+  try {
+    await sbPatch('recete', 'id=eq.' + id, { aktif: false });
+    showToast('✅ Reçete silindi');
+    receteListesiGoster();
+  } catch(e) { showToast('Hata: ' + e.message, true); }
 }
 
 // ── TOAST ─────────────────────────────────────────────
