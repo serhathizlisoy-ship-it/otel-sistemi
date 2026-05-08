@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_71.html -->
+<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_72.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1916,7 +1916,13 @@ async function apiKeyKaydet() {
   var key = document.getElementById('s-apikey')?.value.trim();
   if (!key) { showToast('API anahtarı boş!', true); return; }
   try {
-    await sbPatch('otel_ayarlari', 'anahtar=eq.claude_api_key', {deger: key});
+    // Önce var mı kontrol et
+    var mevcut = await sbGet('otel_ayarlari', 'anahtar=eq.claude_api_key');
+    if (mevcut && mevcut.length > 0) {
+      await sbPatch('otel_ayarlari', 'anahtar=eq.claude_api_key', {deger: key});
+    } else {
+      await sbPost('otel_ayarlari', {anahtar: 'claude_api_key', deger: key});
+    }
     showToast('✅ API anahtarı kaydedildi');
     ayarlarYukle();
   } catch(e) { showToast('Hata: ' + e.message, true); }
@@ -7135,8 +7141,9 @@ Her başlık için şu formatı kullan:
 Başlıklar: Doluluk Analizi, Fiyat Performansı (ADR/RevPAR/GOPPAR), Finansal Durum, Gider Analizi, Bütçe Karşılaştırması.`;
 
   try {
-    var apiKey = await sbGet('otel_ayarlari','anahtar=eq.claude_api_key').then(function(r){ return r&&r[0]?r[0].deger:''; }).catch(function(){ return ''; });
-    if (!apiKey) {
+    var apiKeyArr = await sbGet('otel_ayarlari','anahtar=eq.claude_api_key');
+    var apiKey = apiKeyArr && apiKeyArr[0] && apiKeyArr[0].deger ? apiKeyArr[0].deger.trim() : '';
+    if (!apiKey || apiKey === '') {
       el.innerHTML = '<div style="padding:16px;background:var(--warn-l);border:1px solid #E0C87A;border-radius:8px;font-size:13px;color:var(--warn)">⚠️ Claude API anahtarı tanımlanmamış. <strong>Sistem Ayarları → Sistem</strong> sekmesinden API anahtarınızı girin.</div>';
       return;
     }
@@ -7213,8 +7220,9 @@ Bizim fiyatımız piyasaya göre nerede, doluluk-fiyat dengesi
 Hemen yapılabilecek 3-5 somut öneri`;
 
   try {
-    var apiKey2 = await sbGet('otel_ayarlari','anahtar=eq.claude_api_key').then(function(r){ return r&&r[0]?r[0].deger:''; }).catch(function(){ return ''; });
-    if (!apiKey2) {
+    var apiKeyArr2 = await sbGet('otel_ayarlari','anahtar=eq.claude_api_key');
+    var apiKey2 = apiKeyArr2 && apiKeyArr2[0] && apiKeyArr2[0].deger ? apiKeyArr2[0].deger.trim() : '';
+    if (!apiKey2 || apiKey2 === '') {
       el.innerHTML = '<div style="padding:16px;background:var(--warn-l);border:1px solid #E0C87A;border-radius:8px;font-size:13px;color:var(--warn)">⚠️ Claude API anahtarı tanımlanmamış. <strong>Sistem Ayarları → Sistem</strong> sekmesinden API anahtarınızı girin.</div>';
       return;
     }
