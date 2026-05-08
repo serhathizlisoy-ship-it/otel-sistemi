@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_76.html -->
+<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_77.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1404,9 +1404,25 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
         <div id="rapor-fiyat-alan" style="display:none;margin-bottom:16px">
           <div class="dc">
             <div class="dct"><div class="dot w"></div>💡 Fiyat Önerisi &amp; Piyasa Analizi</div>
-            <div id="rapor-fiyat-icerik">
-              <div style="text-align:center;padding:20px;color:var(--text-3)">Fiyat analizini başlatmak için yukarıdan "Fiyat Önerisi" butonuna tıklayın.</div>
+            <div style="padding:12px 14px;background:var(--accent-l);border:1px solid var(--accent-b);border-radius:8px;font-size:12px;color:var(--accent);margin-bottom:14px">
+              📊 Booking.com veya diğer OTA'lardan baktığınız rakip otellerin fiyatlarını girin. AI sizin ADR'nızla karşılaştırarak öneri üretecek.
             </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
+              <div class="sfield"><label>Rakip 1 Fiyatı (TL/gece)</label><input type="number" id="rakip1" placeholder="Örn: 4500" style="font-family:DM Mono,monospace"></div>
+              <div class="sfield"><label>Rakip 2 Fiyatı (TL/gece)</label><input type="number" id="rakip2" placeholder="Örn: 6000" style="font-family:DM Mono,monospace"></div>
+              <div class="sfield"><label>Rakip 3 Fiyatı (TL/gece)</label><input type="number" id="rakip3" placeholder="Örn: 5500" style="font-family:DM Mono,monospace"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+              <div class="sfield">
+                <label>Rakip Kategori</label>
+                <select id="rakip-kategori" style="padding:8px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;background:var(--bg);width:100%">
+                  <option>Butik Otel</option><option>Pansiyon</option><option>Apart Otel</option><option>Tatil Köyü</option>
+                </select>
+              </div>
+              <div class="sfield"><label>Ek Not (isteğe bağlı)</label><input type="text" id="rakip-not" placeholder="Örn: Bayram dönemi, havuz var vb."></div>
+            </div>
+            <button onclick="raporFiyatOnerisi()" style="padding:10px 20px;border:none;border-radius:7px;background:var(--mgr);color:#fff;font-family:Instrument Sans,sans-serif;font-size:13px;font-weight:600;cursor:pointer">💡 Fiyat Analizi Yap</button>
+            <div id="rapor-fiyat-icerik" style="margin-top:14px"></div>
           </div>
         </div>
 
@@ -7075,14 +7091,61 @@ function raporKart(baslik, satirlar) {
 }
 
 function raporYazdir() {
-  var icerik = document.getElementById('rapor-yazdir-alan');
-  if (!icerik) return;
+  var raporIcerik = document.getElementById('rapor-yazdir-alan');
+  var analizIcerik = document.getElementById('rapor-analiz-icerik');
+  var fiyatIcerik = document.getElementById('rapor-fiyat-icerik');
+
   var w = window.open('', '_blank');
-  w.document.write('<html><head><title>Genel Tesis Raporu</title>' +
-    '<style>body{font-family:sans-serif;padding:20px} .grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px}</style>' +
-    '</head><body>' + icerik.innerHTML + '</body></html>');
+  w.document.write('<html><head><meta charset="UTF-8"><title>Genel Tesis Raporu</title><style>' +
+    'body{font-family:Arial,sans-serif;padding:30px;color:#2c2c2c;background:#fff;max-width:1100px;margin:0 auto}' +
+    'h1{font-size:22px;font-weight:700;margin-bottom:4px}' +
+    'h2{font-size:14px;font-weight:700;margin:20px 0 8px;color:#2d5a2d;border-bottom:2px solid #2d5a2d;padding-bottom:4px}' +
+    '.grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:20px}' +
+    '.kart{border:1px solid #ddd;border-radius:8px;overflow:hidden}' +
+    '.kart-baslik{background:#2d5a2d;color:#fff;padding:8px 12px;font-size:12px;font-weight:700}' +
+    '.kart-icerik{padding:10px 12px}' +
+    '.satir{display:flex;justify-content:space-between;margin-bottom:4px;font-size:11px}' +
+    '.etiket{color:#666}' +
+    '.deger{font-weight:600;font-family:monospace}' +
+    '.ai-bolum{margin-bottom:30px;padding:20px;background:#f9f9f9;border-radius:8px;border:1px solid #eee}' +
+    '.baslik-alan{text-align:center;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #2d5a2d}' +
+    'table{width:100%;border-collapse:collapse;margin-top:12px;font-size:12px}' +
+    'th{background:#2d5a2d;color:#fff;padding:8px;text-align:left}' +
+    'td{padding:7px 8px;border-bottom:1px solid #eee}' +
+    '@media print{body{padding:15px} .no-print{display:none}}' +
+    '</style></head><body>');
+
+  // Başlık
+  w.document.write('<div class="baslik-alan">');
+  w.document.write('<div style="font-size:10px;color:#888;margin-bottom:4px">GENEL TESİS RAPORU</div>');
+  w.document.write('<h1>' + (document.getElementById('rapor-yazdir-alan')?.querySelector('div')?.textContent?.trim()?.split('\n')[0] || 'Otel Raporu') + '</h1>');
+  w.document.write('<div style="font-size:12px;color:#666">' + _raporBas + ' — ' + _raporBit + '</div>');
+  w.document.write('<div style="font-size:11px;color:#999;margin-top:4px">Rapor tarihi: ' + new Date().toLocaleDateString('tr-TR') + '</div>');
+  w.document.write('</div>');
+
+  // Ana rapor
+  if (raporIcerik) {
+    w.document.write('<h2>📊 Genel Tesis Raporu</h2>');
+    w.document.write(raporIcerik.innerHTML);
+  }
+
+  // AI Analizi
+  if (analizIcerik && analizIcerik.textContent.trim() && !analizIcerik.textContent.includes('Analizi yapılıyor') && !analizIcerik.textContent.includes('tıklayın')) {
+    w.document.write('<div style="page-break-before:always"></div>');
+    w.document.write('<h2>🤖 AI Danışman Analizi</h2>');
+    w.document.write('<div class="ai-bolum" style="white-space:pre-wrap;font-size:12px;line-height:1.7">' + analizIcerik.textContent + '</div>');
+  }
+
+  // Fiyat Önerisi
+  if (fiyatIcerik && fiyatIcerik.textContent.trim() && !fiyatIcerik.textContent.includes('Fiyat analizini') && !fiyatIcerik.textContent.includes('girin')) {
+    w.document.write('<h2>💡 Fiyat Önerisi & Piyasa Analizi</h2>');
+    w.document.write('<div class="ai-bolum" style="white-space:pre-wrap;font-size:12px;line-height:1.7">' + fiyatIcerik.textContent + '</div>');
+  }
+
+  w.document.write('<div style="margin-top:40px;padding-top:16px;border-top:1px solid #ddd;font-size:10px;color:#999;text-align:center">Bu rapor ' + new Date().toLocaleDateString("tr-TR") + ' tarihinde otomatik olarak oluşturulmuştur.</div>');
+  w.document.write('</body></html>');
   w.document.close();
-  w.print();
+  setTimeout(function(){ w.print(); }, 500);
 }
 
 
@@ -7113,32 +7176,16 @@ async function raporAIAnaliz() {
 
   var v = _raporVeriler;
 
-  var prompt = `Sen deneyimli bir otel danışmanısın. Aşağıdaki ${v.otelAdi} (${v.konum}, ${v.kategori}) için ${v.donem} dönemine ait verileri analiz et ve Türkçe olarak yorumla.
-
-VERİLER:
-- Oda Kapasitesi: ${v.odaSayisi} oda, ${v.maxKisi} kişi
-- Konaklayan Kişi: ${v.toplamKisiGecesi} kişi
-- Oda Doluluk: %${v.odaDoluluk.toFixed(1)}
-- Kişi Doluluk: %${v.kisiDoluluk.toFixed(1)}
-- ADR (Dolu Oda Başı Fiyat): ${Math.round(v.ADR).toLocaleString('tr-TR')} TL
-- RevPAR (Tüm Oda Başı Gelir): ${Math.round(v.RevPAR).toLocaleString('tr-TR')} TL
-- GOPPAR (Oda Başı Brüt Kâr): ${Math.round(v.GOPPAR).toLocaleString('tr-TR')} TL
-- Toplam Ciro: ${v.toplamCiro.toLocaleString('tr-TR')} TL
-- Toplam Gider: ${v.toplamGider.toLocaleString('tr-TR')} TL
-- Net Kar/Zarar: ${v.netKarZarar.toLocaleString('tr-TR')} TL
-- Kar Marjı: %${v.karMarji.toFixed(1)}
-- Personel Gideri / Ciro: %${v.toplamCiro > 0 ? ((v.giderAnaBaslik['Personel Giderleri']||0)/v.toplamCiro*100).toFixed(1) : 0}
-- Bütçe Ciro: ${v.butceCiro.toLocaleString('tr-TR')} TL
-- Bütçe Gider: ${v.butceGiderToplam.toLocaleString('tr-TR')} TL
-
-Her başlık için şu formatı kullan:
-
-## [Başlık Emoji] Başlık
-**Durum:** [İyi/Dikkat/Kritik] — Kısa durum özeti
-**Yorum:** Verinin ne anlama geldiği
-**Öneri:** Somut yapılabilir öneriler
-
-Başlıklar: Doluluk Analizi, Fiyat Performansı (ADR/RevPAR/GOPPAR), Finansal Durum, Gider Analizi, Bütçe Karşılaştırması.`;
+  var prompt = v.otelAdi + ' | ' + v.konum + ' | ' + v.donem + '\n\n' +
+    'Kapasite: ' + v.odaSayisi + ' oda / ' + v.maxKisi + ' kisi\n' +
+    'Konaklayan: ' + v.toplamKisiGecesi + ' kisi | Oda Doluluk: %' + v.odaDoluluk.toFixed(1) + ' | Kisi Doluluk: %' + v.kisiDoluluk.toFixed(1) + '\n' +
+    'ADR: ' + Math.round(v.ADR).toLocaleString('tr-TR') + ' TL | RevPAR: ' + Math.round(v.RevPAR).toLocaleString('tr-TR') + ' TL | GOPPAR: ' + Math.round(v.GOPPAR).toLocaleString('tr-TR') + ' TL\n' +
+    'Ciro: ' + v.toplamCiro.toLocaleString('tr-TR') + ' TL | Gider: ' + v.toplamGider.toLocaleString('tr-TR') + ' TL | Kar/Zarar: ' + v.netKarZarar.toLocaleString('tr-TR') + ' TL | Marj: %' + v.karMarji.toFixed(1) + '\n' +
+    'Personel/Ciro: %' + (v.toplamCiro > 0 ? ((v.giderAnaBaslik['Personel Giderleri']||0)/v.toplamCiro*100).toFixed(1) : '0') + '\n' +
+    'Butce Ciro: ' + v.butceCiro.toLocaleString('tr-TR') + ' TL | Butce Gider: ' + v.butceGiderToplam.toLocaleString('tr-TR') + ' TL\n\n' +
+    'Sen deneyimli bir otel danismanissin ve bu raporu bizzat hazirlamissin. Turkce, akici, profesyonel yaz. Madde degil paragraf. Her bolum max 3-4 cumle. Basliklar:\n\n' +
+    'DOLULUK ANALIZI\nFIYAT PERFORMANSI (ADR, RevPAR, GOPPAR aciklamalariyla)\nFINANSAL DURUM\nGIDER ANALIZI\nBUTCE KARSILASTIRMASI\nGENEL DEGERLENDIRME VE ONERILER\n\n' +
+    'Son olarak: | Gosterge | Deger | Durum | formatinda kisa ozet tablo';
 
   try {
     var apiKeyArr = await sbGet('otel_ayarlari','anahtar=eq.claude_api_key');
@@ -7192,35 +7239,28 @@ async function raporFiyatOnerisi() {
   var v = _raporVeriler;
   var bugunAy = new Date(_raporBit).toLocaleDateString('tr-TR', {month:'long', year:'numeric'});
 
-  var prompt = `Sen deneyimli bir otel gelir yönetimi (Revenue Management) uzmanısın. 
-
-${v.otelAdi} için fiyat önerisi yap:
-- Konum: ${v.konum}
-- Kategori: ${v.kategori}
-- Kapasite: ${v.odaSayisi} oda
-- Dönem: ${v.donem}
-- Mevcut ADR: ${Math.round(v.ADR).toLocaleString('tr-TR')} TL
-- Mevcut Doluluk: %${v.odaDoluluk.toFixed(1)}
-- Tasarı ADR: ${v.butceCiro > 0 && v.toplamOdaGecesi > 0 ? Math.round(v.butceCiro/v.toplamOdaGecesi) : 'Belirsiz'} TL
-- Kar Marjı: %${v.karMarji.toFixed(1)}
-
-Önce web'de "${v.konum} ${v.kategori} fiyatları ${bugunAy}" araması yaparak bölgedeki rakip fiyatları bul.
-
-Sonra şu formatta yanıt ver:
-
-## 🔍 Piyasa Araştırması
-Bölgedeki rakip otel fiyat aralığı ve piyasa durumu
-
-## 📊 Mevcut Durum Analizi  
-Bizim fiyatımız piyasaya göre nerede, doluluk-fiyat dengesi
-
-## 💡 Fiyat Önerisi
-**Kısa Vade (Bu hafta/ay):** Önerilen fiyat aralığı ve gerekçe
-**Orta Vade (Önümüzdeki ay):** Strateji önerisi
-**Kanal Stratejisi:** OTA vs Direkt satış dengesi
-
-## ✅ Somut Adımlar
-Hemen yapılabilecek 3-5 somut öneri`;
+  var rakip1 = parseFloat(document.getElementById('rakip1')?.value) || 0;
+  var rakip2 = parseFloat(document.getElementById('rakip2')?.value) || 0;
+  var rakip3 = parseFloat(document.getElementById('rakip3')?.value) || 0;
+  var rakipKat = document.getElementById('rakip-kategori')?.value || 'Butik Otel';
+  var rakipNot = document.getElementById('rakip-not')?.value || '';
+  var rakipFiyatlar = [rakip1,rakip2,rakip3].filter(function(f){ return f>0; });
+  var rakipOrt = rakipFiyatlar.length>0 ? Math.round(rakipFiyatlar.reduce(function(a,b){return a+b;},0)/rakipFiyatlar.length) : 0;
+  if (rakipFiyatlar.length === 0) {
+    el.innerHTML = '<div style="padding:14px;background:var(--warn-l);border:1px solid #E0C87A;border-radius:8px;color:var(--warn)">Lutfen en az bir rakip fiyati girin.</div>';
+    return;
+  }
+  var prompt = v.otelAdi + ' - Fiyat Strateji Raporu | ' + v.donem + '\n\n' +
+    'Tesis: ' + v.konum + ' | ' + v.kategori + ' | ' + v.odaSayisi + ' oda\n' +
+    'Mevcut ADR: ' + Math.round(v.ADR).toLocaleString('tr-TR') + ' TL | Doluluk: %' + v.odaDoluluk.toFixed(1) + ' | Kar Marji: %' + v.karMarji.toFixed(1) + '\n\n' +
+    'RAKIP FIYATLAR (' + rakipKat + '):\n' +
+    (rakip1>0 ? 'Rakip 1: ' + rakip1.toLocaleString('tr-TR') + ' TL/gece\n' : '') +
+    (rakip2>0 ? 'Rakip 2: ' + rakip2.toLocaleString('tr-TR') + ' TL/gece\n' : '') +
+    (rakip3>0 ? 'Rakip 3: ' + rakip3.toLocaleString('tr-TR') + ' TL/gece\n' : '') +
+    'Rakip Ortalama: ' + rakipOrt.toLocaleString('tr-TR') + ' TL/gece\n' +
+    (rakipNot ? 'Not: ' + rakipNot + '\n' : '') +
+    '\nSen deneyimli bir revenue management uzmanissin ve bu analizi hazirlamissin. Turkce akici profesyonel yaz. Kisa paragraflar. Basliklar:\n\n' +
+    'PIYASA KONUMLAMASI\nFIYAT ONERISI\nKANAL STRATEJISI\nSOMUT ADIMLAR';
 
   try {
     var apiKeyArr2 = await sbGet('otel_ayarlari','anahtar=eq.claude_api_key');
