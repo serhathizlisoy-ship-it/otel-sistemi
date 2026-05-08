@@ -187,6 +187,128 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
   .atab { flex-wrap:wrap; }
   .atab-btn { font-size:11px; padding:6px 10px; }
 }
+  /* ═════════ DASHBOARD MODÜLÜ ═════════ */
+.dash-hero {
+  background: linear-gradient(135deg, var(--accent) 0%, #234d33 100%);
+  color: #fff; border-radius: 14px; padding: 22px 26px;
+  margin-bottom: 20px; display: flex; justify-content: space-between;
+  align-items: flex-end; flex-wrap: wrap; gap: 14px;
+  box-shadow: 0 6px 24px rgba(45,90,61,0.18);
+}
+.dash-hero-l h2 { font-family: 'DM Serif Display'; font-size: 22px; margin-bottom: 4px; }
+.dash-hero-l p { font-size: 13px; opacity: 0.85; }
+.dash-hero-r { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.dash-pill {
+  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+  padding: 6px 14px; border-radius: 18px; font-size: 12px;
+  display: flex; align-items: center; gap: 6px;
+}
+.dash-pill b { font-family: 'DM Mono'; font-weight: 600; }
+.dash-refresh {
+  background: rgba(255,255,255,0.18); color: #fff;
+  border: 1px solid rgba(255,255,255,0.3);
+  padding: 6px 12px; border-radius: 18px; font-size: 11px;
+  font-family: 'Instrument Sans'; cursor: pointer;
+  display: flex; align-items: center; gap: 5px; transition: all 0.15s;
+}
+.dash-refresh:hover { background: rgba(255,255,255,0.28); }
+.dash-refresh.loading svg { animation: spin 1s linear infinite; }
+
+.dash-group { margin-bottom: 18px; }
+.dash-group-t {
+  font-family: 'DM Serif Display'; font-size: 15px; color: var(--text);
+  margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+}
+.dash-group-t .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+.dash-group-t .dot.m { background: #1A4A6B; }
+.dash-group-t small {
+  font-size: 11px; color: var(--text-3); font-weight: 400;
+  font-family: 'Instrument Sans'; margin-left: auto;
+}
+.dash-grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.dash-kpi {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px 16px; position: relative;
+  overflow: hidden; transition: all 0.18s;
+}
+.dash-kpi:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,0.06); }
+.dash-kpi-ico { position: absolute; top: 12px; right: 12px; font-size: 18px; opacity: 0.4; }
+.dash-kpi-l {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.5px;
+  text-transform: uppercase; color: var(--text-3); margin-bottom: 8px;
+}
+.dash-kpi-v { font-family: 'DM Mono'; font-size: 22px; font-weight: 600; line-height: 1.1; }
+.dash-kpi-s { font-size: 11px; color: var(--text-3); margin-top: 5px; }
+.dash-kpi.pos { background: var(--accent-l); border-color: var(--accent-b); }
+.dash-kpi.neg { background: var(--danger-l); border-color: #e0baba; }
+.dash-kpi.pos .dash-kpi-v { color: var(--accent); }
+.dash-kpi.neg .dash-kpi-v { color: var(--danger); }
+
+.dash-occ { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+.dash-occ-bar {
+  height: 28px; background: var(--bg2); border-radius: 14px;
+  overflow: hidden; display: flex; margin: 12px 0 14px;
+}
+.dash-occ-fill {
+  background: linear-gradient(90deg, var(--accent) 0%, #4a8862 100%);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-family: 'DM Mono'; font-size: 13px; font-weight: 600;
+  transition: width 0.6s cubic-bezier(0.34,1.56,0.64,1); min-width: 0;
+}
+.dash-occ-fill.warn { background: linear-gradient(90deg, #C8850A, #E0A030); }
+.dash-occ-fill.low { background: linear-gradient(90deg, var(--danger), #b04040); }
+.dash-occ-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center; }
+.dash-occ-stat { padding: 10px 8px; background: var(--bg); border-radius: 8px; }
+.dash-occ-stat-v { font-family: 'DM Mono'; font-size: 17px; font-weight: 600; }
+.dash-occ-stat-l { font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.4px; margin-top: 2px; }
+
+.dash-quick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.dash-qb {
+  padding: 14px 10px; border-radius: 10px; border: 1.5px solid var(--border);
+  background: var(--bg); cursor: pointer; text-align: center;
+  font-family: 'Instrument Sans'; transition: all 0.15s;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+}
+.dash-qb:hover {
+  border-color: var(--accent); background: var(--accent-l);
+  transform: translateY(-2px); box-shadow: 0 4px 12px rgba(45,90,61,0.12);
+}
+.dash-qb-i { font-size: 22px; }
+.dash-qb-n { font-size: 12px; font-weight: 600; color: var(--text); }
+
+.dash-alerts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px; }
+.dash-alert-list {
+  display: flex; flex-direction: column; gap: 8px;
+  max-height: 320px; overflow-y: auto; padding-right: 4px;
+}
+.dash-alert-list::-webkit-scrollbar { width: 6px; }
+.dash-alert-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.dash-alert {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 12px; border-radius: 8px;
+  border-left: 3px solid var(--accent); background: var(--bg);
+  font-size: 12.5px; transition: all 0.15s; cursor: pointer;
+}
+.dash-alert:hover { background: var(--bg2); }
+.dash-alert.critical { border-left-color: var(--danger); background: var(--danger-l); }
+.dash-alert.warning { border-left-color: var(--warn); background: var(--warn-l); }
+.dash-alert.info { border-left-color: var(--mgr); background: var(--mgr-l); }
+.dash-alert-i { font-size: 16px; flex-shrink: 0; }
+.dash-alert-b { flex: 1; min-width: 0; }
+.dash-alert-t {
+  font-weight: 600; color: var(--text); margin-bottom: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dash-alert-m { font-size: 11px; color: var(--text-3); }
+.dash-alert-empty { text-align: center; padding: 28px 14px; color: var(--text-3); font-size: 12px; }
+.dash-alert-empty .ico { font-size: 28px; display: block; margin-bottom: 6px; opacity: 0.4; }
+
+@media (max-width: 768px) {
+  .dash-grid4 { grid-template-columns: 1fr 1fr; }
+  .dash-quick { grid-template-columns: 1fr 1fr; }
+  .dash-alerts { grid-template-columns: 1fr; }
+  .dash-hero { flex-direction: column; align-items: flex-start; }
+}
 </style>
 </head>
 <body>
@@ -243,18 +365,165 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
     <nav class="sidebar" id="sidebar"></nav>
     <main class="content">
 
-      <!-- Dashboard -->
-      <div class="pg on" id="pg-dashboard">
-        <div class="ptitle" id="dtitle">Hoş geldiniz</div>
-        <div class="psub" id="dsub"></div>
-        <div class="sg" id="dstats"></div>
-        <div class="dg">
-          <div class="dc"><div class="dct"><div class="dot"></div>Hızlı Erişim</div><div class="mg" id="dmodules"></div></div>
-          <div class="dc"><div class="dct"><div class="dot w"></div>Sistem Uyarıları</div><div class="al" id="dalerts"></div></div>
-          <div class="dc"><div class="dct"><div class="dot i"></div>Son Aktiviteler</div><div class="acl" id="dacts"></div></div>
-          <div class="dc" id="dadmin" style="display:none"><div class="dct"><div class="dot a"></div>Admin Paneli</div><div id="dadmincontent"></div></div>
+     <!-- Dashboard -->
+<div class="pg on" id="pg-dashboard">
+
+  <!-- KARŞILAMA BANDI -->
+  <div class="dash-hero">
+    <div class="dash-hero-l">
+      <h2 id="dtitle">Hoş geldiniz</h2>
+      <p id="dsub"></p>
+    </div>
+    <div class="dash-hero-r">
+      <div class="dash-pill">🏨 <span>Doluluk:</span> <b id="dash-pill-occ">—</b></div>
+      <div class="dash-pill">💰 <span>Dünkü ciro:</span> <b id="dash-pill-rev">—</b></div>
+      <button class="dash-refresh" id="dash-refresh-btn" onclick="dashboard()">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M10.5 6a4.5 4.5 0 1 1-1.32-3.18M10.5 1.5V4H8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Yenile
+      </button>
+    </div>
+  </div>
+
+  <!-- BUGÜNÜN ÖZETİ (DÜN KAPANIŞINDAN) -->
+  <div class="dash-group">
+    <div class="dash-group-t">
+      <span class="dot"></span> Bugünün Özeti
+      <small id="dash-yest-lbl">— dün kapanışından</small>
+    </div>
+    <div class="dash-grid4">
+      <div class="dash-kpi">
+        <div class="dash-kpi-ico">💰</div>
+        <div class="dash-kpi-l">Toplam Ciro</div>
+        <div class="dash-kpi-v" id="dash-d-ciro">—</div>
+        <div class="dash-kpi-s" id="dash-d-ciro-s"></div>
+      </div>
+      <div class="dash-kpi">
+        <div class="dash-kpi-ico">💳</div>
+        <div class="dash-kpi-l">Tahsilat</div>
+        <div class="dash-kpi-v" id="dash-d-tah">—</div>
+        <div class="dash-kpi-s" id="dash-d-tah-s"></div>
+      </div>
+      <div class="dash-kpi">
+        <div class="dash-kpi-ico">🛏️</div>
+        <div class="dash-kpi-l">Dolu Oda / Kişi</div>
+        <div class="dash-kpi-v" id="dash-d-oda">—</div>
+        <div class="dash-kpi-s" id="dash-d-oda-s"></div>
+      </div>
+      <div class="dash-kpi">
+        <div class="dash-kpi-ico">⚡</div>
+        <div class="dash-kpi-l">Enerji Maliyeti</div>
+        <div class="dash-kpi-v" id="dash-d-enerji">—</div>
+        <div class="dash-kpi-s" id="dash-d-enerji-s"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BU AY -->
+  <div class="dash-group">
+    <div class="dash-group-t">
+      <span class="dot m"></span> Bu Ay
+      <small id="dash-month-lbl"></small>
+    </div>
+    <div class="dash-grid4">
+      <div class="dash-kpi">
+        <div class="dash-kpi-ico">📈</div>
+        <div class="dash-kpi-l">Aylık Ciro</div>
+        <div class="dash-kpi-v" id="dash-m-ciro">—</div>
+        <div class="dash-kpi-s" id="dash-m-ciro-s"></div>
+      </div>
+      <div class="dash-kpi">
+        <div class="dash-kpi-ico">📉</div>
+        <div class="dash-kpi-l">Aylık Gider</div>
+        <div class="dash-kpi-v" id="dash-m-gider">—</div>
+        <div class="dash-kpi-s" id="dash-m-gider-s"></div>
+      </div>
+      <div class="dash-kpi" id="dash-m-kar-card">
+        <div class="dash-kpi-ico">💎</div>
+        <div class="dash-kpi-l">Brüt Kar / Zarar</div>
+        <div class="dash-kpi-v" id="dash-m-kar">—</div>
+        <div class="dash-kpi-s" id="dash-m-kar-s"></div>
+      </div>
+      <div class="dash-kpi">
+        <div class="dash-kpi-ico">📊</div>
+        <div class="dash-kpi-l">Kar Marjı</div>
+        <div class="dash-kpi-v" id="dash-m-marj">—</div>
+        <div class="dash-kpi-s" id="dash-m-marj-s"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DOLULUK -->
+  <div class="dash-group">
+    <div class="dash-group-t">
+      <span class="dot" style="background:#1A4A6B"></span> Doluluk Durumu
+      <small>son 7 gün ortalaması</small>
+    </div>
+    <div class="dash-occ">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:13px;color:var(--text-2)">Dünkü doluluk oranı</div>
+        <div style="font-family:'DM Mono';font-size:20px;font-weight:600;color:var(--accent)" id="dash-occ-pct">—</div>
+      </div>
+      <div class="dash-occ-bar">
+        <div class="dash-occ-fill" id="dash-occ-fill" style="width:0%">0%</div>
+      </div>
+      <div class="dash-occ-stats">
+        <div class="dash-occ-stat">
+          <div class="dash-occ-stat-v" id="dash-occ-dolu">—</div>
+          <div class="dash-occ-stat-l">Dolu Oda</div>
+        </div>
+        <div class="dash-occ-stat">
+          <div class="dash-occ-stat-v" id="dash-occ-bos">—</div>
+          <div class="dash-occ-stat-l">Boş Oda</div>
+        </div>
+        <div class="dash-occ-stat">
+          <div class="dash-occ-stat-v" id="dash-occ-7gun">—</div>
+          <div class="dash-occ-stat-l">7 Gün Ort.</div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- UYARILAR (2 sütun) -->
+  <div class="dash-alerts">
+    <div class="dc">
+      <div class="dct">
+        <div class="dot" style="background:var(--danger)"></div>
+        Aksaklık Uyarıları
+        <span style="margin-left:auto;font-size:11px;color:var(--text-3);font-weight:400" id="dash-aks-count"></span>
+      </div>
+      <div class="dash-alert-list" id="dash-aks-list">
+        <div class="dash-alert-empty"><span class="ico">⏳</span>Yükleniyor...</div>
+      </div>
+    </div>
+    <div class="dc">
+      <div class="dct">
+        <div class="dot w"></div>
+        Kritik Stok Uyarıları
+        <span style="margin-left:auto;font-size:11px;color:var(--text-3);font-weight:400" id="dash-stok-count"></span>
+      </div>
+      <div class="dash-alert-list" id="dash-stok-list">
+        <div class="dash-alert-empty"><span class="ico">⏳</span>Yükleniyor...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HIZLI ERİŞİM -->
+  <div class="dash-group">
+    <div class="dash-group-t">
+      <span class="dot"></span> Hızlı Erişim
+    </div>
+    <div class="dash-quick" id="dash-quick-grid"></div>
+  </div>
+
+  <!-- ADMİN PANEL -->
+  <div class="dc" id="dadmin" style="display:none;margin-top:18px">
+    <div class="dct"><div class="dot a"></div>Admin Paneli</div>
+    <div id="dadmincontent"></div>
+  </div>
+
+</div>
 
       <!-- Modül sayfaları -->
       <!-- GİDER MODÜLÜ -->
@@ -1651,69 +1920,259 @@ function sidebar() {
 
 async function dashboard() {
   var moduller = ROL_MODULLER[oturum.rol];
-  var bugun = new Date().toLocaleDateString('tr-TR', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
-  document.getElementById('dtitle').textContent = 'Hoş geldiniz, ' + oturum.ad;
-  document.getElementById('dsub').textContent = bugun;
+  var bugun = new Date();
+  var bugunYazi = bugun.toLocaleDateString('tr-TR', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
 
-  // Kapasite bilgisini Supabase'den çek
-  var toplamOda = 13; var toplamKisi = 26;
+  // Karşılama
+  var saat = bugun.getHours();
+  var selam = saat < 11 ? 'Günaydın' : (saat < 18 ? 'İyi günler' : 'İyi akşamlar');
+  var ad = oturum.ad ? oturum.ad.split(' ')[0] : '';
+  document.getElementById('dtitle').textContent = ad ? selam + ', ' + ad : 'Hoş geldiniz';
+  document.getElementById('dsub').textContent = bugunYazi;
+
+  var aylar = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+  document.getElementById('dash-month-lbl').textContent = aylar[bugun.getMonth()] + ' ' + bugun.getFullYear();
+
+  var btn = document.getElementById('dash-refresh-btn');
+  if (btn) btn.classList.add('loading');
+
+  // Tarih hesapları
+  function isoT(d) { return d.toISOString().split('T')[0]; }
+  function fmtTL(n) {
+    if (n == null || isNaN(n)) return '—';
+    return Math.round(n).toLocaleString('tr-TR') + ' TL';
+  }
+  function fmtTLkisa(n) {
+    if (n == null || isNaN(n)) return '—';
+    if (Math.abs(n) >= 1000000) return (n/1000000).toFixed(1).replace('.',',') + 'M ₺';
+    if (Math.abs(n) >= 1000)    return (n/1000).toFixed(1).replace('.',',')    + 'B ₺';
+    return Math.round(n) + ' ₺';
+  }
+  function num(x) { return Number(x) || 0; }
+
+  var dun = new Date(); dun.setDate(dun.getDate()-1);
+  var dunStr = isoT(dun);
+  var ayBas = isoT(new Date(bugun.getFullYear(), bugun.getMonth(), 1));
+  var bugunStr = isoT(bugun);
+  var ge7 = new Date(); ge7.setDate(ge7.getDate()-7);
+  var ge7Str = isoT(ge7);
+
+  document.getElementById('dash-yest-lbl').textContent =
+    dun.getDate() + '.' + String(dun.getMonth()+1).padStart(2,'0') + ' kapanışından';
+
+  // Toplam oda sayısı
+  var toplamOda = sistemOdaSayisi || 13;
+
+  // ─── 1. DÜN KAPANIŞI ─────────────────────────────
   try {
-    var odalar = await sbGet('odalar', 'aktif=eq.true');
-    if (odalar) {
-      toplamOda = odalar.length;
-      toplamKisi = odalar.reduce(function(s,o){ return s + (o.kapasite||2); }, 0);
-    }
-  } catch(e) {}
+    var dk = await sbGet('gunluk_kapanis', 'tarih=eq.' + dunStr);
+    if (dk && dk.length > 0) {
+      var k = dk[0];
+      var ciro = num(k.toplam_ciro);
+      var tah = num(k.toplam_tahsilat);
+      var dolu = num(k.dolu_oda);
+      var kisi = num(k.konaklayan_kisi);
+      var enerji = num(k.toplam_enerji_tutar);
 
-  var sh = '<div class="sc"><div class="slbl">Toplam Oda</div><div class="sval">' + toplamOda + '</div><div class="ssub">Aktif oda kapasitesi</div></div>' +
-    '<div class="sc hi"><div class="slbl">Kişi Kapasitesi</div><div class="sval">' + toplamKisi + '</div><div class="ssub">Maksimum misafir</div></div>' +
-    '<div class="sc"><div class="slbl">Bu Ayki Gider</div><div class="sval">0 TL</div><div class="ssub">Henüz giriş yok</div></div>' +
-    '<div class="sc"><div class="slbl">Tahmini Kar</div><div class="sval">0 TL</div><div class="ssub">Gelir - Gider</div></div>';
-  document.getElementById('dstats').innerHTML = sh;
+      document.getElementById('dash-d-ciro').textContent = fmtTL(ciro);
+      document.getElementById('dash-d-ciro-s').textContent = kisi > 0 ? 'Kişi başı ' + fmtTL(ciro/kisi) : '';
+      document.getElementById('dash-d-tah').textContent = fmtTL(tah);
+      var fark = ciro - tah;
+      document.getElementById('dash-d-tah-s').textContent =
+        Math.abs(fark) < 1 ? '✅ Eşit' :
+        fark > 0 ? '⚠️ Açık: ' + fmtTL(fark) : 'Fazla: ' + fmtTL(-fark);
+      document.getElementById('dash-d-oda').textContent = dolu + ' / ' + kisi + ' kişi';
+      document.getElementById('dash-d-oda-s').textContent = dunStr + ' kapanışı';
+      document.getElementById('dash-d-enerji').textContent = enerji > 0 ? fmtTL(enerji) : '—';
+      document.getElementById('dash-d-enerji-s').textContent = enerji > 0 && dolu > 0 ? 'Oda başı ' + fmtTL(enerji/dolu) : '';
 
-  var qm = [
-    {id:'gider',i:'📊',n:'Gider Gir',s:'Fatura & ödeme'},
-    {id:'rapor',i:'📈',n:'Raporlar',s:'Analiz'},
-    {id:'gelir-butce',i:'💰',n:'Gelir Bütçesi',s:'Hedef & Fiyat'}
-  ];
-  var mh = '';
-  qm.forEach(function(m){
-    var izin = moduller.indexOf(m.id) >= 0;
-    mh += '<div class="mb' + (!izin?' lk':'') + '" onclick="' + (izin?'git(\''+m.id+'\')':'showToast(\'Erişim yetkiniz yok.\',true)') + '">' +
-      '<div class="mbi">' + m.i + '</div><div class="mbn">' + m.n + '</div><div class="mbs">' + m.s + '</div></div>';
-  });
-  document.getElementById('dmodules').innerHTML = mh;
-
-  // Aksaklık uyarılarını yükle
-  try {
-    var acikAksakliklar = await sbGet('aksaklik', 'durum=neq.Çözüldü&order=oncelik.asc');
-    var uyariHtml = '';
-    if (acikAksakliklar && acikAksakliklar.length > 0) {
-      var aciller = acikAksakliklar.filter(function(a){ return a.oncelik === 'Acil'; });
-      if (aciller.length > 0) {
-        uyariHtml += '<div class="ai d">🔴 ' + aciller.length + ' acil aksaklık var!</div>';
-      }
-      uyariHtml += '<div class="ai w">⚠️ ' + acikAksakliklar.length + ' açık aksaklık — <span onclick="git(\'aksaklik\')" style="cursor:pointer;text-decoration:underline">Görüntüle</span></div>';
+      document.getElementById('dash-pill-rev').textContent = fmtTLkisa(ciro);
+      var pct = toplamOda > 0 ? Math.round((dolu/toplamOda)*100) : 0;
+      document.getElementById('dash-pill-occ').textContent = dolu + '/' + toplamOda + ' (%' + pct + ')';
     } else {
-      uyariHtml += '<div class="ai ok">✅ Açık aksaklık yok</div>';
+      document.getElementById('dash-d-ciro').textContent = '—';
+      document.getElementById('dash-d-ciro-s').textContent = dunStr + ' için kapanış girilmemiş';
+      document.getElementById('dash-d-tah').textContent = '—';
+      document.getElementById('dash-d-oda').textContent = '—';
+      document.getElementById('dash-d-enerji').textContent = '—';
+      document.getElementById('dash-pill-rev').textContent = '—';
+      document.getElementById('dash-pill-occ').textContent = 'veri yok';
     }
-    uyariHtml += '<div class="ai ok">● Sistem Supabase bulutuna bağlı</div>';
-    document.getElementById('dalerts').innerHTML = uyariHtml;
+  } catch(e) { console.warn('Dün kapanış:', e); }
+
+  // ─── 2. BU AY ────────────────────────────────────
+  try {
+    var ayKap = await sbGet('gunluk_kapanis', 'tarih=gte.' + ayBas + '&tarih=lte.' + bugunStr);
+    var ayCiro = 0;
+    if (ayKap) ayKap.forEach(function(k){ ayCiro += num(k.toplam_ciro); });
+
+    var ayGid = await sbGet('gider_girisi', 'tarih=gte.' + ayBas + '&tarih=lte.' + bugunStr);
+    var ayGider = 0;
+    if (ayGid) ayGid.forEach(function(g){ ayGider += num(g.tutar); });
+
+    var ayKar = ayCiro - ayGider;
+    var ayMarj = ayCiro > 0 ? (ayKar/ayCiro)*100 : null;
+
+    document.getElementById('dash-m-ciro').textContent = fmtTL(ayCiro);
+    document.getElementById('dash-m-ciro-s').textContent = (ayKap ? ayKap.length : 0) + ' kapanış kaydı';
+    document.getElementById('dash-m-gider').textContent = fmtTL(ayGider);
+    document.getElementById('dash-m-gider-s').textContent = (ayGid ? ayGid.length : 0) + ' gider kaydı';
+
+    var karEl = document.getElementById('dash-m-kar-card');
+    karEl.classList.remove('pos','neg');
+    if (ayKar > 0) karEl.classList.add('pos');
+    else if (ayKar < 0) karEl.classList.add('neg');
+    document.getElementById('dash-m-kar').textContent = (ayKar >= 0 ? '+' : '') + fmtTL(ayKar);
+    document.getElementById('dash-m-kar-s').textContent = ayKar >= 0 ? 'Kâr durumda' : 'Zararda';
+
+    document.getElementById('dash-m-marj').textContent = ayMarj !== null ? '%' + ayMarj.toFixed(1).replace('.',',') : '—';
+    document.getElementById('dash-m-marj-s').textContent = ayMarj === null ? 'Veri yok' :
+      (ayMarj >= 20 ? 'Sağlıklı' : (ayMarj >= 10 ? 'Orta' : 'Düşük'));
+  } catch(e) { console.warn('Ay özet:', e); }
+
+  // ─── 3. DOLULUK ──────────────────────────────────
+  try {
+    var dunDolu = 0;
+    var dkx = await sbGet('gunluk_kapanis', 'tarih=eq.' + dunStr);
+    if (dkx && dkx.length > 0) dunDolu = num(dkx[0].dolu_oda);
+    var bos = Math.max(0, toplamOda - dunDolu);
+    var pct = toplamOda > 0 ? Math.round((dunDolu/toplamOda)*100) : 0;
+
+    var son7 = await sbGet('gunluk_kapanis', 'tarih=gte.' + ge7Str + '&tarih=lte.' + dunStr);
+    var ort7 = null;
+    if (son7 && son7.length > 0) {
+      var top = son7.reduce(function(s,r){ return s + num(r.dolu_oda); }, 0);
+      ort7 = top / son7.length;
+    }
+
+    document.getElementById('dash-occ-pct').textContent = '%' + pct;
+    var fillEl = document.getElementById('dash-occ-fill');
+    fillEl.style.width = pct + '%';
+    fillEl.textContent = pct >= 8 ? '%' + pct : '';
+    fillEl.classList.remove('warn','low');
+    if (pct < 30) fillEl.classList.add('low');
+    else if (pct < 60) fillEl.classList.add('warn');
+
+    document.getElementById('dash-occ-dolu').textContent = dunDolu;
+    document.getElementById('dash-occ-bos').textContent = bos;
+    document.getElementById('dash-occ-7gun').textContent = ort7 !== null ?
+      '%' + Math.round((ort7/toplamOda)*100) : '—';
+  } catch(e) { console.warn('Doluluk:', e); }
+
+  // ─── 4. AKSAKLIK UYARILARI ───────────────────────
+  try {
+    var aks = await sbGet('aksaklik', 'durum=neq.Çözüldü&order=oncelik.asc,tarih.desc');
+    var aksListe = document.getElementById('dash-aks-list');
+    var aksCnt = document.getElementById('dash-aks-count');
+
+    if (!aks || aks.length === 0) {
+      aksListe.innerHTML = '<div class="dash-alert-empty"><span class="ico">✅</span>Açık aksaklık yok — her şey yolunda</div>';
+      aksCnt.textContent = '0 açık';
+    } else {
+      var acil = aks.filter(function(a){ return a.oncelik === 'Acil'; }).length;
+      aksCnt.textContent = aks.length + ' açık' + (acil ? ' · ' + acil + ' acil' : '');
+
+      aksListe.innerHTML = aks.slice(0,15).map(function(a){
+        var cls = a.oncelik === 'Acil' ? 'critical' : (a.oncelik === 'Düşük' ? 'info' : 'warning');
+        var ico = a.oncelik === 'Acil' ? '🔴' : (a.oncelik === 'Düşük' ? '🟢' : '🟡');
+        var trh = a.tarih ? new Date(a.tarih + 'T12:00:00').toLocaleDateString('tr-TR', {day:'2-digit', month:'short'}) : '';
+        var aciklama = (a.aciklama || '').replace(/[<>]/g,'').substring(0,55);
+        return '<div class="dash-alert ' + cls + '" onclick="git(\'aksaklik\')">' +
+          '<span class="dash-alert-i">' + ico + '</span>' +
+          '<div class="dash-alert-b">' +
+          '<div class="dash-alert-t">' + (a.tur || 'Aksaklık') + ': ' + aciklama + (a.aciklama && a.aciklama.length > 55 ? '…' : '') + '</div>' +
+          '<div class="dash-alert-m">' + trh + ' · ' + (a.konum || '—') + ' · ' + a.durum + '</div>' +
+          '</div></div>';
+      }).join('');
+    }
   } catch(e) {
-    document.getElementById('dalerts').innerHTML =
-      '<div class="ai ok">● Sistem Supabase bulutuna bağlı</div>' +
-      '<div class="ai ok">● Veriler her cihazdan erişilebilir</div>';
+    document.getElementById('dash-aks-list').innerHTML =
+      '<div class="dash-alert-empty"><span class="ico">⚠️</span>Aksaklık verisine ulaşılamadı</div>';
+    document.getElementById('dash-aks-count').textContent = '';
   }
 
-  document.getElementById('dacts').innerHTML =
-    '<div class="aci"><div class="acd"></div><div><div class="act">Sistem başarıyla başlatıldı</div><div class="acti">Bugün</div></div></div>' +
-    '<div class="aci"><div class="acd"></div><div><div class="act">Supabase bulut bağlantısı kuruldu</div><div class="acti">Bugün</div></div></div>' +
-    '<div class="aci"><div class="acd i"></div><div><div class="act">13 oda tanımı yüklendi</div><div class="acti">Bugün</div></div></div>';
+  // ─── 5. KRİTİK STOK UYARILARI ────────────────────
+  try {
+    var bakiye = await sbGet('stok_bakiye', '');
+    var urunler = await sbGet('stok_urun', 'aktif=eq.true');
+    var stokListe = document.getElementById('dash-stok-list');
+    var stokCnt = document.getElementById('dash-stok-count');
 
+    if (!urunler || urunler.length === 0) {
+      stokListe.innerHTML = '<div class="dash-alert-empty"><span class="ico">📦</span>Henüz ürün tanımlı değil</div>';
+      stokCnt.textContent = 'pasif';
+    } else {
+      var bakiyeMap = {};
+      if (bakiye) bakiye.forEach(function(b){ bakiyeMap[b.urun_id] = num(b.miktar); });
+
+      var kritikler = urunler.filter(function(u) {
+        var ms = num(u.minimum_stok);
+        if (ms <= 0) return false;
+        var mevcut = bakiyeMap[u.id] || 0;
+        return mevcut <= ms;
+      }).sort(function(a,b){
+        var oa = (bakiyeMap[a.id]||0) / (num(a.minimum_stok)||1);
+        var ob = (bakiyeMap[b.id]||0) / (num(b.minimum_stok)||1);
+        return oa - ob;
+      });
+
+      if (kritikler.length === 0) {
+        stokListe.innerHTML = '<div class="dash-alert-empty"><span class="ico">✅</span>Kritik seviyede ürün yok</div>';
+        stokCnt.textContent = '0 / ' + urunler.length + ' ürün';
+      } else {
+        stokCnt.textContent = kritikler.length + ' ürün kritik';
+        stokListe.innerHTML = kritikler.slice(0,15).map(function(u){
+          var mevcut = bakiyeMap[u.id] || 0;
+          var ms = num(u.minimum_stok);
+          var oran = ms > 0 ? mevcut/ms : 0;
+          var negatif = mevcut < 0;
+          var cls = negatif ? 'critical' : (oran < 0.3 ? 'critical' : 'warning');
+          var ico = negatif ? '🔴' : (oran < 0.3 ? '🚨' : '⚠️');
+          var durum = negatif ? 'NEGATİF!' : (oran < 0.3 ? 'Kritik' : 'Az');
+          return '<div class="dash-alert ' + cls + '" onclick="git(\'stok\')">' +
+            '<span class="dash-alert-i">' + ico + '</span>' +
+            '<div class="dash-alert-b">' +
+            '<div class="dash-alert-t">' + (u.ad || 'Ürün') + '</div>' +
+            '<div class="dash-alert-m">Kalan: ' + mevcut.toLocaleString('tr-TR') + ' ' + (u.birim || '') +
+            ' · Min: ' + ms + ' ' + (u.birim || '') + ' · ' + durum + '</div>' +
+            '</div></div>';
+        }).join('');
+      }
+    }
+  } catch(e) {
+    document.getElementById('dash-stok-list').innerHTML =
+      '<div class="dash-alert-empty"><span class="ico">📦</span>Stok verisine ulaşılamadı</div>';
+    document.getElementById('dash-stok-count').textContent = '';
+  }
+
+  // ─── 6. HIZLI ERİŞİM ─────────────────────────────
+  var hizliButonlar = [
+    {id:'kapanis',  i:'🌙', n:'Günlük Kapanış'},
+    {id:'gider',    i:'💸', n:'Gider Girişi'},
+    {id:'aksaklik', i:'⚠️', n:'Aksaklık Bildir', extra:'aksaklikModalAc()'},
+    {id:'cari',     i:'👥', n:'Cari Hesaplar'},
+    {id:'rapor',    i:'📈', n:'Raporlar'},
+    {id:'stok',     i:'📦', n:'Stok Yönetimi'},
+    {id:'gerceklesen', i:'📊', n:'Gerçekleşen'},
+    {id:'gelir-butce', i:'💰', n:'Bütçe'}
+  ];
+  var qhtml = '';
+  hizliButonlar.forEach(function(b){
+    if (moduller.indexOf(b.id) < 0) return;
+    var onClick = b.extra ? 'git(\'' + b.id + '\');setTimeout(' + b.extra + ',200)' : 'git(\'' + b.id + '\')';
+    qhtml += '<button class="dash-qb" onclick="' + onClick + '">' +
+      '<span class="dash-qb-i">' + b.i + '</span>' +
+      '<span class="dash-qb-n">' + b.n + '</span>' +
+      '</button>';
+  });
+  document.getElementById('dash-quick-grid').innerHTML = qhtml;
+
+  // ─── 7. ADMİN PANEL ──────────────────────────────
   if (oturum.rol === 'admin') {
+    var toplamKisi = sistemKisiKapasitesi || 26;
     document.getElementById('dadmin').style.display = 'block';
     document.getElementById('dadmincontent').innerHTML =
-      '<div style="display:flex;flex-direction:column;gap:8px">' +
+      '<div style="display:flex;flex-direction:column;gap:10px">' +
       '<div style="padding:10px 12px;background:var(--admin-l);border:1px solid var(--admin-b);border-radius:8px;display:flex;justify-content:space-between;align-items:center">' +
       '<span style="font-size:12px;color:var(--admin)"><strong>Veritabanı:</strong> Supabase Bulut</span>' +
       '<span style="font-size:11px;background:var(--admin);color:#fff;padding:2px 8px;border-radius:10px">Aktif</span></div>' +
@@ -1722,9 +2181,12 @@ async function dashboard() {
       '<div style="padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;text-align:center"><div style="font-size:20px;font-family:DM Mono,monospace;font-weight:500">' + toplamKisi + '</div><div style="font-size:11px;color:var(--text-3)">Max Kişi</div></div></div>' +
       '<button onclick="git(\'ayarlar\')" style="padding:9px;border:1px solid var(--admin-b);border-radius:7px;background:var(--admin-l);color:var(--admin);font-family:Instrument Sans,sans-serif;font-size:12px;font-weight:600;cursor:pointer;width:100%">⚙️ Sistem Ayarlarına Git</button>' +
       '</div>';
+  } else {
+    document.getElementById('dadmin').style.display = 'none';
   }
-}
 
+  if (btn) btn.classList.remove('loading');
+}
 // ── NAVİGASYON ────────────────────────────────────────
 function git(sayfaId) {
   var moduller = ROL_MODULLER[oturum.rol];
