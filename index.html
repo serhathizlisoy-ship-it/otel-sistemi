@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0042)file:///C:/Users/HP/Downloads/index_4.html -->
+<!-- saved from url=(0042)file:///C:/Users/HP/Downloads/index_5.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -4188,6 +4188,7 @@ function butceSekme(sekme) {
     if (el) el.style.display = s === sekme ? 'block' : 'none';
     if (btn) btn.className = 'atab-btn' + (s === sekme ? ' on' : '');
   });
+  if (sekme === 'fiyat') fiyatHesaplamaYukle();
   if (sekme === 'dfc') dfcTablosuYukle();
   if (sekme === 'revizyon') revizyonGecmisiYukle();
   if (sekme === 'gider') giderButcesiYukle();
