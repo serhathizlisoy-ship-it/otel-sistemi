@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_70.html -->
+<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_71.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7140,23 +7140,23 @@ Başlıklar: Doluluk Analizi, Fiyat Performansı (ADR/RevPAR/GOPPAR), Finansal D
       el.innerHTML = '<div style="padding:16px;background:var(--warn-l);border:1px solid #E0C87A;border-radius:8px;font-size:13px;color:var(--warn)">⚠️ Claude API anahtarı tanımlanmamış. <strong>Sistem Ayarları → Sistem</strong> sekmesinden API anahtarınızı girin.</div>';
       return;
     }
-    var response = await fetch('https://api.anthropic.com/v1/messages', {
+    var response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-allow-browser': 'true'
+        'Authorization': 'Bearer ' + apiKey,
+        'HTTP-Referer': 'https://serhathizlisoy-ship-it.github.io',
+        'X-Title': 'Otel Yonetim Sistemi'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'anthropic/claude-sonnet-4',
         max_tokens: 1500,
         messages: [{ role: 'user', content: prompt }]
       })
     });
 
     var data = await response.json();
-    var metin = data.content && data.content[0] ? data.content[0].text : 'Yanıt alınamadı.';
+    var metin = data.choices && data.choices[0] ? data.choices[0].message.content : (data.error ? data.error.message : 'Yanıt alınamadı.');
 
     // Markdown'ı HTML'e çevir
     var html = metin
@@ -7218,27 +7218,23 @@ Hemen yapılabilecek 3-5 somut öneri`;
       el.innerHTML = '<div style="padding:16px;background:var(--warn-l);border:1px solid #E0C87A;border-radius:8px;font-size:13px;color:var(--warn)">⚠️ Claude API anahtarı tanımlanmamış. <strong>Sistem Ayarları → Sistem</strong> sekmesinden API anahtarınızı girin.</div>';
       return;
     }
-    var response = await fetch('https://api.anthropic.com/v1/messages', {
+    var response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': apiKey2,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-allow-browser': 'true'
+        'Authorization': 'Bearer ' + apiKey2,
+        'HTTP-Referer': 'https://serhathizlisoy-ship-it.github.io',
+        'X-Title': 'Otel Yonetim Sistemi'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'anthropic/claude-sonnet-4',
         max_tokens: 1500,
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         messages: [{ role: 'user', content: prompt }]
       })
     });
 
     var data = await response.json();
-    var metin = data.content
-      .filter(function(c){ return c.type === 'text'; })
-      .map(function(c){ return c.text; })
-      .join('\n');
+    var metin = data.choices && data.choices[0] ? data.choices[0].message.content : (data.error ? data.error.message : 'Yanıt alınamadı.');
 
     if (!metin) metin = 'Yanıt alınamadı.';
 
