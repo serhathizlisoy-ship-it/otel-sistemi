@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0042)file:///C:/Users/HP/Downloads/index_7.html -->
+<!-- saved from url=(0042)file:///C:/Users/HP/Downloads/index_8.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1837,7 +1837,7 @@ async function girisYap() {
   err.style.display = 'none';
 
   try {
-    var sonuc = await sbRpc('kullanici_giris', {p_kullanici_adi: u, p_sifre: p});
+    var sonuc = await sbGet('kullanicilar', 'kullanici_adi=eq.' + u + '&sifre=eq.' + p);
     if (sonuc && sonuc.length > 0) {
       oturum = sonuc[0];
       sessionStorage.setItem('oturum', JSON.stringify(oturum));
@@ -2462,8 +2462,7 @@ async function sifreDegistir(userId, kullaniciAdi) {
   if (s1.length < 6) { showToast('Şifre en az 6 karakter!', true); return; }
   if (s1 !== s2) { showToast('Şifreler eşleşmiyor!', true); return; }
   try {
-    // Şifreyi hash'leyerek güncelle - RPC ile
-    await sbRpc('sifre_guncelle', {p_user_id: userId, p_sifre: s1});
+    await sbPatch('kullanicilar', 'id=eq.' + userId, {sifre: s1});
     document.getElementById('sifre-' + userId).value = '';
     document.getElementById('sifre2-' + userId).value = '';
     showToast('✓ ' + kullaniciAdi + ' şifresi değiştirildi');
