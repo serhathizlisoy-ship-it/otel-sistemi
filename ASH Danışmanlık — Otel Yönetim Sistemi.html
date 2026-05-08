@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_51.html -->
+<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_52.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -300,6 +300,57 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
                     </select>
                   </div>
                   <div id="gid-personel-bilgi" style="display:none;padding:10px 12px;background:var(--accent-l);border:1px solid var(--accent-b);border-radius:8px;font-size:12px;color:var(--accent)"></div>
+                </div>
+
+                <!-- STOK GİRİŞİ -->
+                <div id="gid-stok-alan" style="display:none">
+                  <div style="margin-top:8px;padding:12px 14px;background:var(--bg2);border:1.5px solid var(--accent-b);border-radius:10px">
+                    <div style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:10px">📦 Stok Girişi</div>
+                    
+                    <!-- Kategori + Ürün + Miktar satırı -->
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:flex-end">
+                      <div>
+                        <div style="font-size:11px;color:var(--text-3);margin-bottom:3px">Stok Kategorisi</div>
+                        <select id="gid-stok-kat" onchange="gidStokKategoriSecildi()" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:6px;font-family:Instrument Sans,sans-serif;font-size:12px;background:var(--bg)">
+                          <option value="">— Seçiniz —</option>
+                        </select>
+                      </div>
+                      <div>
+                        <div style="font-size:11px;color:var(--text-3);margin-bottom:3px">Ürün</div>
+                        <select id="gid-stok-urun" onchange="gidStokUrunSecildi()" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:6px;font-family:Instrument Sans,sans-serif;font-size:12px;background:var(--bg)">
+                          <option value="">— Kategori seçin —</option>
+                        </select>
+                      </div>
+                      <div>
+                        <div style="font-size:11px;color:var(--text-3);margin-bottom:3px">Miktar</div>
+                        <div style="display:flex;align-items:center;gap:4px">
+                          <input type="number" id="gid-stok-miktar" placeholder="0" min="0" step="0.01" style="flex:1;padding:7px;border:1px solid var(--border);border-radius:6px;font-family:DM Mono,monospace;font-size:13px;background:var(--bg)">
+                          <span id="gid-stok-birim" style="font-size:11px;color:var(--text-3);white-space:nowrap">birim</span>
+                        </div>
+                      </div>
+                      <button onclick="gidStokUrunEkle()" style="padding:7px 14px;border:none;border-radius:6px;background:var(--accent);color:#fff;font-family:Instrument Sans,sans-serif;font-size:12px;cursor:pointer;white-space:nowrap">+ Ekle</button>
+                    </div>
+
+                    <!-- Yeni ürün ekle -->
+                    <div id="gid-yeni-urun-alan" style="display:none;margin-bottom:8px;padding:10px;background:var(--bg);border:1px dashed var(--border);border-radius:7px">
+                      <div style="font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:8px">➕ Yeni Ürün Ekle</div>
+                      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px">
+                        <input type="text" id="gid-yeni-urun-ad" placeholder="Ürün adı" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--bg)">
+                        <select id="gid-yeni-urun-birim" style="padding:6px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--bg)">
+                          <option value="gram">gram</option>
+                          <option value="kg">kg</option>
+                          <option value="ml">ml</option>
+                          <option value="litre">litre</option>
+                          <option value="adet">adet</option>
+                        </select>
+                        <button onclick="gidYeniUrunKaydet()" style="padding:6px 12px;border:none;border-radius:6px;background:var(--mgr);color:#fff;font-size:12px;cursor:pointer">Kaydet</button>
+                      </div>
+                    </div>
+                    <button onclick="document.getElementById(&#39;gid-yeni-urun-alan&#39;).style.display=document.getElementById(&#39;gid-yeni-urun-alan&#39;).style.display===&#39;none&#39;?&#39;block&#39;:&#39;none&#39;" style="font-size:11px;color:var(--accent);border:none;background:none;cursor:pointer;padding:0;margin-bottom:8px">+ Sistemde olmayan ürün ekle</button>
+
+                    <!-- Eklenen stok kalemleri -->
+                    <div id="gid-stok-listesi" style="display:flex;flex-direction:column;gap:4px"></div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1777,6 +1828,18 @@ var GIDER_YAPISI = {
   }
 };
 
+
+// ── STOK BAĞLANTILI ALT KIRILIMLAR ──────────────────
+var STOK_BAGLI = {
+  'Pansiyon F&B Gideri':          ['Yiyecek', 'Alkolsüz İçecek', 'Alkollü İçecek'],
+  'Ekstra F&B Gideri':            ['Yiyecek', 'Alkolsüz İçecek', 'Alkollü İçecek'],
+  'Minibar Gideri':               ['Alkolsüz İçecek', 'Alkollü İçecek'],
+  'Buklet Malzemeleri Gideri':    ['Buklet'],
+  'Temizlik Malzemeleri Gideri':  ['Temizlik']
+};
+
+var _stokGirisler = []; // Mevcut stok giriş satırları
+
 // ── GİDER MODÜLÜ EK FONKSİYONLAR ───────────────────
 var PERSONEL_GEREKTIREN = ['Maaş + Asgari Geçim İndirimi','SGK Ödemeleri','Sosyal Yardımlar (Ev Kirası)','Personel F&B Maliyeti'];
 
@@ -1835,11 +1898,11 @@ function giderAltSecildi() {
   var ana = document.getElementById('gid-ana').value;
   var alt = document.getElementById('gid-alt').value;
   var personelSec = document.getElementById('gid-personel-sec');
-  
+  var stokAlan = document.getElementById('gid-stok-alan');
+
   // Personel gerektiren alt kırılım mı?
   if (ana === 'Personel Giderleri' && PERSONEL_GEREKTIREN.indexOf(alt) >= 0) {
     personelSec.style.display = 'block';
-    // Personel listesini doldur
     var sel = document.getElementById('gid-personel');
     sel.innerHTML = '<option value="">— Personel seçin —</option>';
     _giderPersoneller.forEach(function(p) {
@@ -1849,7 +1912,130 @@ function giderAltSecildi() {
     personelSec.style.display = 'none';
     document.getElementById('gid-personel-bilgi').style.display = 'none';
   }
+
+  // Stok bağlantılı alt kırılım mı?
+  if (stokAlan && STOK_BAGLI[alt]) {
+    stokAlan.style.display = 'block';
+    _stokGirisler = [];
+    gidStokListesiGoster();
+    // Kategorileri doldur
+    var katSel = document.getElementById('gid-stok-kat');
+    if (katSel) {
+      katSel.innerHTML = '<option value="">— Seçiniz —</option>';
+      var izinliKatlar = STOK_BAGLI[alt];
+      _stokKategoriler.forEach(function(k) {
+        if (izinliKatlar.indexOf(k.ad) >= 0) {
+          katSel.innerHTML += '<option value="' + k.id + '" data-ad="' + k.ad + '">' + k.ad + '</option>';
+        }
+      });
+    }
+  } else if (stokAlan) {
+    stokAlan.style.display = 'none';
+    _stokGirisler = [];
+  }
+
   giderOzetGoster();
+}
+
+function gidStokKategoriSecildi() {
+  var katSel = document.getElementById('gid-stok-kat');
+  var katId = katSel.value;
+  var urunSel = document.getElementById('gid-stok-urun');
+  urunSel.innerHTML = '<option value="">— Ürün seçin —</option>';
+  if (!katId) return;
+
+  var katUrunler = _stokUrunler.filter(function(u){ return u.kategori_id === katId; });
+  katUrunler.forEach(function(u) {
+    urunSel.innerHTML += '<option value="' + u.id + '" data-birim="' + u.birim + '" data-bf="' + (u.birim_fiyat||0) + '">' + u.ad + '</option>';
+  });
+}
+
+function gidStokUrunSecildi() {
+  var urunSel = document.getElementById('gid-stok-urun');
+  var opt = urunSel.options[urunSel.selectedIndex];
+  var birim = opt ? (opt.getAttribute('data-birim')||'') : '';
+  var birimEl = document.getElementById('gid-stok-birim');
+  if (birimEl) birimEl.textContent = birim;
+}
+
+function gidStokUrunEkle() {
+  var urunSel = document.getElementById('gid-stok-urun');
+  var miktar = parseFloat(document.getElementById('gid-stok-miktar').value) || 0;
+  if (!urunSel.value || miktar <= 0) { showToast('Ürün ve miktar girin!', true); return; }
+
+  var opt = urunSel.options[urunSel.selectedIndex];
+  var birim = opt.getAttribute('data-birim') || '';
+  var bf = parseFloat(opt.getAttribute('data-bf')) || 0;
+  var urun = _stokUrunler.find(function(u){ return u.id === urunSel.value; });
+
+  _stokGirisler.push({
+    urun_id: urunSel.value,
+    ad: urun ? urun.ad : opt.text,
+    miktar: miktar,
+    birim: birim,
+    birim_fiyat: bf,
+    tutar: miktar * bf
+  });
+
+  document.getElementById('gid-stok-miktar').value = '';
+  urunSel.value = '';
+  document.getElementById('gid-stok-birim').textContent = 'birim';
+  gidStokListesiGoster();
+  
+  // Toplam tutarı güncelle
+  var toplamTutar = _stokGirisler.reduce(function(s,g){ return s+g.tutar; }, 0);
+  if (toplamTutar > 0) {
+    document.getElementById('gid-tutar').value = toplamTutar.toFixed(2);
+    giderOzetGoster();
+  }
+}
+
+function gidStokListesiGoster() {
+  var el = document.getElementById('gid-stok-listesi');
+  if (!el) return;
+  if (_stokGirisler.length === 0) {
+    el.innerHTML = '<div style="font-size:11px;color:var(--text-3);text-align:center;padding:8px">Henüz ürün eklenmedi</div>';
+    return;
+  }
+  var html = '';
+  _stokGirisler.forEach(function(g, idx) {
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px">' +
+      '<span style="font-size:12px;font-weight:600">' + g.ad + '</span>' +
+      '<span style="font-size:12px;color:var(--text-3)">' + g.miktar.toLocaleString('tr-TR') + ' ' + g.birim + '</span>' +
+      '<span style="font-family:DM Mono,monospace;font-size:12px;color:var(--accent)">' + (g.tutar>0?g.tutar.toFixed(2)+' TL':'—') + '</span>' +
+      '<button data-idx="' + idx + '" onclick="gidStokSil(this)" style="padding:2px 7px;border:1px solid #e0baba;border-radius:4px;background:var(--danger-l);color:var(--danger);font-size:11px;cursor:pointer">✕</button>' +
+      '</div>';
+  });
+  el.innerHTML = html;
+}
+
+function gidStokSil(btn) {
+  var idx = parseInt(btn.getAttribute('data-idx'));
+  _stokGirisler.splice(idx, 1);
+  gidStokListesiGoster();
+  var toplamTutar = _stokGirisler.reduce(function(s,g){ return s+g.tutar; }, 0);
+  document.getElementById('gid-tutar').value = toplamTutar > 0 ? toplamTutar.toFixed(2) : '';
+  giderOzetGoster();
+}
+
+async function gidYeniUrunKaydet() {
+  var ad = document.getElementById('gid-yeni-urun-ad').value.trim();
+  var birim = document.getElementById('gid-yeni-urun-birim').value;
+  var katSel = document.getElementById('gid-stok-kat');
+  var katId = katSel.value;
+  if (!ad || !katId) { showToast('Kategori seçin ve ürün adı girin!', true); return; }
+
+  try {
+    var yeni = await sbPost('stok_urun', { kategori_id: katId, ad: ad, birim: birim, aktif: true });
+    if (yeni && yeni[0]) {
+      await sbPost('stok_bakiye', { urun_id: yeni[0].id, miktar: 0 });
+      _stokUrunler.push(yeni[0]);
+    }
+    showToast('✅ Yeni ürün eklendi: ' + ad);
+    document.getElementById('gid-yeni-urun-ad').value = '';
+    document.getElementById('gid-yeni-urun-alan').style.display = 'none';
+    gidStokKategoriSecildi(); // Listeyi yenile
+  } catch(e) { showToast('Hata: ' + e.message, true); }
 }
 
 function personelSecildi() {
@@ -1951,6 +2137,40 @@ async function giderKaydet() {
       await sbPost('firma_cari', firmaCariData);
     }
 
+
+    // Stok girişlerini kaydet
+    if (_stokGirisler && _stokGirisler.length > 0) {
+      for (var si = 0; si < _stokGirisler.length; si++) {
+        var sg = _stokGirisler[si];
+        var birimFiyat = sg.miktar > 0 ? sg.tutar / sg.miktar : 0;
+        await sbPost('stok_hareket', {
+          urun_id: sg.urun_id, hareket_tipi: 'giris',
+          miktar: sg.miktar, birim_fiyat: birimFiyat,
+          toplam_tutar: sg.tutar, tarih: tarih,
+          aciklama: ana + ' - ' + alt,
+          giren_kullanici: oturum.kullanici_adi
+        });
+        var mevcut = await sbGet('stok_bakiye', 'urun_id=eq.' + sg.urun_id);
+        if (mevcut && mevcut.length > 0) {
+          await sbPatch('stok_bakiye', 'urun_id=eq.' + sg.urun_id, {
+            miktar: (mevcut[0].miktar||0) + sg.miktar,
+            son_guncelleme: new Date().toISOString()
+          });
+        }
+        if (birimFiyat > 0) {
+          await sbPatch('stok_urun', 'id=eq.' + sg.urun_id, {
+            son_alis_fiyati: sg.tutar, birim_fiyat: birimFiyat
+          });
+          var urun = _stokUrunler ? _stokUrunler.find(function(u){ return u.id === sg.urun_id; }) : null;
+          if (urun) { urun.birim_fiyat = birimFiyat; }
+        }
+      }
+      _stokGirisler = [];
+      var stokListEl = document.getElementById('gid-stok-listesi');
+      if (stokListEl) stokListEl.innerHTML = '';
+      var stokAlanEl = document.getElementById('gid-stok-alan');
+      if (stokAlanEl) stokAlanEl.style.display = 'none';
+    }
     showToast('✓ Gider kaydedildi' + (personelId ? ' + Personel carisi güncellendi' : '') + (firmaId ? ' + Firma carisi güncellendi' : ''));
 
     // Formu sıfırla
