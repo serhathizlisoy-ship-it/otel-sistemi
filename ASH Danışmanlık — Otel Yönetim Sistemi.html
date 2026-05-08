@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_79.html -->
+<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_80.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7094,58 +7094,128 @@ function raporYazdir() {
   var raporIcerik = document.getElementById('rapor-yazdir-alan');
   var analizIcerik = document.getElementById('rapor-analiz-icerik');
   var fiyatIcerik = document.getElementById('rapor-fiyat-icerik');
+  var otelAdi = (_raporVeriler && _raporVeriler.otelAdi) ? _raporVeriler.otelAdi : 'Otel';
+  var konum = (_raporVeriler && _raporVeriler.konum) ? _raporVeriler.konum : '';
 
   var w = window.open('', '_blank');
-  w.document.write('<html><head><meta charset="UTF-8"><title>Genel Tesis Raporu</title><style>' +
-    'body{font-family:Arial,sans-serif;padding:30px;color:#2c2c2c;background:#fff;max-width:1100px;margin:0 auto}' +
-    'h1{font-size:22px;font-weight:700;margin-bottom:4px}' +
-    'h2{font-size:14px;font-weight:700;margin:20px 0 8px;color:#2d5a2d;border-bottom:2px solid #2d5a2d;padding-bottom:4px}' +
-    '.grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:20px}' +
-    '.kart{border:1px solid #ddd;border-radius:8px;overflow:hidden}' +
-    '.kart-baslik{background:#2d5a2d;color:#fff;padding:8px 12px;font-size:12px;font-weight:700}' +
-    '.kart-icerik{padding:10px 12px}' +
-    '.satir{display:flex;justify-content:space-between;margin-bottom:4px;font-size:11px}' +
-    '.etiket{color:#666}' +
-    '.deger{font-weight:600;font-family:monospace}' +
-    '.ai-bolum{margin-bottom:30px;padding:20px;background:#f9f9f9;border-radius:8px;border:1px solid #eee}' +
-    '.baslik-alan{text-align:center;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #2d5a2d}' +
-    'table{width:100%;border-collapse:collapse;margin-top:12px;font-size:12px}' +
-    'th{background:#2d5a2d;color:#fff;padding:8px;text-align:left}' +
-    'td{padding:7px 8px;border-bottom:1px solid #eee}' +
-    '@media print{body{padding:15px} .no-print{display:none}}' +
-    '</style></head><body>');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>${otelAdi} - Genel Tesis Raporu</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #fff; color: #2c2c2c; }
+    .kapak { background: linear-gradient(135deg, #1a3d1a 0%, #2d5a2d 60%, #4a7c4a 100%); color: #fff; padding: 50px 40px; margin-bottom: 0; }
+    .kapak-ust { font-size: 11px; letter-spacing: 3px; opacity: 0.7; margin-bottom: 16px; text-transform: uppercase; }
+    .kapak-baslik { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+    .kapak-alt { font-size: 13px; opacity: 0.8; margin-bottom: 4px; }
+    .kapak-tarih { font-size: 12px; opacity: 0.6; margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2); display: flex; justify-content: space-between; }
+    .icerik { padding: 30px 40px; }
+    .bolum { margin-bottom: 30px; page-break-inside: avoid; }
+    .bolum-baslik { font-size: 13px; font-weight: 700; color: #2d5a2d; border-bottom: 2px solid #2d5a2d; padding-bottom: 6px; margin-bottom: 14px; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
+    .bolum-baslik::before { content: ''; display: inline-block; width: 4px; height: 16px; background: #2d5a2d; border-radius: 2px; }
+    .grid4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .kart { border: 1px solid #e5e5e5; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .kart-baslik { background: #2d5a2d; color: #fff; padding: 8px 12px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; }
+    .kart-ic { padding: 12px; }
+    .satir { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid #f5f5f5; font-size: 11px; }
+    .satir:last-child { border-bottom: none; }
+    .etiket { color: #888; }
+    .deger { font-weight: 600; font-family: monospace; font-size: 12px; }
+    .deger.iyi { color: #2d5a2d; }
+    .deger.dikkat { color: #b8860b; }
+    .deger.kritik { color: #c0392b; }
+    .ai-kart { background: #f8faf8; border: 1px solid #d4e8d4; border-left: 4px solid #2d5a2d; border-radius: 8px; padding: 20px 24px; }
+    .ai-baslik { font-size: 12px; font-weight: 700; color: #2d5a2d; margin: 14px 0 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .ai-icerik { font-size: 12px; line-height: 1.7; color: #3a3a3a; }
+    .fiyat-kart { background: #fafdf8; border: 1px solid #c8e0c8; border-left: 4px solid #4a7c4a; border-radius: 8px; padding: 20px 24px; }
+    .ozet-tablo { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 11px; }
+    .ozet-tablo th { background: #2d5a2d; color: #fff; padding: 8px 10px; text-align: left; }
+    .ozet-tablo td { padding: 7px 10px; border-bottom: 1px solid #eee; }
+    .ozet-tablo tr:nth-child(even) td { background: #f9f9f9; }
+    .footer { margin-top: 40px; padding: 16px 40px; border-top: 2px solid #e5e5e5; display: flex; justify-content: space-between; font-size: 10px; color: #aaa; }
+    .sayfa-kenari { position: fixed; top: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1a3d1a, #4a7c4a); }
+    @media print { 
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .bolum { page-break-inside: avoid; }
+      .sayfa-kenari { position: fixed; }
+    }
+  </style>
+  </head><body>
+  <div class="sayfa-kenari"></div>`);
 
-  // Başlık
-  w.document.write('<div class="baslik-alan">');
-  w.document.write('<div style="font-size:10px;color:#888;margin-bottom:4px">GENEL TESİS RAPORU</div>');
-  w.document.write('<h1>' + (document.getElementById('rapor-yazdir-alan')?.querySelector('div')?.textContent?.trim()?.split('\n')[0] || 'Otel Raporu') + '</h1>');
-  w.document.write('<div style="font-size:12px;color:#666">' + _raporBas + ' — ' + _raporBit + '</div>');
-  w.document.write('<div style="font-size:11px;color:#999;margin-top:4px">Rapor tarihi: ' + new Date().toLocaleDateString('tr-TR') + '</div>');
-  w.document.write('</div>');
+  // KAPAK
+  w.document.write(`
+  <div class="kapak">
+    <div class="kapak-ust">Genel Tesis Raporu</div>
+    <div class="kapak-baslik">${otelAdi}</div>
+    <div class="kapak-alt">${konum}</div>
+    <div class="kapak-tarih">
+      <span>Dönem: ${_raporBas} — ${_raporBit}</span>
+      <span>Rapor Tarihi: ${new Date().toLocaleDateString('tr-TR')}</span>
+    </div>
+  </div>
+  <div class="icerik">`);
 
-  // Ana rapor
+  // ANA RAPOR
   if (raporIcerik) {
-    w.document.write('<h2>📊 Genel Tesis Raporu</h2>');
-    w.document.write(raporIcerik.innerHTML);
+    w.document.write('<div class="bolum"><div class="bolum-baslik">Tesis Performans Raporu</div>');
+    w.document.write('<div class="grid4">');
+    // Rapor içeriğindeki kartları al
+    var kartlar = raporIcerik.querySelectorAll ? raporIcerik.querySelectorAll('[style*="border:1px solid var(--border)"]') : [];
+    if (kartlar.length > 0) {
+      kartlar.forEach(function(k) {
+        w.document.write('<div class="kart">' + k.innerHTML + '</div>');
+      });
+    } else {
+      w.document.write(raporIcerik.innerHTML);
+    }
+    w.document.write('</div></div>');
   }
 
-  // AI Analizi
-  if (analizIcerik && analizIcerik.textContent.trim() && !analizIcerik.textContent.includes('Analizi yapılıyor') && !analizIcerik.textContent.includes('tıklayın')) {
+  // AI ANALİZİ
+  var analizMetin = analizIcerik ? analizIcerik.textContent.trim() : '';
+  if (analizMetin && !analizMetin.includes('yapılıyor') && !analizMetin.includes('tıklayın') && !analizMetin.includes('API Hatası')) {
     w.document.write('<div style="page-break-before:always"></div>');
-    w.document.write('<h2>🤖 AI Danışman Analizi</h2>');
-    w.document.write('<div class="ai-bolum" style="white-space:pre-wrap;font-size:12px;line-height:1.7">' + analizIcerik.textContent + '</div>');
+    w.document.write('<div class="bolum"><div class="bolum-baslik">AI Danışman Analizi</div>');
+    w.document.write('<div class="ai-kart">');
+    
+    var satirlar = analizMetin.split('\n');
+    satirlar.forEach(function(satir) {
+      if (!satir.trim()) { w.document.write('<div style="margin:6px 0"></div>'); return; }
+      if (satir.trim() === satir.trim().toUpperCase() && satir.trim().length > 3) {
+        w.document.write('<div class="ai-baslik">' + satir.trim() + '</div>');
+      } else {
+        w.document.write('<div class="ai-icerik">' + satir + '</div>');
+      }
+    });
+    
+    w.document.write('</div></div>');
   }
 
-  // Fiyat Önerisi
-  if (fiyatIcerik && fiyatIcerik.textContent.trim() && !fiyatIcerik.textContent.includes('Fiyat analizini') && !fiyatIcerik.textContent.includes('girin')) {
-    w.document.write('<h2>💡 Fiyat Önerisi & Piyasa Analizi</h2>');
-    w.document.write('<div class="ai-bolum" style="white-space:pre-wrap;font-size:12px;line-height:1.7">' + fiyatIcerik.textContent + '</div>');
+  // FİYAT ÖNERİSİ
+  var fiyatMetin = fiyatIcerik ? fiyatIcerik.textContent.trim() : '';
+  if (fiyatMetin && !fiyatMetin.includes('girin') && !fiyatMetin.includes('API Hatası')) {
+    w.document.write('<div class="bolum"><div class="bolum-baslik">Fiyat Önerisi & Piyasa Analizi</div>');
+    w.document.write('<div class="fiyat-kart">');
+    
+    var fSatirlar = fiyatMetin.split('\n');
+    fSatirlar.forEach(function(satir) {
+      if (!satir.trim()) { w.document.write('<div style="margin:6px 0"></div>'); return; }
+      if (satir.trim() === satir.trim().toUpperCase() && satir.trim().length > 3) {
+        w.document.write('<div class="ai-baslik" style="color:#4a7c4a">' + satir.trim() + '</div>');
+      } else {
+        w.document.write('<div class="ai-icerik">' + satir + '</div>');
+      }
+    });
+    
+    w.document.write('</div></div>');
   }
 
-  w.document.write('<div style="margin-top:40px;padding-top:16px;border-top:1px solid #ddd;font-size:10px;color:#999;text-align:center">Bu rapor ' + new Date().toLocaleDateString("tr-TR") + ' tarihinde otomatik olarak oluşturulmuştur.</div>');
+  w.document.write('</div>');
+  w.document.write(`<div class="footer"><span>${otelAdi} — Gizli & Özel</span><span>Bu rapor otomatik olarak oluşturulmuştur</span></div>`);
   w.document.write('</body></html>');
   w.document.close();
-  setTimeout(function(){ w.print(); }, 500);
+  setTimeout(function(){ w.print(); }, 800);
 }
 
 
