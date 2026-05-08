@@ -1710,7 +1710,8 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
           </div>
         </div>
       </div>
-     
+      <div class="pg" id="pg-fiyat"><div class="ptitle">Fiyat Hesaplama</div><div class="psub">Oda ve kişi fiyatlandırma modülü</div><div class="cs"><div class="csi">🏷️</div><div class="cst">Fiyat Hesaplama Modülü</div><div class="css">Gider kalemleri ve reçete verileri üzerinden oda/kişi başı fiyat hesaplama.</div><span class="csb">⏳ Geliştiriliyor</span></div></div>
+
       <!-- Ayarlar -->
       <div class="pg" id="pg-ayarlar">
         <div class="ptitle">Sistem Ayarları</div>
@@ -1772,7 +1773,7 @@ async function sbDelete(tablo, filtre) {
 
 // ── ROL YETKİLERİ ────────────────────────────────────
 var ROL_MODULLER = {
-  admin:      ['dashboard','gider','kapanis','aksaklik','gelir-butce','gider-butce','gerceklesen','stok','recete','rapor','cari','ayarlar'],
+  admin:      ['dashboard','gider','kapanis','aksaklik','gelir-butce','gider-butce','gerceklesen','stok','recete','rapor','fiyat','cari','ayarlar'],
   yonetici:   ['dashboard','gider','kapanis','aksaklik','gelir-butce','gider-butce','gerceklesen','stok','recete','rapor','cari'],
   resepsiyon: ['dashboard','gider','kapanis','aksaklik','stok']
 };
@@ -1788,6 +1789,7 @@ var MENU = [
   { id:'stok',         ad:'Stok Yönetimi',  ikon:'📦', bolum:'Stok & Reçete' },
   { id:'recete',       ad:'Reçete Yönetimi',ikon:'🍳', bolum:'Stok & Reçete' },
   { id:'rapor',     ad:'Raporlar',        ikon:'📈', bolum:'Analiz' },
+  { id:'fiyat',     ad:'Fiyat Hesaplama', ikon:'🏷️', bolum:'Analiz' },
   { id:'kapanis',   ad:'Günlük Kapanış',  ikon:'🌙', bolum:'Veri Girişi' },
   { id:'aksaklik',  ad:'Aksaklık Takibi',  ikon:'⚠️', bolum:'Veri Girişi' },
   { id:'ayarlar',   ad:'Sistem Ayarları', ikon:'⚙️', bolum:'Sistem' }
