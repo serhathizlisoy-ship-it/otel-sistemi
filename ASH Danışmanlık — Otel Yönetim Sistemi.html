@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_54.html -->
+<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_55.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -307,8 +307,8 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
                   <div style="margin-top:8px;padding:12px 14px;background:var(--bg2);border:1.5px solid var(--accent-b);border-radius:10px">
                     <div style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:10px">📦 Stok Girişi</div>
                     
-                    <!-- Kategori + Ürün + Miktar satırı -->
-                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:flex-end">
+                    <!-- Kategori + Ürün + Miktar + Fiyat satırı -->
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:flex-end">
                       <div>
                         <div style="font-size:11px;color:var(--text-3);margin-bottom:3px">Stok Kategorisi</div>
                         <select id="gid-stok-kat" onchange="gidStokKategoriSecildi()" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:6px;font-family:Instrument Sans,sans-serif;font-size:12px;background:var(--bg)">
@@ -324,9 +324,14 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
                       <div>
                         <div style="font-size:11px;color:var(--text-3);margin-bottom:3px">Miktar</div>
                         <div style="display:flex;align-items:center;gap:4px">
-                          <input type="number" id="gid-stok-miktar" placeholder="0" min="0" step="0.01" style="flex:1;padding:7px;border:1px solid var(--border);border-radius:6px;font-family:DM Mono,monospace;font-size:13px;background:var(--bg)">
+                          <input type="number" id="gid-stok-miktar" placeholder="0" min="0" step="0.01" oninput="gidStokTutarHesapla()" style="flex:1;padding:7px;border:1px solid var(--border);border-radius:6px;font-family:DM Mono,monospace;font-size:13px;background:var(--bg)">
                           <span id="gid-stok-birim" style="font-size:11px;color:var(--text-3);white-space:nowrap">birim</span>
                         </div>
+                      </div>
+                      <div>
+                        <div style="font-size:11px;color:var(--text-3);margin-bottom:3px">Tutar (TL)</div>
+                        <input type="number" id="gid-stok-tutar" placeholder="0.00" min="0" step="0.01" oninput="gidStokTutarHesapla()" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:6px;font-family:DM Mono,monospace;font-size:13px;background:var(--bg)">
+                        <div id="gid-stok-bf" style="font-size:10px;color:var(--text-3);margin-top:2px">Birim fiyat: —</div>
                       </div>
                       <button onclick="gidStokUrunEkle()" style="padding:7px 14px;border:none;border-radius:6px;background:var(--accent);color:#fff;font-family:Instrument Sans,sans-serif;font-size:12px;cursor:pointer;white-space:nowrap">+ Ekle</button>
                     </div>
@@ -1972,16 +1977,47 @@ function gidStokUrunSecildi() {
   var birim = opt ? (opt.getAttribute('data-birim')||'') : '';
   var birimEl = document.getElementById('gid-stok-birim');
   if (birimEl) birimEl.textContent = birim;
+  // Birim fiyat varsa tutarı hesapla
+  gidStokTutarHesapla();
+}
+
+function gidStokTutarHesapla() {
+  var urunSel = document.getElementById('gid-stok-urun');
+  var opt = urunSel ? urunSel.options[urunSel.selectedIndex] : null;
+  var bf = opt ? parseFloat(opt.getAttribute('data-bf')||0) : 0;
+  var miktar = parseFloat(document.getElementById('gid-stok-miktar')?.value) || 0;
+  var tutarEl = document.getElementById('gid-stok-tutar');
+  var bfEl = document.getElementById('gid-stok-bf');
+  var birim = document.getElementById('gid-stok-birim')?.textContent || '';
+
+  // Birim fiyat varsa tutarı otomatik hesapla
+  if (bf > 0 && miktar > 0 && tutarEl && !tutarEl._manuelGiris) {
+    tutarEl.value = (miktar * bf).toFixed(2);
+  }
+
+  // Tutar girilmişse birim fiyatı hesapla
+  var tutar = parseFloat(tutarEl?.value) || 0;
+  if (bfEl) {
+    if (tutar > 0 && miktar > 0) {
+      bfEl.textContent = 'Birim fiyat: ' + (tutar/miktar).toFixed(4) + ' TL/' + birim;
+    } else if (bf > 0) {
+      bfEl.textContent = 'Birim fiyat: ' + bf.toFixed(4) + ' TL/' + birim;
+    } else {
+      bfEl.textContent = 'Birim fiyat: —';
+    }
+  }
 }
 
 function gidStokUrunEkle() {
   var urunSel = document.getElementById('gid-stok-urun');
   var miktar = parseFloat(document.getElementById('gid-stok-miktar').value) || 0;
+  var tutar = parseFloat(document.getElementById('gid-stok-tutar')?.value) || 0;
   if (!urunSel.value || miktar <= 0) { showToast('Ürün ve miktar girin!', true); return; }
+  if (tutar <= 0) { showToast('Tutar girin!', true); return; }
 
   var opt = urunSel.options[urunSel.selectedIndex];
   var birim = opt.getAttribute('data-birim') || '';
-  var bf = parseFloat(opt.getAttribute('data-bf')) || 0;
+  var birimFiyat = miktar > 0 ? tutar / miktar : 0;
   var urun = _stokUrunler.find(function(u){ return u.id === urunSel.value; });
 
   _stokGirisler.push({
@@ -1989,21 +2025,21 @@ function gidStokUrunEkle() {
     ad: urun ? urun.ad : opt.text,
     miktar: miktar,
     birim: birim,
-    birim_fiyat: bf,
-    tutar: miktar * bf
+    birim_fiyat: birimFiyat,
+    tutar: tutar
   });
 
   document.getElementById('gid-stok-miktar').value = '';
+  document.getElementById('gid-stok-tutar').value = '';
+  document.getElementById('gid-stok-bf').textContent = 'Birim fiyat: —';
   urunSel.value = '';
   document.getElementById('gid-stok-birim').textContent = 'birim';
   gidStokListesiGoster();
-  
-  // Toplam tutarı güncelle
+
+  // Toplam tutarı yan taraftaki Tutar alanına aktar
   var toplamTutar = _stokGirisler.reduce(function(s,g){ return s+g.tutar; }, 0);
-  if (toplamTutar > 0) {
-    document.getElementById('gid-tutar').value = toplamTutar.toFixed(2);
-    giderOzetGoster();
-  }
+  document.getElementById('gid-tutar').value = toplamTutar.toFixed(2);
+  giderOzetGoster();
 }
 
 function gidStokListesiGoster() {
@@ -2030,7 +2066,7 @@ function gidStokSil(btn) {
   _stokGirisler.splice(idx, 1);
   gidStokListesiGoster();
   var toplamTutar = _stokGirisler.reduce(function(s,g){ return s+g.tutar; }, 0);
-  document.getElementById('gid-tutar').value = toplamTutar > 0 ? toplamTutar.toFixed(2) : '';
+  document.getElementById('gid-tutar').value = toplamTutar > 0 ? toplamTutar.toFixed(2) : '0';
   giderOzetGoster();
 }
 
