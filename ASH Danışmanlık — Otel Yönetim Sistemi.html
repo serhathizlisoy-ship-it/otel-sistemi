@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_77.html -->
+<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_78.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7220,7 +7220,31 @@ async function raporAIAnaliz() {
       .split('## ').join('<h3 style="margin:16px 0 8px;color:var(--accent);font-size:14px">')
       .split('**').join('<strong>');
 
-    el.innerHTML = '<div style="font-size:13px;line-height:1.7;color:var(--text);white-space:pre-wrap">' + metin + '</div>';
+    // Markdown temizle ve güzel formatla
+    var temiz = metin
+      .replace(/^#{1,3}\s*/gm, '')           // ## ### başlıkları kaldır
+      .replace(/\*\*/g, '')                   // **bold** kaldır
+      .replace(/\|[-:]+\|[-:| ]+/g, '')      // |---| tablo ayırıcıları kaldır
+      .replace(/^---+$/gm, '')               // --- ayırıcıları kaldır
+      .replace(/^\|(.+)\|$/gm, function(m, inner) {  // Tablo satırlarını düzgün yap
+        var cols = inner.split('|').map(function(c){ return c.trim(); }).filter(Boolean);
+        if (cols.length >= 2) return '<div style="display:flex;gap:16px;padding:5px 0;border-bottom:1px solid var(--border)">' + cols.map(function(c,i){ return '<span style="flex:'+(i===0?'1.5':'1')+';font-size:12px;'+(i===cols.length-1?'font-weight:600;color:'+(c.includes('Kritik')?'var(--danger)':c.includes('İyi')||c.includes('Normal')?'var(--accent)':'var(--warn)')+'':'')+'">' + c + '</span>'; }).join('') + '</div>';
+        return '';
+      })
+      .trim();
+
+    // Başlıkları bul ve büyüt (tümü büyük harf olanlar)
+    var html = temiz.split('\n').map(function(line) {
+      if (!line.trim()) return '<div style="margin:6px 0"></div>';
+      // Büyük harf başlık mı?
+      if (line.trim() === line.trim().toUpperCase() && line.trim().length > 3 && !line.includes('|') && !line.includes(':')) {
+        return '<div style="font-size:13px;font-weight:700;color:var(--accent);margin:16px 0 6px;padding-bottom:4px;border-bottom:2px solid var(--accent-b)">' + line.trim() + '</div>';
+      }
+      if (line.startsWith('<div')) return line; // Tablo satırı
+      return '<div style="font-size:13px;line-height:1.7;color:var(--text)">' + line + '</div>';
+    }).join('');
+
+    el.innerHTML = '<div>' + html + '</div>';
 
   } catch(e) {
     el.innerHTML = '<div style="color:var(--danger);padding:14px">API Hatası: ' + e.message + '</div>';
@@ -7292,7 +7316,17 @@ async function raporFiyatOnerisi() {
 
     if (!metin) metin = 'Yanıt alınamadı.';
 
-    el.innerHTML = '<div style="font-size:13px;line-height:1.7;color:var(--text);white-space:pre-wrap">' + metin + '</div>';
+    var temiz2 = metin
+      .replace(/##/g, '').replace(/###/g, '').replace(/\*\*/g, '')
+      .replace(/^---+$/mg, '').trim();
+    var html2 = temiz2.split('\n').map(function(line) {
+      if (!line.trim()) return '<div style="margin:6px 0"></div>';
+      if (line.trim() === line.trim().toUpperCase() && line.trim().length > 3 && !line.includes('|') && !line.includes(':')) {
+        return '<div style="font-size:13px;font-weight:700;color:var(--mgr);margin:16px 0 6px;padding-bottom:4px;border-bottom:2px solid var(--mgr-b)">' + line.trim() + '</div>';
+      }
+      return '<div style="font-size:13px;line-height:1.7;color:var(--text)">' + line + '</div>';
+    }).join('');
+    el.innerHTML = '<div>' + html2 + '</div>';
 
 
   } catch(e) {
