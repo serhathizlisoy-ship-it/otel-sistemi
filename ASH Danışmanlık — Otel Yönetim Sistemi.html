@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_52.html -->
+<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_53.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1873,6 +1873,18 @@ async function giderModuluBaslat() {
   try {
     _giderPersoneller = await sbGet('personel', 'aktif=eq.true&order=ad_soyad.asc');
     _giderFirmalar = await sbGet('firma', 'aktif=eq.true&order=firma_adi.asc');
+  } catch(e) {}
+
+  // Stok kategorileri ve ürünleri yükle (stok alanı için)
+  try {
+    if (!_stokKategoriler || _stokKategoriler.length === 0) {
+      var kat = await sbGet('stok_kategori', 'order=sira.asc');
+      if (kat) _stokKategoriler = kat;
+    }
+    if (!_stokUrunler || _stokUrunler.length === 0) {
+      var urunler = await sbGet('stok_urun', 'aktif=eq.true&order=ad.asc');
+      if (urunler) _stokUrunler = urunler;
+    }
   } catch(e) {}
 }
 
