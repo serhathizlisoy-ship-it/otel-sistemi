@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_75.html -->
+<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_76.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7147,9 +7147,11 @@ Başlıklar: Doluluk Analizi, Fiyat Performansı (ADR/RevPAR/GOPPAR), Finansal D
       el.innerHTML = '<div style="padding:16px;background:var(--warn-l);border:1px solid #E0C87A;border-radius:8px;font-size:13px;color:var(--warn)">⚠️ Claude API anahtarı tanımlanmamış. <strong>Sistem Ayarları → Sistem</strong> sekmesinden API anahtarınızı girin.</div>';
       return;
     }
-    var corsUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://openrouter.ai/api/v1/chat/completions');
+    var corsUrl = 'https://openrouter.ai/api/v1/chat/completions';
     var response = await fetch(corsUrl, {
       method: 'POST',
+      mode: 'cors',
+      credentials: 'omit',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + apiKey,
@@ -7227,9 +7229,11 @@ Hemen yapılabilecek 3-5 somut öneri`;
       el.innerHTML = '<div style="padding:16px;background:var(--warn-l);border:1px solid #E0C87A;border-radius:8px;font-size:13px;color:var(--warn)">⚠️ Claude API anahtarı tanımlanmamış. <strong>Sistem Ayarları → Sistem</strong> sekmesinden API anahtarınızı girin.</div>';
       return;
     }
-    var corsUrl2 = 'https://corsproxy.io/?' + encodeURIComponent('https://openrouter.ai/api/v1/chat/completions');
+    var corsUrl2 = 'https://openrouter.ai/api/v1/chat/completions';
     var response = await fetch(corsUrl2, {
       method: 'POST',
+      mode: 'cors',
+      credentials: 'omit',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + apiKey2,
