@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_67.html -->
+<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_68.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -6703,9 +6703,10 @@ async function raporYukle() {
     var basTarih = new Date(_raporBas);
     var bitTarih = new Date(_raporBit);
     var toplamGun = Math.ceil((bitTarih - basTarih) / (1000*60*60*24)) + 1;
-    var maxOdaGecesi = odaSayisi * toplamGun;
+    var etkinGun = Math.max(toplamGun - 1, 1); // Bugünün verisi henüz girilmedi
+    var maxOdaGecesi = odaSayisi * etkinGun;
     var odaDoluluk = maxOdaGecesi > 0 ? (toplamOdaGecesi / maxOdaGecesi * 100) : 0;
-    var kisiDoluluk = (maxKisi * toplamGun) > 0 ? (toplamKisiGecesi / (maxKisi * toplamGun) * 100) : 0;
+    var kisiDoluluk = (maxKisi * etkinGun) > 0 ? (toplamKisiGecesi / (maxKisi * etkinGun) * 100) : 0;
 
     // Metrikler
     var ADR = toplamOdaGecesi > 0 ? toplamKonaklama / toplamOdaGecesi : 0;
@@ -6752,10 +6753,10 @@ async function raporYukle() {
 
     // Doluluk kartı
     html += raporKart('🏨 Doluluk', [
-      { label: 'Oda Kapasitesi', value: odaSayisi + ' oda' },
-      { label: 'Maks. Kişi', value: maxKisi + ' kişi' },
-      { label: 'Toplam Gün', value: toplamGun + ' gün' },
-      { label: 'Konaklayan Kişi', value: toplamKisiGecesi.toLocaleString('tr-TR') + ' kişi', bold: true },
+      { label: 'Oda Kapasitesi', value: odaSayisi },
+      { label: 'Maks. Kişi Kapasitesi', value: maxKisi },
+      { label: 'Toplam Gün', value: toplamGun - 1 },
+      { label: 'Konaklayan Kişi', value: toplamKisiGecesi.toLocaleString('tr-TR'), bold: true },
       { label: 'Dolu Oda Gecesi', value: toplamOdaGecesi.toLocaleString('tr-TR') },
       { label: 'Oda Doluluk', value: '%' + odaDoluluk.toFixed(1), color: odaDoluluk >= 60 ? 'var(--accent)' : odaDoluluk >= 40 ? 'var(--warn)' : 'var(--danger)', bold: true },
       { label: 'Kişi Doluluk', value: '%' + kisiDoluluk.toFixed(1), color: 'var(--text-2)' }
@@ -6763,10 +6764,10 @@ async function raporYukle() {
 
     // Metrikler kartı
     html += raporKart('📊 Performans Metrikleri', [
-      { label: 'ADR', value: Math.round(ADR).toLocaleString('tr-TR') + ' TL', bold: true, color: 'var(--accent)' },
-      { label: 'RevPAR', value: Math.round(RevPAR).toLocaleString('tr-TR') + ' TL', bold: true },
-      { label: 'GOPPAR', value: Math.round(GOPPAR).toLocaleString('tr-TR') + ' TL', bold: true, color: netKarZarar >= 0 ? 'var(--accent)' : 'var(--danger)' },
-      { label: 'Kişi Başı Satış', value: Math.round(kisiBasiSatis).toLocaleString('tr-TR') + ' TL' },
+      { label: 'ADR (Ort. Oda Fiyatı)', value: Math.round(ADR).toLocaleString('tr-TR') + ' TL', bold: true, color: 'var(--accent)' },
+      { label: 'RevPAR (Oda Başı Gelir)', value: Math.round(RevPAR).toLocaleString('tr-TR') + ' TL', bold: true },
+      { label: 'GOPPAR (Oda Başı Brüt Kâr)', value: Math.round(GOPPAR).toLocaleString('tr-TR') + ' TL', bold: true, color: netKarZarar >= 0 ? 'var(--accent)' : 'var(--danger)' },
+      { label: 'Kişi Başı Satış', value: Math.round(kisiBasiSatis).toLocaleString('tr-TR') + ' TL', separator: true },
       { label: 'Kişi Başı Maliyet', value: Math.round(kisiBasiCost).toLocaleString('tr-TR') + ' TL' },
       { label: 'Kar Marjı', value: '%' + karMarji.toFixed(1), bold: true, color: karMarji >= 18 ? 'var(--accent)' : karMarji >= 0 ? 'var(--warn)' : 'var(--danger)' }
     ]);
@@ -6807,6 +6808,22 @@ async function raporYukle() {
     giderSatirlari.push({ label: 'TOPLAM GİDER', value: toplamGider.toLocaleString('tr-TR') + ' TL', bold: true, color: 'var(--danger)', separator: true });
 
     html += raporKart('💸 Gider Kalemleri & Ciro %', giderSatirlari);
+
+    // Cari borçlar
+    try {
+      var firmaCari = await sbGet('firma_cari', '');
+      var personelCari = await sbGet('personel_cari', '');
+      var firmaBorcToplam = 0, personelBorcToplam = 0;
+      if (firmaCari) firmaCari.forEach(function(f){ if((f.borc||0)>(f.odeme||0)) firmaBorcToplam += (f.borc||0)-(f.odeme||0); });
+      if (personelCari) personelCari.forEach(function(p){ if((p.borc||0)>(p.odeme||0)) personelBorcToplam += (p.borc||0)-(p.odeme||0); });
+      var toplamCariBorç = firmaBorcToplam + personelBorcToplam;
+
+      html += raporKart('💳 Cari Borçlar', [
+        { label: 'Firma Borçları', value: firmaBorcToplam.toLocaleString('tr-TR') + ' TL' },
+        { label: 'Personel Borçları', value: personelBorcToplam.toLocaleString('tr-TR') + ' TL' },
+        { label: 'TOPLAM CARİ BORÇ', value: toplamCariBorç.toLocaleString('tr-TR') + ' TL', bold: true, color: toplamCariBorç > 0 ? 'var(--danger)' : 'var(--accent)', separator: true }
+      ]);
+    } catch(e) {}
 
     html += '</div>';
 
