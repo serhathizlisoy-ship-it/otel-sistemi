@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_63.html -->
+<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_64.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1234,6 +1234,26 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
             <div id="sayim-kaydet-btn" style="display:none;margin-top:14px;display:flex;justify-content:flex-end">
               <button class="sbtn" style="width:auto;padding:10px 24px" onclick="sayimKaydet()">💾 Sayımı Kaydet</button>
             </div>
+          </div>
+
+          <!-- Sezon Kapatma -->
+          <div class="dc" style="margin-bottom:16px">
+            <div class="dct"><div class="dot i"></div>Sezon Kapatma</div>
+            <div style="padding:12px 16px;background:var(--warn-l);border:1px solid #E0C87A;border-radius:8px;font-size:12px;color:var(--warn);margin-bottom:12px">
+              ⚠️ Sezon kapatma işlemi: Tüm stok sayımlarından yola çıkarak yıllık gider düzeltmesini hesaplar ve raporlar. Sadece sezon sonunda yapın.
+            </div>
+            <div style="display:grid;grid-template-columns:1fr auto;gap:14px;align-items:flex-end">
+              <div class="sfield">
+                <label>Kapatma Yılı</label>
+                <select id="sezon-kapanis-yil" style="padding:8px 12px;border:1px solid var(--border);border-radius:7px;font-family:Instrument Sans,sans-serif;font-size:13px;background:var(--bg);width:100%">
+                  <option value="2026">2026</option>
+                  <option value="2025">2025</option>
+                  <option value="2027">2027</option>
+                </select>
+              </div>
+              <button onclick="sezonKapatmaRaporuGoster()" style="padding:10px 20px;border:1px solid var(--warn);border-radius:7px;background:var(--warn-l);color:var(--warn);font-family:Instrument Sans,sans-serif;font-size:13px;font-weight:600;cursor:pointer">📊 Sezon Kapatma Raporu</button>
+            </div>
+            <div id="sezon-kapanis-rapor" style="margin-top:14px"></div>
           </div>
 
           <!-- Sayım Raporu -->
@@ -6260,6 +6280,175 @@ async function sayimRaporuYukle() {
   } catch(e) {
     el.innerHTML = '<div style="color:var(--danger);padding:20px">Hata: ' + e.message + '</div>';
   }
+}
+
+
+// ── SEZON KAPATMA ─────────────────────────────────────
+async function sezonKapatmaRaporuGoster() {
+  var yil = parseInt(document.getElementById('sezon-kapanis-yil').value) || 2026;
+  var el = document.getElementById('sezon-kapanis-rapor');
+  el.innerHTML = '<div style="text-align:center;padding:20px"><div class="spinner" style="margin:0 auto;border-color:var(--border);border-top-color:var(--accent)"></div></div>';
+
+  try {
+    // 1. O yılın tüm gider girişlerini topla
+    var giderler = await sbGet('gider_girisi', 'order=tarih.asc');
+    var toplamGider = 0;
+    if (giderler) {
+      giderler.forEach(function(g) {
+        if (new Date(g.tarih).getFullYear() === yil) {
+          toplamGider += (g.tutar || 0);
+        }
+      });
+    }
+
+    // 2. Mevcut stok bakiyelerini al
+    var bakiye = await sbGet('stok_bakiye', '');
+    var bakiyeMap = {};
+    if (bakiye) bakiye.forEach(function(b) { bakiyeMap[b.urun_id] = b.miktar; });
+
+    // 3. Devir stok değerini hesapla (kategori bazında)
+    var toplamDevirStok = 0;
+    var katDevirler = {};
+    _stokKategoriler.forEach(function(k) {
+      katDevirler[k.id] = { ad: k.ad, deger: 0, urunler: [] };
+    });
+
+    _stokUrunler.forEach(function(u) {
+      var mevcut = bakiyeMap[u.id] || 0;
+      if (mevcut > 0 && u.birim_fiyat > 0) {
+        var deger = mevcut * u.birim_fiyat;
+        toplamDevirStok += deger;
+        if (katDevirler[u.kategori_id]) {
+          katDevirler[u.kategori_id].deger += deger;
+          katDevirler[u.kategori_id].urunler.push({
+            ad: u.ad, miktar: mevcut, birim: u.birim,
+            birimFiyat: u.birim_fiyat, deger: deger
+          });
+        }
+      }
+    });
+
+    var netDonemGideri = toplamGider - toplamDevirStok;
+
+    // Rapor HTML
+    var html = '<div style="border:2px solid var(--accent);border-radius:12px;overflow:hidden;margin-top:4px">' +
+      '<div style="padding:14px 18px;background:var(--accent);color:#fff">' +
+      '<div style="font-size:15px;font-weight:700">' + yil + ' Sezonu Kapatma Raporu</div>' +
+      '<div style="font-size:12px;opacity:0.8;margin-top:2px">' + new Date().toLocaleDateString("tr-TR") + ' tarihinde oluşturuldu</div>' +
+      '</div>';
+
+    // Özet kartlar
+    html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-bottom:1px solid var(--border)">' +
+      '<div style="padding:16px;text-align:center;border-right:1px solid var(--border)">' +
+      '<div style="font-size:11px;color:var(--text-3);margin-bottom:4px">TOPLAM GİDER GİRİŞİ</div>' +
+      '<div style="font-family:DM Mono,monospace;font-size:18px;font-weight:700;color:var(--danger)">' + toplamGider.toLocaleString("tr-TR") + ' TL</div>' +
+      '</div>' +
+      '<div style="padding:16px;text-align:center;border-right:1px solid var(--border)">' +
+      '<div style="font-size:11px;color:var(--text-3);margin-bottom:4px">DEVİR STOK DEĞERİ</div>' +
+      '<div style="font-family:DM Mono,monospace;font-size:18px;font-weight:700;color:var(--warn)">' + toplamDevirStok.toLocaleString("tr-TR") + ' TL</div>' +
+      '</div>' +
+      '<div style="padding:16px;text-align:center">' +
+      '<div style="font-size:11px;color:var(--accent);margin-bottom:4px">NET DÖNEM GİDERİ</div>' +
+      '<div style="font-family:DM Mono,monospace;font-size:18px;font-weight:700;color:var(--accent)">' + netDonemGideri.toLocaleString("tr-TR") + ' TL</div>' +
+      '</div></div>';
+
+    // Devir stok detayı
+    html += '<div style="padding:16px">' +
+      '<div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--text-2)">📦 Devir Stok Detayı (Sonraki Yıla Devreden)</div>';
+
+    Object.values(katDevirler).forEach(function(k) {
+      if (k.urunler.length === 0) return;
+      html += '<div style="margin-bottom:10px">' +
+        '<div style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:6px">' + k.ad + ' — ' + k.deger.toFixed(2) + ' TL</div>' +
+        '<table style="width:100%;border-collapse:collapse;font-size:12px">';
+      k.urunler.forEach(function(u) {
+        html += '<tr style="border-bottom:1px solid var(--border)">' +
+          '<td style="padding:5px 8px">' + u.ad + '</td>' +
+          '<td style="padding:5px 8px;font-family:DM Mono,monospace;color:var(--text-3)">' + u.miktar.toLocaleString('tr-TR') + ' ' + u.birim + '</td>' +
+          '<td style="padding:5px 8px;font-family:DM Mono,monospace;color:var(--text-3)">' + u.birimFiyat.toFixed(4) + ' TL/' + u.birim + '</td>' +
+          '<td style="padding:5px 8px;text-align:right;font-family:DM Mono,monospace;font-weight:600;color:var(--warn)">' + u.deger.toFixed(2) + ' TL</td>' +
+          '</tr>';
+      });
+      html += '</table></div>';
+    });
+
+    html += '</div>';
+
+    // Onay butonu
+    var mevcutKapanis = await sbGet('sezon_kapanis', 'yil=eq.' + yil);
+    var zatenOnaylandi = mevcutKapanis && mevcutKapanis.length > 0 && mevcutKapanis[0].onaylandi;
+
+    html += '<div style="padding:14px 16px;background:var(--bg2);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">' +
+      '<div style="font-size:12px;color:var(--text-3)">' +
+        (zatenOnaylandi ?
+          '✅ Bu sezon ' + new Date(mevcutKapanis[0].onay_tarihi).toLocaleDateString("tr-TR") + ' tarihinde kapatıldı.' :
+          'Raporu onayladığınızda kayıt altına alınır ve devir stok yeni yıla aktarılır.'
+        ) +
+      '</div>' +
+      (zatenOnaylandi ? '' :
+        '<button onclick="sezonKapatmaOnayla(' + yil + ',' + toplamGider + ',' + toplamDevirStok + ',' + netDonemGideri + ')" ' +
+        'style="padding:10px 24px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-family:Instrument Sans,sans-serif;font-size:13px;font-weight:700;cursor:pointer">✅ Sezonu Kapat & Onayla</button>'
+      ) +
+      '</div></div>';
+
+    el.innerHTML = html;
+
+  } catch(e) {
+    el.innerHTML = '<div style="color:var(--danger);padding:20px">Hata: ' + e.message + '</div>';
+  }
+}
+
+async function sezonKapatmaOnayla(yil, toplamGider, devirStok, netGider) {
+  if (!confirm(yil + ' sezonu kapatılacak. Bu işlem geri alınamaz. Emin misiniz?')) return;
+  if (oturum.rol !== 'admin') { showToast('Sadece Admin onaylayabilir!', true); return; }
+
+  try {
+    // Sezon kapatma kaydı oluştur
+    var mevcut = await sbGet('sezon_kapanis', 'yil=eq.' + yil);
+    var data = {
+      yil: yil,
+      kapanis_tarihi: new Date().toISOString().split('T')[0],
+      toplam_gider: toplamGider,
+      devir_stok_degeri: devirStok,
+      net_donem_gideri: netGider,
+      onaylandi: true,
+      onaylayan: oturum.kullanici_adi,
+      onay_tarihi: new Date().toISOString()
+    };
+
+    if (mevcut && mevcut.length > 0) {
+      await sbPatch('sezon_kapanis', 'yil=eq.' + yil, data);
+    } else {
+      await sbPost('sezon_kapanis', data);
+    }
+
+    // Devir stokları yeni yıla aktar
+    var bakiye = await sbGet('stok_bakiye', '');
+    var bakiyeMap = {};
+    if (bakiye) bakiye.forEach(function(b) { bakiyeMap[b.urun_id] = b.miktar; });
+
+    for (var i = 0; i < _stokUrunler.length; i++) {
+      var u = _stokUrunler[i];
+      var mevcut2 = bakiyeMap[u.id] || 0;
+      if (mevcut2 > 0) {
+        // Devir hareketi kaydet
+        await sbPost('stok_hareket', {
+          urun_id: u.id,
+          hareket_tipi: 'devir',
+          miktar: mevcut2,
+          birim_fiyat: u.birim_fiyat || 0,
+          toplam_tutar: mevcut2 * (u.birim_fiyat || 0),
+          tarih: new Date().toISOString().split('T')[0],
+          aciklama: yil + ' → ' + (yil+1) + ' devir stoku',
+          giren_kullanici: oturum.kullanici_adi
+        });
+      }
+    }
+
+    showToast('✅ ' + yil + ' sezonu başarıyla kapatıldı!');
+    sezonKapatmaRaporuGoster();
+
+  } catch(e) { showToast('Hata: ' + e.message, true); }
 }
 
 // ── TOAST ─────────────────────────────────────────────
