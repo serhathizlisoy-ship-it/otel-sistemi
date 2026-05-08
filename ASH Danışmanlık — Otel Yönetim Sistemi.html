@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_69.html -->
+<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_70.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1775,7 +1775,8 @@ function renderAyarlar(kullanicilar, odalar, ayarlar) {
     icerik = '<div class="dc"><div class="dct"><div class="dot"></div>Otel Genel Bilgileri</div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
       '<div class="sfield" style="grid-column:1/-1"><label>Otel Adı</label><input type="text" id="s-ad" value="' + getAyar(ayarlar,'otel_adi','Datça Butik Otel') + '"></div>' +
-      '<div class="sfield"><label>Konum (Şehir/İlçe)</label><input type="text" id="s-konum" placeholder="Örn: Datça, Muğla" value="' + getAyar(ayarlar,'konum','Datça, Muğla') + '"></div>' +
+      '<div class="sfield"><label>İl</label><select id="s-il" onchange="ilSecildi()" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:7px;font-family:Instrument Sans,sans-serif;font-size:13px;background:var(--bg)">' + ilSecenekleri(getAyar(ayarlar,'il','Muğla')) + '</select></div>' +
+      '<div class="sfield"><label>İlçe</label><select id="s-ilce" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:7px;font-family:Instrument Sans,sans-serif;font-size:13px;background:var(--bg)">' + ilceSecenekleri(getAyar(ayarlar,'il','Muğla'), getAyar(ayarlar,'ilce','Datça')) + '</select></div>' +
       '<div class="sfield"><label>Otel Kategorisi</label><select id="s-kategori">' +
       ['Butik Otel','Pansiyon','Apart Otel','Tatil Köyü','Şehir Oteli','Dağ Evi / Bungalov'].map(function(t){
         return '<option ' + (getAyar(ayarlar,'kategori','Butik Otel')===t?'selected':'') + '>' + t + '</option>';
@@ -1872,14 +1873,27 @@ function renderAyarlar(kullanicilar, odalar, ayarlar) {
   }
 
   else if (ayarlarSekme === 'sistem') {
+    var mevcutApiKey = getAyar(ayarlar,'claude_api_key','');
     icerik = '<div class="dc"><div class="dct"><div class="dot i"></div>Sistem Bilgileri</div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' +
-      [['Versiyon','v1.0'],['Geliştirici','ASH Danışmanlık'],['Veritabanı','Supabase Bulut'],['Aktif Modül','2 / 9'],
+      [['Versiyon','v1.0'],['Geliştirici','ASH Danışmanlık'],['Veritabanı','Supabase Bulut'],
        ['Aktif Oda',toplamAktif + ' oda'],['Max Kapasite',toplamKapasite + ' kişi']].map(function(x){
         return '<div style="padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;display:flex;justify-content:space-between;align-items:center">' +
           '<span style="font-size:12px;color:var(--text-3)">' + x[0] + '</span>' +
           '<span style="font-size:13px;font-weight:600;font-family:DM Mono,monospace">' + x[1] + '</span></div>';
       }).join('') +
+      '</div>' +
+      '<div style="margin-top:16px"><div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:8px">🤖 Claude AI Entegrasyonu</div>' +
+      '<div style="padding:12px 14px;background:var(--warn-l);border:1px solid #E0C87A;border-radius:8px;font-size:12px;color:var(--warn);margin-bottom:10px">' +
+      "\u26a0\ufe0f API anahtari Supabase veritabaninda saklanir. Anthropic Console'dan alabilirsiniz: console.anthropic.com" +
+      '</div>' +
+      '<div style="display:flex;gap:10px;align-items:flex-end">' +
+      '<div class="sfield" style="flex:1"><label>Claude API Anahtarı</label>' +
+      '<input type="password" id="s-apikey" value="' + mevcutApiKey + '" placeholder="sk-ant-..." style="font-family:DM Mono,monospace;font-size:12px">' +
+      '</div>' +
+      '<button onclick="apiKeyKaydet()" style="padding:9px 18px;border:none;border-radius:7px;background:var(--accent);color:#fff;font-size:12px;cursor:pointer;white-space:nowrap;margin-bottom:1px">💾 Kaydet</button>' +
+      '</div>' +
+      (mevcutApiKey ? '<div style="margin-top:6px;font-size:11px;color:var(--accent)">✅ API anahtarı tanımlı</div>' : '<div style="margin-top:6px;font-size:11px;color:var(--danger)">❌ API anahtarı tanımlı değil</div>') +
       '</div>' +
       '<div style="margin-top:12px;padding:10px 14px;background:var(--accent-l);border:1px solid var(--accent-b);border-radius:8px;font-size:12px;color:var(--accent)">' +
       '☁️ Tüm veriler Supabase bulutunda güvenle saklanır. Her cihazdan, her yerden erişilebilir.' +
@@ -1897,10 +1911,23 @@ function ayarlarSekmeGit(id) {
   ayarlarYukle();
 }
 
+
+async function apiKeyKaydet() {
+  var key = document.getElementById('s-apikey')?.value.trim();
+  if (!key) { showToast('API anahtarı boş!', true); return; }
+  try {
+    await sbPatch('otel_ayarlari', 'anahtar=eq.claude_api_key', {deger: key});
+    showToast('✅ API anahtarı kaydedildi');
+    ayarlarYukle();
+  } catch(e) { showToast('Hata: ' + e.message, true); }
+}
+
 async function otelKaydet() {
   var data = [
     {anahtar:'otel_adi',  deger:document.getElementById('s-ad').value.trim()},
-    {anahtar:'konum',     deger:document.getElementById('s-konum').value.trim()},
+    {anahtar:'il',        deger:document.getElementById('s-il')?document.getElementById('s-il').value:''},
+    {anahtar:'ilce',      deger:document.getElementById('s-ilce')?document.getElementById('s-ilce').value:''},
+    {anahtar:'konum',     deger:(document.getElementById('s-ilce')?document.getElementById('s-ilce').value:'') + ', ' + (document.getElementById('s-il')?document.getElementById('s-il').value:'')},
     {anahtar:'kategori',  deger:document.getElementById('s-kategori')?document.getElementById('s-kategori').value:'Butik Otel'},
     {anahtar:'tip',       deger:document.getElementById('s-tip').value},
     {anahtar:'sezon',     deger:document.getElementById('s-sezon').value.trim()}
@@ -1981,6 +2008,115 @@ var GIDER_YAPISI = {
   }
 };
 
+
+
+// ── İL / İLÇE VERİTABANI ─────────────────────────────
+var IL_ILCE = {
+  "Adana":["Aladağ","Ceyhan","Çukurova","Feke","İmamoğlu","Karaisalı","Karataş","Kozan","Pozantı","Saimbeyli","Sarıçam","Seyhan","Tufanbeyli","Yumurtalık","Yüreğir"],
+  "Adıyaman":["Adıyaman Merkez","Besni","Çelikhan","Gerger","Gölbaşı","Kahta","Samsat","Sincik","Tut"],
+  "Afyonkarahisar":["Afyon Merkez","Başmakçı","Bayat","Bolvadin","Çay","Çobanlar","Dazkırı","Dinar","Emirdağ","Evciler","Hocalar","İhsaniye","İscehisar","Kızılören","Sandıklı","Sinanpaşa","Sultandağı","Şuhut"],
+  "Ağrı":["Ağrı Merkez","Diyadin","Doğubayazıt","Eleşkirt","Hamur","Patnos","Taşlıçay","Tutak"],
+  "Aksaray":["Ağaçören","Aksaray Merkez","Eskil","Gülağaç","Güzelyurt","Ortaköy","Sarıyahşi","Sultanhanı"],
+  "Amasya":["Amasya Merkez","Göynücek","Gümüşhacıköy","Hamamözü","Merzifon","Suluova","Taşova"],
+  "Ankara":["Altındağ","Ayaş","Bala","Beypazarı","Çamlıdere","Çankaya","Çubuk","Elmadağ","Etimesgut","Evren","Gölbaşı","Güdül","Haymana","Kalecik","Kazan","Keçiören","Kızılcahamam","Mamak","Nallıhan","Polatlı","Pursaklar","Sincan","Şereflikoçhisar","Yenimahalle"],
+  "Antalya":["Akseki","Aksu","Alanya","Demre","Döşemealtı","Elmalı","Finike","Gazipaşa","Gündoğmuş","İbradı","Kaş","Kemer","Kepez","Konyaaltı","Korkuteli","Kumluca","Manavgat","Muratpaşa","Serik"],
+  "Ardahan":["Ardahan Merkez","Çıldır","Damal","Göle","Hanak","Posof"],
+  "Artvin":["Ardanuç","Arhavi","Artvin Merkez","Borçka","Hopa","Kemalpaşa","Murgul","Şavşat","Yusufeli"],
+  "Aydın":["Bozdoğan","Buharkent","Çine","Didim","Efeler","Germencik","İncirliova","Karacasu","Karpuzlu","Koçarlı","Köşk","Kuşadası","Kuyucak","Nazilli","Söke","Sultanhisar","Yenipazar"],
+  "Balıkesir":["Altıeylül","Ayvalık","Balya","Bandırma","Bigadiç","Burhaniye","Dursunbey","Edremit","Erdek","Gömeç","Gönen","Havran","İvrindi","Karesi","Kepsut","Manyas","Marmara","Savaştepe","Sındırgı","Susurluk"],
+  "Bartın":["Amasra","Bartın Merkez","Kurucaşile","Ulus"],
+  "Batman":["Batman Merkez","Beşiri","Gercüş","Hasankeyf","Kozluk","Sason"],
+  "Bayburt":["Aydıntepe","Bayburt Merkez","Demirözü"],
+  "Bilecik":["Bilecik Merkez","Bozüyük","Gölpazarı","İnhisar","Osmaneli","Pazaryeri","Söğüt","Yenipazar"],
+  "Bingöl":["Adaklı","Bingöl Merkez","Genç","Karlıova","Kiğı","Solhan","Yaylalar","Yedisu"],
+  "Bitlis":["Adilcevaz","Ahlat","Bitlis Merkez","Güroymak","Hizan","Mutki","Tatvan"],
+  "Bolu":["Bolu Merkez","Dörtdivan","Gerede","Göynük","Kıbrıscık","Mengen","Mudurnu","Seben","Yeniçağa"],
+  "Burdur":["Ağlasun","Altınyayla","Bucak","Burdur Merkez","Çavdır","Çeltikçi","Gölhisar","Karamanlı","Kemer","Tefenni","Yeşilova"],
+  "Bursa":["Büyükorhan","Gemlik","Gürsu","Harmancık","İnegöl","İznik","Karacabey","Keles","Kestel","Mudanya","Mustafakemalpaşa","Nilüfer","Orhaneli","Orhangazi","Osmangazi","Yıldırım","Yenişehir"],
+  "Çanakkale":["Ayvacık","Bayramiç","Biga","Bozcaada","Çan","Çanakkale Merkez","Eceabat","Ezine","Gelibolu","Gökçeada","Lapseki","Yenice"],
+  "Çankırı":["Atkaracalar","Bayramören","Çankırı Merkez","Eldivan","Ilgaz","Khanköy","Korgun","Kurşunlu","Orta","Şabanözü","Yapraklı"],
+  "Çorum":["Alaca","Bayat","Boğazkale","Dodurga","İskilip","Kargı","Laçin","Mecitözü","Oğuzlar","Ortaköy","Osmancık","Sungurlu","Uğurludağ","Çorum Merkez"],
+  "Denizli":["Acıpayam","Babadağ","Baklan","Bekilli","Beyağaç","Bozkurt","Buldan","Çal","Çameli","Çardak","Çivril","Güney","Honaz","Kale","Merkezefendi","Pamukkale","Sarayköy","Serinhisar","Tavas"],
+  "Diyarbakır":["Bağlar","Bismil","Çermik","Çınar","Çüngüş","Dicle","Eğil","Ergani","Hani","Hazro","Kayapınar","Kocaköy","Kulp","Lice","Silvan","Sur","Yenişehir"],
+  "Düzce":["Akçakoca","Cumayeri","Çilimli","Düzce Merkez","Gümüşova","Gölyaka","Kaynaşlı","Yığılca"],
+  "Edirne":["Edirne Merkez","Enez","Havsa","İpsala","Keşan","Lalapaşa","Meriç","Süloğlu","Uzunköprü"],
+  "Elazığ":["Ağın","Alacakaya","Arıcak","Baskil","Elazığ Merkez","Karakoçan","Keban","Kovancılar","Maden","Palu","Sivrice"],
+  "Erzincan":["Çayırlı","Erzincan Merkez","İliç","Kemah","Kemaliye","Otlukbeli","Refahiye","Tercan","Üzümlü"],
+  "Erzurum":["Aşkale","Aziziye","Çat","Hınıs","Horasan","İspir","Karayazı","Köprüköy","Narman","Oltu","Olur","Palandöken","Pasinler","Pazaryolu","Şenkaya","Tekman","Tortum","Uzundere","Yakutiye"],
+  "Eskişehir":["Alpu","Beylikova","Çifteler","Eskişehir Merkez","Günyüzü","Han","İnönü","Mahmudiye","Mihalgazi","Mihalıççık","Odunpazarı","Sarıcakaya","Seyitgazi","Sivrihisar","Tepebaşı"],
+  "Gaziantep":["Araban","İslahiye","Karkamış","Nurdağı","Oğuzeli","Şahinbey","Şehitkamil","Nizip","Yavuzeli"],
+  "Giresun":["Alucra","Bulancak","Çamoluk","Çanakçı","Dereli","Doğankent","Espiye","Eynesil","Giresun Merkez","Görele","Güce","Keşap","Piraziz","Şebinkarahisar","Tirebolu","Yağlıdere"],
+  "Gümüşhane":["Gümüşhane Merkez","Kelkit","Köse","Kürtün","Şiran","Torul"],
+  "Hakkari":["Çukurca","Hakkari Merkez","Şemdinli","Yüksekova"],
+  "Hatay":["Altınözü","Antakya","Arsuz","Belen","Defne","Dörtyol","Erzin","Hassa","İskenderun","Kırıkhan","Kumlu","Payas","Reyhanlı","Samandağ","Yayladağı"],
+  "Iğdır":["Aralık","Iğdır Merkez","Karakoyunlu","Tuzluca"],
+  "Isparta":["Aksu","Atabey","Eğirdir","Gelendost","Gönen","Keçiborlu","Isparta Merkez","Senirkent","Sütçüler","Şarkikaraağaç","Uluborlu","Yalvaç","Yenişarbademli"],
+  "İstanbul":["Adalar","Arnavutköy","Ataşehir","Avcılar","Bağcılar","Bahçelievler","Bakırköy","Başakşehir","Bayrampaşa","Beşiktaş","Beykoz","Beylikdüzü","Beyoğlu","Büyükçekmece","Çatalca","Çekmeköy","Esenler","Esenyurt","Eyüpsultan","Fatih","Gaziosmanpaşa","Güngören","Kadıköy","Kağıthane","Kartal","Küçükçekmece","Maltepe","Pendik","Sancaktepe","Sarıyer","Silivri","Sultanbeyli","Sultangazi","Şile","Şişli","Tuzla","Ümraniye","Üsküdar","Zeytinburnu"],
+  "İzmir":["Aliağa","Balçova","Bayındır","Bayraklı","Bergama","Beydağ","Bornova","Buca","Çeşme","Çiğli","Dikili","Foça","Gaziemir","Güzelbahçe","Karabağlar","Karaburun","Karşıyaka","Kemalpaşa","Kınık","Kiraz","Konak","Menderes","Menemen","Narlıdere","Ödemiş","Seferihisar","Selçuk","Tire","Torbalı","Urla"],
+  "Kahramanmaraş":["Afşin","Andırın","Çağlayancerit","Dulkadiroğlu","Ekinözü","Elbistan","Göksun","Nurhak","Onikişubat","Pazarcık","Türkoğlu"],
+  "Karabük":["Eflani","Eskipazar","Karabük Merkez","Ovacık","Safranbolu","Yenice"],
+  "Karaman":["Ayrancı","Başyayla","Ermenek","Karaman Merkez","Kazımkarabekir","Sarıveliler"],
+  "Kars":["Arpaçay","Digor","Kağızman","Kars Merkez","Sarıkamış","Selim","Susuz"],
+  "Kastamonu":["Abana","Ağlı","Araç","Azdavay","Bozkurt","Cide","Çatalzeytin","Daday","Devrekani","Doğanyurt","Hanönü","İhsangazi","İnebolu","Kastamonu Merkez","Küre","Pınarbaşı","Seydiler","Şenpazar","Taşköprü","Tosya"],
+  "Kayseri":["Akkışla","Bünyan","Develi","Felahiye","Hacılar","İncesu","Kocasinan","Melikgazi","Özvatan","Pınarbaşı","Sarıoğlan","Sarız","Talas","Tomarza","Yahyalı","Yeşilhisar"],
+  "Kırıkkale":["Bahşılı","Balışeyh","Çelebi","Delice","Karakeçili","Keskin","Kırıkkale Merkez","Sulakyurt","Yahşihan"],
+  "Kırklareli":["Babaeski","Demirköy","Kırklareli Merkez","Kofçaz","Lüleburgaz","Pehlivanköy","Pınarhisar","Vize"],
+  "Kırşehir":["Akçakent","Akpınar","Boztepe","Çiçekdağı","Kaman","Kırşehir Merkez","Mucur"],
+  "Kilis":["Elbeyli","Kilis Merkez","Musabeyli","Polateli"],
+  "Kocaeli":["Başiskele","Çayırova","Darıca","Derince","Dilovası","Gebze","Gölcük","İzmit","Kandıra","Karamürsel","Kartepe","Körfez"],
+  "Konya":["Ahırlı","Akören","Akşehir","Altınekin","Beyşehir","Bozkır","Cihanbeyli","Çeltik","Çumra","Derbent","Derebucak","Doğanhisar","Emirgazi","Ereğli","Güneysinir","Hadim","Halkapınar","Hüyük","Ilgın","Kadınhanı","Karapınar","Karatay","Kulu","Meram","Sarayönü","Selçuklu","Seydişehir","Taşkent","Tuzlukçu","Yalıhüyük","Yunak"],
+  "Kütahya":["Altıntaş","Aslanapa","Çavdarhisar","Domaniç","Dumlupınar","Emet","Gediz","Hisarcık","Kütahya Merkez","Pazarlar","Simav","Şaphane","Tavşanlı"],
+  "Malatya":["Akçadağ","Arapgir","Arguvan","Battalgazi","Darende","Doğanşehir","Doğanyol","Hekimhan","Kale","Kuluncak","Pütürge","Yazıhan","Yeşilyurt"],
+  "Manisa":["Ahmetli","Akhisar","Alaşehir","Demirci","Gölmarmara","Gördes","Kırkağaç","Köprübaşı","Kula","Sarıgöl","Saruhanlı","Selendi","Soma","Şehzadeler","Turgutlu","Yunusemre"],
+  "Mardin":["Artuklu","Dargeçit","Derik","Kızıltepe","Mazıdağı","Midyat","Nusaybin","Ömerli","Savur","Yeşilli"],
+  "Mersin":["Akdeniz","Anamur","Aydıncık","Bozyazı","Çamlıyayla","Erdemli","Gülnar","Mezitli","Mut","Silifke","Tarsus","Toroslar","Yenişehir"],
+  "Muğla":["Bodrum","Dalaman","Datça","Fethiye","Kavaklıdere","Köyceğiz","Marmaris","Menteşe","Milas","Ortaca","Seydikemer","Ula","Yatağan"],
+  "Muş":["Bulanık","Hasköy","Korkut","Malazgirt","Merkez","Varto"],
+  "Nevşehir":["Acıgöl","Avanos","Derinkuyu","Gülşehir","Hacıbektaş","Kozaklı","Nevşehir Merkez","Ürgüp"],
+  "Niğde":["Altunhisar","Bor","Çamardı","Çiftlik","Niğde Merkez","Ulukışla"],
+  "Ordu":["Akkuş","Altınordu","Aybastı","Çamaş","Çatalpınar","Çaybaşı","Fatsa","Gölköy","Gülyalı","Gürgentepe","İkizce","Kabadüz","Kabataş","Korgan","Kumru","Mesudiye","Perşembe","Ulubey","Ünye"],
+  "Osmaniye":["Bahçe","Düziçi","Hasanbeyli","Kadirli","Osmaniye Merkez","Sumbas","Toprakkale"],
+  "Rize":["Ardeşen","Çamlıhemşin","Çayeli","Derepazarı","Fındıklı","Güneysu","Hemşin","İkizdere","İyidere","Kalkandere","Pazar","Rize Merkez"],
+  "Sakarya":["Adapazarı","Akyazı","Arifiye","Erenler","Ferizli","Geyve","Hendek","Karapürçek","Karasu","Kaynarca","Kocaali","Mithatpaşa","Pamukova","Sapanca","Serdivan","Söğütlü","Taraklı"],
+  "Samsun":["Alaçam","Asarcık","Atakum","Ayvacık","Bafra","Canik","Çarşamba","İlkadım","Kavak","Ladik","Ondokuzmayıs","Salıpazarı","Tekkeköy","Terme","Vezirköprü","Yakakent"],
+  "Siirt":["Baykan","Eruh","Kurtalan","Pervari","Siirt Merkez","Şirvan","Tillo"],
+  "Sinop":["Ayancık","Boyabat","Dikmen","Durağan","Erfelek","Gerze","Saraydüzü","Sinop Merkez","Türkeli"],
+  "Sivas":["Akıncılar","Altınyayla","Divriği","Doğanşar","Gemerek","Gölova","Gürün","Hafik","İmranlı","Kangal","Koyulhisar","Sivas Merkez","Suşehri","Şarkışla","Ulaş","Yıldızeli","Zara"],
+  "Şanlıurfa":["Akçakale","Birecik","Bozova","Ceylanpınar","Eyyübiye","Halfeti","Haliliye","Harran","Hilvan","Karaköprü","Siverek","Suruç","Viranşehir"],
+  "Şırnak":["Beytüşşebap","Cizre","Güçlükonak","İdil","Şırnak Merkez","Silopi","Uludere"],
+  "Tekirdağ":["Çerkezköy","Çorlu","Ergene","Hayrabolu","Kapaklı","Malkara","Marmaraereğlisi","Muratlı","Saray","Süleymanpaşa","Şarköy"],
+  "Tokat":["Almus","Artova","Başçiftlik","Erbaa","Niksar","Pazar","Reşadiye","Sulusaray","Tokat Merkez","Turhal","Yeşilyurt","Zile"],
+  "Trabzon":["Akçaabat","Araklı","Arsin","Beşikdüzü","Çarşıbaşı","Çaykara","Dernekpazarı","Düzköy","Hayrat","Köprübaşı","Maçka","Of","Ortahisar","Sürmene","Şalpazarı","Tonya","Vakfıkebir","Yomra"],
+  "Tunceli":["Çemişgezek","Hozat","Mazgirt","Nazımiye","Ovacık","Pertek","Pülümür","Tunceli Merkez"],
+  "Uşak":["Banaz","Eşme","Karahallı","Sivaslı","Ulubey","Uşak Merkez"],
+  "Van":["Bahçesaray","Başkale","Çaldıran","Çatak","Edremit","Erciş","Gevaş","Gürpınar","İpekyolu","Muradiye","Özalp","Saray","Tuşba"],
+  "Yalova":["Altınova","Armutlu","Çınarcık","Çiftlikköy","Termal","Yalova Merkez"],
+  "Yozgat":["Akdağmadeni","Aydıncık","Boğazlıyan","Çandır","Çayıralan","Çekerek","Kadışehri","Saraykent","Sarıkaya","Şefaatli","Sorgun","Yenifakılı","Yerköy","Yozgat Merkez"],
+  "Zonguldak":["Alaplı","Çaycuma","Devrek","Ereğli","Gökçebey","Kilimli","Kozlu","Zonguldak Merkez"]
+};
+
+function ilSecenekleri(seciliIl) {
+  var html = '<option value="">— İl Seçin —</option>';
+  Object.keys(IL_ILCE).sort().forEach(function(il) {
+    html += '<option value="' + il + '"' + (seciliIl===il?' selected':'') + '>' + il + '</option>';
+  });
+  return html;
+}
+
+function ilceSecenekleri(il, seciliIlce) {
+  if (!il || !IL_ILCE[il]) return '<option value="">— Önce İl Seçin —</option>';
+  var html = '<option value="">— İlçe Seçin —</option>';
+  IL_ILCE[il].forEach(function(ilce) {
+    html += '<option value="' + ilce + '"' + (seciliIlce===ilce?' selected':'') + '>' + ilce + '</option>';
+  });
+  return html;
+}
+
+function ilSecildi() {
+  var il = document.getElementById('s-il')?.value || '';
+  var ilceSel = document.getElementById('s-ilce');
+  if (ilceSel) ilceSel.innerHTML = ilceSecenekleri(il, '');
+}
 
 // ── STOK BAĞLANTILI ALT KIRILIMLAR ──────────────────
 var STOK_BAGLI = {
@@ -6999,9 +7135,19 @@ Her başlık için şu formatı kullan:
 Başlıklar: Doluluk Analizi, Fiyat Performansı (ADR/RevPAR/GOPPAR), Finansal Durum, Gider Analizi, Bütçe Karşılaştırması.`;
 
   try {
+    var apiKey = await sbGet('otel_ayarlari','anahtar=eq.claude_api_key').then(function(r){ return r&&r[0]?r[0].deger:''; }).catch(function(){ return ''; });
+    if (!apiKey) {
+      el.innerHTML = '<div style="padding:16px;background:var(--warn-l);border:1px solid #E0C87A;border-radius:8px;font-size:13px;color:var(--warn)">⚠️ Claude API anahtarı tanımlanmamış. <strong>Sistem Ayarları → Sistem</strong> sekmesinden API anahtarınızı girin.</div>';
+      return;
+    }
     var response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-allow-browser': 'true'
+      },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1500,
@@ -7067,9 +7213,19 @@ Bizim fiyatımız piyasaya göre nerede, doluluk-fiyat dengesi
 Hemen yapılabilecek 3-5 somut öneri`;
 
   try {
+    var apiKey2 = await sbGet('otel_ayarlari','anahtar=eq.claude_api_key').then(function(r){ return r&&r[0]?r[0].deger:''; }).catch(function(){ return ''; });
+    if (!apiKey2) {
+      el.innerHTML = '<div style="padding:16px;background:var(--warn-l);border:1px solid #E0C87A;border-radius:8px;font-size:13px;color:var(--warn)">⚠️ Claude API anahtarı tanımlanmamış. <strong>Sistem Ayarları → Sistem</strong> sekmesinden API anahtarınızı girin.</div>';
+      return;
+    }
     var response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey2,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-allow-browser': 'true'
+      },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1500,
