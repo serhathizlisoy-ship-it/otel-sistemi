@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0042)file:///C:/Users/HP/Downloads/index_5.html -->
+<!-- saved from url=(0042)file:///C:/Users/HP/Downloads/index_6.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7753,7 +7753,8 @@ function raporSekmeGit(sekme) {
   if (sekme === 'analiz') {
     analizAlan.style.display = analizAlan.style.display === 'none' ? 'block' : 'none';
     if (analizAlan.style.display === 'block') raporAIAnaliz();
-    if (fiyatAlan.style.display === 'block') raporFiyatOnerisi();
+  } else if (sekme === 'fiyat') {
+    fiyatAlan.style.display = fiyatAlan.style.display === 'none' ? 'block' : 'none';
   } else if (sekme === 'karsilastirma') {
     karsilastirmaAlan.style.display = karsilastirmaAlan.style.display === 'none' ? 'block' : 'none';
     if (karsilastirmaAlan.style.display === 'block') raporKarsilastirmaYukle();
