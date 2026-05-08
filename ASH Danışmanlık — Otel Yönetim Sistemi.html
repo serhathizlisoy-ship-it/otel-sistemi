@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_85.html -->
+<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_86.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1388,6 +1388,7 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
             <button onclick="raporYazdir()" style="padding:8px 16px;border:1px solid var(--border);border-radius:7px;background:var(--bg);font-size:12px;cursor:pointer">🖨️ Yazdır / PDF</button>
           <button onclick="raporSekmeGit(&#39;analiz&#39;)" id="rapor-btn-analiz" style="padding:8px 16px;border:1px solid var(--accent-b);border-radius:7px;background:var(--accent-l);color:var(--accent);font-size:12px;cursor:pointer;font-weight:600">🤖 AI Analizi</button>
           <button onclick="raporSekmeGit(&#39;fiyat&#39;)" id="rapor-btn-fiyat" style="padding:8px 16px;border:1px solid var(--mgr-b);border-radius:7px;background:var(--mgr-l);color:var(--mgr);font-size:12px;cursor:pointer;font-weight:600">💡 Fiyat Önerisi</button>
+          <button onclick="raporSekmeGit(&#39;karsilastirma&#39;)" id="rapor-btn-karsilastirma" style="padding:8px 16px;border:1px solid var(--warn-b, #E0C87A);border-radius:7px;background:var(--warn-l);color:var(--warn);font-size:12px;cursor:pointer;font-weight:600">📊 Karşılaştırma</button>
           </div>
         </div>
 
@@ -1398,6 +1399,12 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
             <div id="rapor-analiz-icerik">
               <div style="text-align:center;padding:20px;color:var(--text-3)">AI analizini başlatmak için yukarıdan "AI Analizi" butonuna tıklayın.</div>
             </div>
+          </div>
+        </div>
+
+        <div id="rapor-karsilastirma-alan" style="display:none;margin-bottom:16px">
+          <div id="rapor-karsilastirma-icerik">
+            <div style="text-align:center;padding:30px"><div class="spinner" style="margin:0 auto;border-color:var(--border);border-top-color:var(--warn)"></div></div>
           </div>
         </div>
 
@@ -7280,13 +7287,17 @@ var _raporVeriler = null; // Son yüklenen rapor verileri
 function raporSekmeGit(sekme) {
   var analizAlan = document.getElementById('rapor-analiz-alan');
   var fiyatAlan = document.getElementById('rapor-fiyat-alan');
-  
+  var karsilastirmaAlan = document.getElementById('rapor-karsilastirma-alan');
+
   if (sekme === 'analiz') {
     analizAlan.style.display = analizAlan.style.display === 'none' ? 'block' : 'none';
     if (analizAlan.style.display === 'block') raporAIAnaliz();
   } else if (sekme === 'fiyat') {
     fiyatAlan.style.display = fiyatAlan.style.display === 'none' ? 'block' : 'none';
     if (fiyatAlan.style.display === 'block') raporFiyatOnerisi();
+  } else if (sekme === 'karsilastirma') {
+    karsilastirmaAlan.style.display = karsilastirmaAlan.style.display === 'none' ? 'block' : 'none';
+    if (karsilastirmaAlan.style.display === 'block') raporKarsilastirmaYukle();
   }
 }
 
@@ -7459,6 +7470,221 @@ async function raporFiyatOnerisi() {
 
   } catch(e) {
     el.innerHTML = '<div style="color:var(--danger);padding:14px">API Hatası: ' + e.message + '</div>';
+  }
+}
+
+
+// ── KARŞILAŞTIRMA RAPORU ─────────────────────────────
+async function raporKarsilastirmaYukle() {
+  var el = document.getElementById('rapor-karsilastirma-icerik');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:30px"><div class="spinner" style="margin:0 auto;border-color:var(--border);border-top-color:var(--warn)"></div><div style="margin-top:12px;color:var(--text-3)">Veriler yükleniyor...</div></div>';
+
+  try {
+    var bas = _raporBas;
+    var bit = _raporBit;
+    var yil = new Date(bas).getFullYear();
+
+    // Veri çek
+    var [kapanis, giderler, butceAylik, butceGider] = await Promise.all([
+      sbGet('gunluk_kapanis', 'tarih=gte.' + bas + '&tarih=lte.' + bit),
+      sbGet('gider_girisi', 'tarih=gte.' + bas + '&tarih=lte.' + bit),
+      sbGet('butce_aylik', 'yil=eq.' + yil),
+      sbGet('butce_gider_aylik', 'yil=eq.' + yil + '&onaylandi=eq.true')
+    ]);
+
+    // Gerçekleşen gelir hesapla
+    var gercekKonaklama = 0, gercekFB = 0, gercekMinibar = 0;
+    var gercekCamasir = 0, gercekOdaServis = 0, gercekDiger = 0;
+    var gercekNakit = 0, gercekKredi = 0, gercekHavale = 0, gercekDigerTah = 0;
+
+    if (kapanis) kapanis.forEach(function(k) {
+      gercekKonaklama += k.konaklama_ciro||0;
+      gercekFB += k.fb_ciro||0;
+      gercekMinibar += k.minibar_ciro||0;
+      gercekCamasir += k.camasir_ciro||0;
+      gercekOdaServis += k.oda_servis_ciro||0;
+      gercekDiger += k.diger_ciro||0;
+      gercekNakit += k.nakit||0;
+      gercekKredi += k.kredi_karti||0;
+      gercekHavale += k.banka_havale||0;
+      gercekDigerTah += k.diger_tahsilat||0;
+    });
+    var gercekToplamCiro = gercekKonaklama + gercekFB + gercekMinibar + gercekCamasir + gercekOdaServis + gercekDiger;
+    var gercekToplamTahsilat = gercekNakit + gercekKredi + gercekHavale + gercekDigerTah;
+
+    // Tasarı gelir hesapla (seçilen dönemdeki aylar)
+    var tasariCiro = 0;
+    var basTarih = new Date(bas), bitTarih = new Date(bit);
+    if (butceAylik) butceAylik.forEach(function(b) {
+      var ayTarih = new Date(yil, b.ay-1, 1);
+      if (ayTarih >= basTarih && ayTarih <= bitTarih) tasariCiro += (b.tahmini_gelir_orta||0);
+    });
+
+    // Gerçekleşen gider ana başlık bazında
+    var gercekGider = {};
+    if (giderler) giderler.forEach(function(g) {
+      if (!gercekGider[g.ana_baslik]) gercekGider[g.ana_baslik] = 0;
+      gercekGider[g.ana_baslik] += (g.tutar||0);
+    });
+    var gercekToplamGider = Object.values(gercekGider).reduce(function(s,v){ return s+v; },0);
+
+    // Tasarı gider ana başlık bazında
+    var tasariGider = {};
+    if (butceGider) butceGider.forEach(function(b) {
+      var ayTarih = new Date(yil, b.ay-1, 1);
+      if (ayTarih >= basTarih && ayTarih <= bitTarih) {
+        if (!tasariGider[b.ana_baslik]) tasariGider[b.ana_baslik] = 0;
+        tasariGider[b.ana_baslik] += (b.hesaplanan_tutar||0);
+      }
+    });
+    var tasariToplamGider = Object.values(tasariGider).reduce(function(s,v){ return s+v; },0);
+
+    // Stok tüketimi - operasyon gider kalemi bazında
+    var stokCikis = await sbGet('stok_hareket', 'hareket_tipi=eq.cikis&tarih=gte.' + bas + '&tarih=lte.' + bit);
+    var stokToplamCikis = 0;
+    if (stokCikis) stokCikis.forEach(function(s){ stokToplamCikis += (s.toplam_tutar||0); });
+
+    // Kasa farkı
+    var kasaFark = gercekToplamCiro - gercekToplamTahsilat;
+
+    // YARDIMCI FONKSİYONLAR
+    function sapmaRenk(fark, ters) {
+      // ters=true → gider için (fark pozitifse kötü)
+      if (ters) {
+        if (fark > 0) return fark / (tasariToplamGider||1) > 0.15 ? 'var(--danger)' : 'var(--warn)';
+        return 'var(--accent)';
+      } else {
+        if (fark < 0) return Math.abs(fark) / (tasariCiro||1) > 0.15 ? 'var(--danger)' : 'var(--warn)';
+        return 'var(--accent)';
+      }
+    }
+    function sapmaIkon(fark, ters) {
+      if (ters) return fark > 0 ? (fark/(tasariToplamGider||1)>0.15?'🔴':'⚠️') : '✅';
+      return fark < 0 ? (Math.abs(fark)/(tasariCiro||1)>0.15?'🔴':'⚠️') : '✅';
+    }
+    function sapmaYuzde(gercek, tasari) {
+      if (!tasari) return '—';
+      return (((gercek-tasari)/tasari)*100).toFixed(1) + '%';
+    }
+    function kTL(v) { return (v||0).toLocaleString('tr-TR') + ' TL'; }
+
+    // Açıklama renk kodu
+    var aciklamaHtml = '<div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap">' +
+      '<div style="display:flex;align-items:center;gap:6px;font-size:12px"><span style="color:var(--accent);font-size:16px">✅</span> <span>Hedef üzerinde / Beklenen içinde</span></div>' +
+      '<div style="display:flex;align-items:center;gap:6px;font-size:12px"><span style="font-size:16px">⚠️</span> <span>%5-15 sapma — dikkat gerekli</span></div>' +
+      '<div style="display:flex;align-items:center;gap:6px;font-size:12px"><span style="color:var(--danger);font-size:16px">🔴</span> <span>%15+ sapma — acil aksiyon gerekli</span></div>' +
+      '</div>';
+
+    function karsiTablo(baslik, satirlar, toplamSatir) {
+      var html = '<div style="margin-bottom:20px"><div style="font-size:13px;font-weight:700;color:var(--text-2);margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid var(--border)">' + baslik + '</div>';
+      html += '<div style="overflow-x:auto"><table class="tbl"><thead><tr>' +
+        '<th style="min-width:180px">Kalem</th>' +
+        '<th style="text-align:right">Tasarı</th>' +
+        '<th style="text-align:right">Gerçekleşen</th>' +
+        '<th style="text-align:right">Fark</th>' +
+        '<th style="text-align:right">% Sapma</th>' +
+        '<th style="text-align:center">Durum</th>' +
+        '</tr></thead><tbody>';
+      satirlar.forEach(function(s) {
+        var fark = s.gercek - s.tasari;
+        var renk = sapmaRenk(fark, s.ters);
+        var ikon = sapmaIkon(fark, s.ters);
+        var yuzde = s.tasari > 0 ? sapmaYuzde(s.gercek, s.tasari) : '—';
+        html += '<tr>' +
+          '<td style="font-weight:' + (s.bold?'700':'500') + ';font-size:12px' + (s.bold?';border-top:1px solid var(--border)':'') + '">' + s.label + '</td>' +
+          '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px">' + kTL(s.tasari) + '</td>' +
+          '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px;font-weight:' + (s.bold?'700':'400') + '">' + kTL(s.gercek) + '</td>' +
+          '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px;color:' + renk + ';font-weight:600">' + (fark>=0?'+':'') + kTL(fark) + '</td>' +
+          '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px;color:' + renk + '">' + (s.tasari>0?yuzde:'—') + '</td>' +
+          '<td style="text-align:center;font-size:16px">' + (s.tasari>0?ikon:'—') + '</td>' +
+          '</tr>';
+      });
+      html += '</tbody></table></div></div>';
+      return html;
+    }
+
+    var html = aciklamaHtml;
+
+    // 1. GELİR KARŞILAŞTIRMASI
+    html += karsiTablo('💰 Gelir Karşılaştırması', [
+      { label: 'Konaklama Cirosu', tasari: tasariCiro * 0.85, gercek: gercekKonaklama },
+      { label: 'F&B Cirosu', tasari: tasariCiro * 0.08, gercek: gercekFB },
+      { label: 'Minibar', tasari: tasariCiro * 0.03, gercek: gercekMinibar },
+      { label: 'Çamaşırhane', tasari: tasariCiro * 0.02, gercek: gercekCamasir },
+      { label: 'Oda Servis', tasari: tasariCiro * 0.01, gercek: gercekOdaServis },
+      { label: 'Diğer', tasari: tasariCiro * 0.01, gercek: gercekDiger },
+      { label: 'TOPLAM CİRO', tasari: tasariCiro, gercek: gercekToplamCiro, bold: true }
+    ]);
+
+    // 2. GİDER KARŞILAŞTIRMASI
+    var giderSatirlari = Object.keys(SEKTOREL_ANA).map(function(baslik) {
+      return {
+        label: baslik.replace(' Giderleri','').replace(' Gideri',''),
+        tasari: tasariGider[baslik] || 0,
+        gercek: gercekGider[baslik] || 0,
+        ters: true
+      };
+    });
+    giderSatirlari.push({ label: 'TOPLAM GİDER', tasari: tasariToplamGider, gercek: gercekToplamGider, bold: true, ters: true });
+    html += karsiTablo('💸 Gider Karşılaştırması (8 Ana Başlık)', giderSatirlari);
+
+    // 3. KASA & TAHSİLAT KONTROLÜ
+    html += '<div style="margin-bottom:20px"><div style="font-size:13px;font-weight:700;color:var(--text-2);margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid var(--border)">💳 Kasa & Tahsilat Kontrolü</div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">';
+
+    // Ciro vs Tahsilat
+    var kasaIkon = Math.abs(kasaFark) < gercekToplamCiro * 0.05 ? '✅' : Math.abs(kasaFark) < gercekToplamCiro * 0.15 ? '⚠️' : '🔴';
+    html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden">' +
+      '<div style="padding:8px 12px;background:var(--accent);color:#fff;font-size:12px;font-weight:700">Ciro vs Tahsilat</div>' +
+      '<div style="padding:12px">' +
+      '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px"><span style="color:var(--text-3)">Toplam Ciro</span><span style="font-family:DM Mono,monospace;font-weight:600">' + kTL(gercekToplamCiro) + '</span></div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px"><span style="color:var(--text-3)">Nakit</span><span style="font-family:DM Mono,monospace">' + kTL(gercekNakit) + '</span></div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px"><span style="color:var(--text-3)">Kredi Kartı</span><span style="font-family:DM Mono,monospace">' + kTL(gercekKredi) + '</span></div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px"><span style="color:var(--text-3)">Havale/EFT</span><span style="font-family:DM Mono,monospace">' + kTL(gercekHavale) + '</span></div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px"><span style="color:var(--text-3)">Diğer</span><span style="font-family:DM Mono,monospace">' + kTL(gercekDigerTah) + '</span></div>' +
+      '<div style="border-top:1px solid var(--border);margin:8px 0"></div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px"><span style="font-weight:600">Toplam Tahsilat</span><span style="font-family:DM Mono,monospace;font-weight:700">' + kTL(gercekToplamTahsilat) + '</span></div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:13px;padding:8px;background:' + (Math.abs(kasaFark)<100?'var(--accent-l)':'var(--warn-l)') + ';border-radius:7px">' +
+      '<span style="font-weight:700">Fark (Açık Hesap)</span>' +
+      '<span style="font-family:DM Mono,monospace;font-weight:700;color:' + (Math.abs(kasaFark)<100?'var(--accent)':'var(--danger)') + '">' + kasaIkon + ' ' + kTL(Math.abs(kasaFark)) + '</span></div>' +
+      '<div style="font-size:11px;color:var(--text-3);margin-top:6px">' + (Math.abs(kasaFark)<100?'✅ Ciro ile tahsilat örtüşüyor.':'⚠️ ' + kTL(Math.abs(kasaFark)) + ' henüz tahsil edilmemiş veya fazla tahsilat var.') + '</div>' +
+      '</div></div>';
+
+    // Operasyon Gider vs Stok Tüketimi
+    var opGider = gercekGider['Operasyon Giderleri'] || 0;
+    var stokFark = opGider - stokToplamCikis;
+    html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden">' +
+      '<div style="padding:8px 12px;background:var(--mgr);color:#fff;font-size:12px;font-weight:700">Operasyon Gider vs Stok Tüketimi</div>' +
+      '<div style="padding:12px">' +
+      '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px"><span style="color:var(--text-3)">Operasyon Gider Girişi</span><span style="font-family:DM Mono,monospace;font-weight:600">' + kTL(opGider) + '</span></div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px"><span style="color:var(--text-3)">Stok Tüketimi (Çıkış)</span><span style="font-family:DM Mono,monospace">' + kTL(stokToplamCikis) + '</span></div>' +
+      '<div style="border-top:1px solid var(--border);margin:8px 0"></div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:13px;padding:8px;background:' + (stokFark>=0?'var(--accent-l)':'var(--danger-l)') + ';border-radius:7px">' +
+      '<span style="font-weight:700">Fark</span>' +
+      '<span style="font-family:DM Mono,monospace;font-weight:700;color:' + (stokFark>=0?'var(--accent)':'var(--danger)') + '">' + (stokFark>=0?'✅ ':'🔴 ') + kTL(Math.abs(stokFark)) + '</span></div>' +
+      '<div style="font-size:11px;color:var(--text-3);margin-top:6px">' + (stokFark>0?'Gider girişi stok tüketiminden yüksek → Stokta kalan mal veya henüz tüketim girilmemiş olabilir.':stokFark<0?'Stok tüketimi gider girişinden yüksek → Eksik gider girişi olabilir.':'✅ Operasyon gideri ile stok tüketimi örtüşüyor.') + '</div>' +
+      '</div></div>';
+
+    html += '</div></div>';
+
+    // 4. KAR/ZARAR ÖZETİ
+    var gercekKar = gercekToplamCiro - gercekToplamGider;
+    var tasariKar = tasariCiro - tasariToplamGider;
+    var gercekMarj = gercekToplamCiro > 0 ? (gercekKar/gercekToplamCiro*100).toFixed(1) : 0;
+    var tasariMarj = tasariCiro > 0 ? (tasariKar/tasariCiro*100).toFixed(1) : 0;
+
+    html += karsiTablo('📈 Kar/Zarar Özeti', [
+      { label: 'Toplam Ciro', tasari: tasariCiro, gercek: gercekToplamCiro },
+      { label: 'Toplam Gider', tasari: tasariToplamGider, gercek: gercekToplamGider, ters: true },
+      { label: 'NET KAR/ZARAR', tasari: tasariKar, gercek: gercekKar, bold: true },
+      { label: 'Kar Marjı (%)', tasari: parseFloat(tasariMarj), gercek: parseFloat(gercekMarj) }
+    ]);
+
+    el.innerHTML = html;
+
+  } catch(e) {
+    el.innerHTML = '<div style="color:var(--danger);padding:20px">Hata: ' + e.message + '</div>';
   }
 }
 
