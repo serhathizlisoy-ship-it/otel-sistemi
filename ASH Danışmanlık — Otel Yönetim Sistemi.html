@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_55.html -->
+<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_56.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -307,33 +307,36 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
                   <div style="margin-top:8px;padding:12px 14px;background:var(--bg2);border:1.5px solid var(--accent-b);border-radius:10px">
                     <div style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:10px">📦 Stok Girişi</div>
                     
-                    <!-- Kategori + Ürün + Miktar + Fiyat satırı -->
-                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:flex-end">
+                    <!-- Kategori + Ürün satırı -->
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
                       <div>
-                        <div style="font-size:11px;color:var(--text-3);margin-bottom:3px">Stok Kategorisi</div>
-                        <select id="gid-stok-kat" onchange="gidStokKategoriSecildi()" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:6px;font-family:Instrument Sans,sans-serif;font-size:12px;background:var(--bg)">
+                        <div style="font-size:11px;color:var(--text-3);margin-bottom:4px">Stok Kategorisi</div>
+                        <select id="gid-stok-kat" onchange="gidStokKategoriSecildi()" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:7px;font-family:Instrument Sans,sans-serif;font-size:13px;background:var(--bg)">
                           <option value="">— Seçiniz —</option>
                         </select>
                       </div>
                       <div>
-                        <div style="font-size:11px;color:var(--text-3);margin-bottom:3px">Ürün</div>
-                        <select id="gid-stok-urun" onchange="gidStokUrunSecildi()" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:6px;font-family:Instrument Sans,sans-serif;font-size:12px;background:var(--bg)">
+                        <div style="font-size:11px;color:var(--text-3);margin-bottom:4px">Ürün</div>
+                        <select id="gid-stok-urun" onchange="gidStokUrunSecildi()" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:7px;font-family:Instrument Sans,sans-serif;font-size:13px;background:var(--bg)">
                           <option value="">— Kategori seçin —</option>
                         </select>
                       </div>
+                    </div>
+                    <!-- Miktar + Tutar + Ekle satırı -->
+                    <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;margin-bottom:8px;align-items:flex-end">
                       <div>
-                        <div style="font-size:11px;color:var(--text-3);margin-bottom:3px">Miktar</div>
-                        <div style="display:flex;align-items:center;gap:4px">
-                          <input type="number" id="gid-stok-miktar" placeholder="0" min="0" step="0.01" oninput="gidStokTutarHesapla()" style="flex:1;padding:7px;border:1px solid var(--border);border-radius:6px;font-family:DM Mono,monospace;font-size:13px;background:var(--bg)">
-                          <span id="gid-stok-birim" style="font-size:11px;color:var(--text-3);white-space:nowrap">birim</span>
+                        <div style="font-size:11px;color:var(--text-3);margin-bottom:4px">Miktar</div>
+                        <div style="display:flex;align-items:center;gap:6px">
+                          <input type="number" id="gid-stok-miktar" placeholder="0" min="0" step="0.01" oninput="gidStokTutarHesapla()" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:7px;font-family:DM Mono,monospace;font-size:14px;background:var(--bg)">
+                          <span id="gid-stok-birim" style="font-size:12px;color:var(--text-3);white-space:nowrap;min-width:30px">birim</span>
                         </div>
                       </div>
                       <div>
-                        <div style="font-size:11px;color:var(--text-3);margin-bottom:3px">Tutar (TL)</div>
-                        <input type="number" id="gid-stok-tutar" placeholder="0.00" min="0" step="0.01" oninput="gidStokTutarHesapla()" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:6px;font-family:DM Mono,monospace;font-size:13px;background:var(--bg)">
-                        <div id="gid-stok-bf" style="font-size:10px;color:var(--text-3);margin-top:2px">Birim fiyat: —</div>
+                        <div style="font-size:11px;color:var(--text-3);margin-bottom:4px">Tutar (TL)</div>
+                        <input type="number" id="gid-stok-tutar" placeholder="0.00" min="0" step="0.01" oninput="gidStokTutarHesapla()" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:7px;font-family:DM Mono,monospace;font-size:14px;background:var(--bg)">
+                        <div id="gid-stok-bf" style="font-size:10px;color:var(--text-3);margin-top:3px">Birim fiyat: —</div>
                       </div>
-                      <button onclick="gidStokUrunEkle()" style="padding:7px 14px;border:none;border-radius:6px;background:var(--accent);color:#fff;font-family:Instrument Sans,sans-serif;font-size:12px;cursor:pointer;white-space:nowrap">+ Ekle</button>
+                      <button onclick="gidStokUrunEkle()" style="padding:9px 20px;border:none;border-radius:7px;background:var(--accent);color:#fff;font-family:Instrument Sans,sans-serif;font-size:13px;font-weight:600;cursor:pointer">+ Ekle</button>
                     </div>
 
                     <!-- Yeni ürün ekle -->
