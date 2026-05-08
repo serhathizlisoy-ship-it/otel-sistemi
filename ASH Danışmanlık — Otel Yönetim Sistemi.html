@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_82.html -->
+<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_83.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -6995,25 +6995,65 @@ async function raporYukle() {
 
     html += raporKart('💸 Gider Kalemleri', giderSatirlari);
 
-    // Cari borçlar
-    try {
-      var firmaCari = await sbGet('firma_cari', '');
-      var personelCari = await sbGet('personel_cari', '');
-      var firmaBorcToplam = 0, personelBorcToplam = 0;
-      // firma_cari: borc/odeme sütunları
-      if (firmaCari) firmaCari.forEach(function(f){ firmaBorcToplam += ((f.borc||0) - (f.odeme||0)); });
-      // personel_cari: borclu/alacakli sütunları  
-      if (personelCari) personelCari.forEach(function(p){ personelBorcToplam += ((p.borclu||0) - (p.alacakli||0)); });
-      if (personelBorcToplam < 0) personelBorcToplam = 0;
-      if (firmaBorcToplam < 0) firmaBorcToplam = 0;
-      var toplamCariBorç = firmaBorcToplam + personelBorcToplam;
+    // Cari borçlar - personel ve firma bazında
+    var firmaBorcToplam = 0, personelBorcToplam = 0;
+    var cariSatirlari = [];
 
-      html += raporKart('💳 Cari Borçlar', [
-        { label: 'Firma Borçları', value: firmaBorcToplam.toLocaleString('tr-TR') + ' TL' },
-        { label: 'Personel Borçları', value: personelBorcToplam.toLocaleString('tr-TR') + ' TL' },
-        { label: 'TOPLAM CARİ BORÇ', value: toplamCariBorç.toLocaleString('tr-TR') + ' TL', bold: true, color: toplamCariBorç > 0 ? 'var(--danger)' : 'var(--accent)', separator: true }
-      ]);
-    } catch(e) {}
+    // Personel bazında borç hesapla
+    try {
+      var personelListesi = await sbGet('personel', 'aktif=eq.true&order=ad_soyad.asc');
+      var personelCariTum = await sbGet('personel_cari', '');
+      if (personelListesi && personelCariTum) {
+        personelListesi.forEach(function(p) {
+          var hareketler = personelCariTum.filter(function(h){ return h.personel_id === p.id; });
+          var alacakli = hareketler.reduce(function(s,h){ return s+(h.alacakli||0); }, 0);
+          var borclu = hareketler.reduce(function(s,h){ return s+(h.borclu||0); }, 0);
+          var net = alacakli - borclu; // pozitif = biz borçluyuz
+          if (net > 0) {
+            personelBorcToplam += net;
+            cariSatirlari.push({ label: '👤 ' + p.ad_soyad, value: net.toLocaleString('tr-TR') + ' TL', color: 'var(--danger)' });
+          }
+        });
+      }
+    } catch(e) { console.log('personel_cari hata:', e.message); }
+
+    // Firma bazında borç hesapla
+    try {
+      var firmaListesi = await sbGet('firma', 'aktif=eq.true&order=firma_adi.asc');
+      var firmaCariTum = await sbGet('firma_cari', '');
+      if (firmaListesi && firmaCariTum) {
+        firmaListesi.forEach(function(f) {
+          var hareketler = firmaCariTum.filter(function(h){ return h.firma_id === f.id; });
+          var borc = hareketler.reduce(function(s,h){ return s+(h.borc||0); }, 0);
+          var odeme = hareketler.reduce(function(s,h){ return s+(h.odeme||0); }, 0);
+          var net = borc - odeme;
+          if (net > 0) {
+            firmaBorcToplam += net;
+            cariSatirlari.push({ label: '🏢 ' + f.firma_adi, value: net.toLocaleString('tr-TR') + ' TL', color: 'var(--danger)' });
+          }
+        });
+      }
+    } catch(e) { console.log('firma_cari hata:', e.message); }
+
+    var toplamCariBorç = personelBorcToplam + firmaBorcToplam;
+
+    // Kartı oluştur
+    var cariKartSatirlari = [];
+    if (personelBorcToplam > 0) {
+      cariKartSatirlari.push({ label: '— PERSONEL —', value: personelBorcToplam.toLocaleString('tr-TR') + ' TL', bold: true });
+    }
+    cariSatirlari.filter(function(s){ return s.label.startsWith('👤'); }).forEach(function(s){ cariKartSatirlari.push(s); });
+    if (firmaBorcToplam > 0) {
+      cariKartSatirlari.push({ label: '— FİRMA —', value: firmaBorcToplam.toLocaleString('tr-TR') + ' TL', bold: true, separator: true });
+    }
+    cariSatirlari.filter(function(s){ return s.label.startsWith('🏢'); }).forEach(function(s){ cariKartSatirlari.push(s); });
+    cariKartSatirlari.push({ label: 'TOPLAM CARİ BORÇ', value: toplamCariBorç.toLocaleString('tr-TR') + ' TL', bold: true, color: toplamCariBorç > 0 ? 'var(--danger)' : 'var(--accent)', separator: true });
+
+    if (cariKartSatirlari.length > 0) {
+      html += raporKart('💳 Cari Borçlar', cariKartSatirlari);
+    } else {
+      html += raporKart('💳 Cari Borçlar', [{ label: 'Bekleyen borç yok', value: '✅', color: 'var(--accent)' }]);
+    }
 
     html += '</div>';
 
