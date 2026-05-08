@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_80.html -->
+<!-- saved from url=(0058)file:///C:/Users/HP/Downloads/otel-yonetim-sistemi_81.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -6947,12 +6947,16 @@ async function raporYukle() {
 
     // Metrikler kartı
     html += raporKart('📊 Performans Metrikleri', [
-      { label: 'ADR (Ort. Oda Fiyatı)', value: Math.round(ADR).toLocaleString('tr-TR') + ' TL', bold: true, color: 'var(--accent)' },
-      { label: 'RevPAR (Oda Başı Gelir)', value: Math.round(RevPAR).toLocaleString('tr-TR') + ' TL', bold: true },
-      { label: 'GOPPAR (Oda Başı Brüt Kâr)', value: Math.round(GOPPAR).toLocaleString('tr-TR') + ' TL', bold: true, color: netKarZarar >= 0 ? 'var(--accent)' : 'var(--danger)' },
+      { label: 'ADR', value: Math.round(ADR).toLocaleString('tr-TR') + ' TL', bold: true, color: 'var(--accent)' },
+      { label: 'RevPAR', value: Math.round(RevPAR).toLocaleString('tr-TR') + ' TL', bold: true },
+      { label: 'GOPPAR', value: Math.round(GOPPAR).toLocaleString('tr-TR') + ' TL', bold: true, color: netKarZarar >= 0 ? 'var(--accent)' : 'var(--danger)' },
       { label: 'Kişi Başı Satış', value: Math.round(kisiBasiSatis).toLocaleString('tr-TR') + ' TL', separator: true },
       { label: 'Kişi Başı Maliyet', value: Math.round(kisiBasiCost).toLocaleString('tr-TR') + ' TL' },
-      { label: 'Kar Marjı', value: '%' + karMarji.toFixed(1), bold: true, color: karMarji >= 18 ? 'var(--accent)' : karMarji >= 0 ? 'var(--warn)' : 'var(--danger)' }
+      { label: 'Kar Marjı', value: '%' + karMarji.toFixed(1), bold: true, color: karMarji >= 18 ? 'var(--accent)' : karMarji >= 0 ? 'var(--warn)' : 'var(--danger)' },
+      { label: '─────────────────', value: '', separator: true },
+      { label: 'ADR', value: 'Dolu oda başına ortalama geceleme fiyatı', note: true },
+      { label: 'RevPAR', value: 'Mevcut her oda başına düşen konaklama geliri', note: true },
+      { label: 'GOPPAR', value: 'Mevcut her oda başına düşen brüt işletme kârı', note: true }
     ]);
 
     html += '</div>';
@@ -6985,12 +6989,11 @@ async function raporYukle() {
 
     var giderSatirlari = Object.keys(SEKTOREL_ANA).map(function(baslik) {
       var tutar = giderAnaBaslik[baslik] || 0;
-      var ciroYuzde = toplamCiro > 0 ? (tutar / toplamCiro * 100) : 0;
-      return { label: baslik.replace(' Giderleri','').replace(' Gideri',''), value: tutar.toLocaleString('tr-TR') + ' TL (%' + ciroYuzde.toFixed(1) + ')' };
+      return { label: baslik.replace(' Giderleri','').replace(' Gideri',''), value: tutar.toLocaleString('tr-TR') + ' TL' };
     });
     giderSatirlari.push({ label: 'TOPLAM GİDER', value: toplamGider.toLocaleString('tr-TR') + ' TL', bold: true, color: 'var(--danger)', separator: true });
 
-    html += raporKart('💸 Gider Kalemleri & Ciro %', giderSatirlari);
+    html += raporKart('💸 Gider Kalemleri', giderSatirlari);
 
     // Cari borçlar
     try {
@@ -7079,11 +7082,19 @@ function raporKart(baslik, satirlar) {
     '<div style="padding:10px 12px">';
 
   satirlar.forEach(function(s) {
-    if (s.separator) html += '<div style="border-top:1px solid var(--border);margin:6px 0"></div>';
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">' +
-      '<span style="font-size:11px;color:var(--text-3)">' + s.label + '</span>' +
-      '<span style="font-family:DM Mono,monospace;font-size:' + (s.bold?'13':'12') + 'px;font-weight:' + (s.bold?'700':'400') + ';color:' + (s.color||'var(--text)') + '">' + s.value + '</span>' +
-      '</div>';
+    if (s.separator && s.label !== '─────────────────') html += '<div style="border-top:1px solid var(--border);margin:6px 0"></div>';
+    if (s.note) {
+      // Açıklama satırı - küçük gri
+      html += '<div style="display:flex;gap:6px;align-items:baseline;margin-bottom:3px">' +
+        '<span style="font-size:10px;font-weight:700;color:var(--accent);min-width:50px">' + s.label + '</span>' +
+        '<span style="font-size:10px;color:var(--text-3);font-style:italic">' + s.value + '</span>' +
+        '</div>';
+    } else if (s.label !== '─────────────────') {
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">' +
+        '<span style="font-size:11px;color:var(--text-3)">' + s.label + '</span>' +
+        '<span style="font-family:DM Mono,monospace;font-size:' + (s.bold?'13':'12') + 'px;font-weight:' + (s.bold?'700':'400') + ';color:' + (s.color||'var(--text)') + '">' + s.value + '</span>' +
+        '</div>';
+    }
   });
 
   html += '</div></div>';
