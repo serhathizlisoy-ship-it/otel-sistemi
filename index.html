@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_42.html -->
+<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_43.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -4093,53 +4093,76 @@ async function kapanisDuzenle(id) {
     if (!kayit || kayit.length === 0) { showToast('Kayit bulunamadi!', true); return; }
     var k = kayit[0];
 
-    var modal = document.createElement('div');
-    modal.id = 'kap-duzenle-modal';
-    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;display:flex;align-items:center;justify-content:center';
+    // Gunluk Kapanış sekmesine geç
+    kapanisSekme('giris');
 
-    var fields = [
-      ['konaklama_ciro', 'Konaklama Ciro', k.konaklama_ciro||0],
-      ['fb_ciro', 'F&B Ciro', k.fb_ciro||0],
-      ['minibar_ciro', 'Minibar Ciro', k.minibar_ciro||0],
-      ['camasir_ciro', 'Camasir Ciro', k.camasir_ciro||0],
-      ['oda_servis_ciro', 'Oda Servis', k.oda_servis_ciro||0],
-      ['diger_ciro', 'Diger Ciro', k.diger_ciro||0],
-      ['nakit', 'Nakit', k.nakit||0],
-      ['kredi_karti', 'Kredi Karti', k.kredi_karti||0],
-      ['banka_havale', 'Banka Havale', k.banka_havale||0],
-      ['diger_tahsilat', 'Diger Tahsilat', k.diger_tahsilat||0],
-      ['dolu_oda', 'Dolu Oda', k.dolu_oda||0],
-      ['konaklayan_kisi', 'Konaklayan Kisi', k.konaklayan_kisi||0]
-    ];
+    // Formu doldur
+    setTimeout(function() {
+      // Duzenleme modunu set et
+      window._kapanisDuzenleId = id;
 
-    var formHtml = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;width:560px;max-width:95vw;max-height:90vh;overflow-y:auto">' +
-      '<div style="font-size:15px;font-weight:700;margin-bottom:4px">Kapanisi Duzenle</div>' +
-      '<div style="font-size:12px;color:var(--text-2);margin-bottom:16px">' + k.tarih + '</div>' +
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">';
+      // Tarih
+      var tarihEl = document.getElementById('kap-tarih');
+      if (tarihEl) tarihEl.value = k.tarih;
 
-    fields.forEach(function(f) {
-      formHtml += '<div class="sfield"><label>'+f[0]==='dolu_oda'||f[0]==='konaklayan_kisi'?f[1]+' (Adet)':f[1]+' (TL)'+'</label>' +
-        '<input type="number" id="kd-'+f[0]+'" value="'+f[2]+'" style="font-family:DM Mono,monospace"></div>';
-    });
+      // Kisi ve oda
+      var kisiEl = document.getElementById('kap-kisi');
+      if (kisiEl) { kisiEl.value = k.konaklayan_kisi||0; }
+      var odaEl = document.getElementById('kap-oda');
+      if (odaEl) { odaEl.value = k.dolu_oda||0; }
 
-    formHtml += '</div>' +
-      '<div class="sfield" style="margin-bottom:16px"><label>Notlar</label><input type="text" id="kd-notlar" value="'+(k.notlar||'')+'"></div>' +
-      '<div style="display:flex;gap:10px;justify-content:flex-end">' +
-      '<button onclick="kapanisDuzenleModalKapat()" style="padding:9px 20px;border:1px solid var(--border);border-radius:8px;background:none;color:var(--text-2);font-size:13px;cursor:pointer">Iptal</button>' +
-      '<button data-id="'+id+'" onclick="kapanisDuzenleKaydet(this.dataset.id)" style="padding:9px 24px;border:none;border-radius:8px;background:var(--accent);color:#000;font-size:13px;font-weight:700;cursor:pointer">Kaydet</button>' +
-      '</div></div>';
+      // Ciro
+      var fields = {
+        'kap-ciro-kon': k.konaklama_ciro||0,
+        'kap-ciro-fb': k.fb_ciro||0,
+        'kap-ciro-mini': k.minibar_ciro||0,
+        'kap-ciro-cam': k.camasir_ciro||0,
+        'kap-ciro-os': k.oda_servis_ciro||0,
+        'kap-ciro-diger': k.diger_ciro||0,
+        'kap-tah-nakit': k.nakit||0,
+        'kap-tah-kredi': k.kredi_karti||0,
+        'kap-tah-havale': k.banka_havale||0,
+        'kap-tah-acenta': k.acenta||0,
+        'kap-tah-dep': k.depozito||0
+      };
+      Object.keys(fields).forEach(function(fid) {
+        var el = document.getElementById(fid);
+        if (el) el.value = fields[fid] || '';
+      });
 
-    modal.innerHTML = formHtml;
-    document.body.appendChild(modal);
+      // Notlar
+      var notEl = document.getElementById('kap-notlar');
+      if (notEl) notEl.value = k.notlar||'';
+
+      // Toplamları güncelle
+      if (typeof kapCiroTopla === 'function') kapCiroTopla();
+      if (typeof kapTahsilatTopla === 'function') kapTahsilatTopla();
+      if (typeof kapanisOzetGoster === 'function') kapanisOzetGoster();
+
+      // Kaydet butonunu guncelleme moduna al
+      var kaydetBtn = document.querySelector('[onclick="kapanisKaydet()"]');
+      if (kaydetBtn) {
+        kaydetBtn.textContent = 'Guncelle';
+        kaydetBtn.style.background = 'var(--warn)';
+        kaydetBtn.setAttribute('onclick', 'kapanisDuzenleKaydet()');
+      }
+
+      // Uyari goster
+      showToast('Form dolduruldu. Degistirip Guncelle butonuna basin.');
+    }, 300);
+
   } catch(e) { showToast('Hata: '+e.message, true); }
 }
+
 
 function kapanisDuzenleModalKapat() {
   var m = document.getElementById('kap-duzenle-modal');
   if (m) m.remove();
 }
 
-async function kapanisDuzenleKaydet(id) {
+async function kapanisDuzenleKaydet() {
+  var id = window._kapanisDuzenleId;
+  if (!id) { showToast('Duzenlenecek kayit bulunamadi!', true); return; }
   try {
     var data = {
       konaklama_ciro:  parseFloat(document.getElementById('kd-konaklama_ciro').value)||0,
@@ -4161,8 +4184,16 @@ async function kapanisDuzenleKaydet(id) {
     data.toplam_tahsilat = data.nakit + data.kredi_karti + data.banka_havale + data.diger_tahsilat;
 
     await sbPatch('gunluk_kapanis', 'id=eq.'+id, data);
-    kapanisDuzenleModalKapat();
+    window._kapanisDuzenleId = null;
+    // Butonu eski haline dondur
+    var kaydetBtn = document.querySelector('[onclick="kapanisDuzenleKaydet()"]');
+    if (kaydetBtn) {
+      kaydetBtn.textContent = 'Kapanisi Kaydet';
+      kaydetBtn.style.background = '';
+      kaydetBtn.setAttribute('onclick', 'kapanisKaydet()');
+    }
     showToast('Kapanisi guncellendi!');
+    kapanisSekme('liste');
     kapanisListesiYukle();
   } catch(e) { showToast('Hata: '+e.message, true); }
 }
