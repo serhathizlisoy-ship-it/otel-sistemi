@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_36.html -->
+<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_37.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -2476,13 +2476,19 @@ async function fiyatlandirmaAyarlariYukle(el, tabHtml) {
 
 
 async function katsayiKaydet() {
+  var sk = parseFloat(document.getElementById('k-single')?.value)||0.65;
+  var tk = parseFloat(document.getElementById('k-triple')?.value)||1.35;
+  var ek = parseFloat(document.getElementById('k-exbed')?.value)||0.35;
+  var pk = parseFloat(document.getElementById('k-pax')?.value)||0.50;
+
   var data = [
-    {anahtar:'katsayi_single', deger:String(parseFloat(document.getElementById('k-single')?.value)||0.65)},
-    {anahtar:'katsayi_triple', deger:String(parseFloat(document.getElementById('k-triple')?.value)||1.35)},
-    {anahtar:'katsayi_exbed',  deger:String(parseFloat(document.getElementById('k-exbed')?.value)||0.35)},
-    {anahtar:'katsayi_pax',    deger:String(parseFloat(document.getElementById('k-pax')?.value)||0.50)}
+    {anahtar:'katsayi_single', deger:String(sk)},
+    {anahtar:'katsayi_triple', deger:String(tk)},
+    {anahtar:'katsayi_exbed',  deger:String(ek)},
+    {anahtar:'katsayi_pax',    deger:String(pk)}
   ];
   try {
+    // 1. Supabase ayarlarına kaydet
     for (var i=0;i<data.length;i++) {
       var mevcut = await sbGet('otel_ayarlari','anahtar=eq.'+data[i].anahtar).catch(function(){return [];});
       if (mevcut && mevcut.length > 0) {
@@ -2491,13 +2497,47 @@ async function katsayiKaydet() {
         await sbPost('otel_ayarlari',{anahtar:data[i].anahtar,deger:data[i].deger});
       }
     }
-    window._katsayi_single = parseFloat(document.getElementById('k-single')?.value)||0.65;
-    window._katsayi_triple = parseFloat(document.getElementById('k-triple')?.value)||1.35;
-    window._katsayi_exbed  = parseFloat(document.getElementById('k-exbed')?.value)||0.35;
-    window._katsayi_pax    = parseFloat(document.getElementById('k-pax')?.value)||0.50;
-    showToast('Katsayilar kaydedildi!');
+
+    // 2. Global değişkenleri güncelle
+    window._katsayi_single = sk;
+    window._katsayi_triple = tk;
+    window._katsayi_exbed  = ek;
+    window._katsayi_pax    = pk;
+
+    // 3. Mevcut fiyat_donem kayıtlarını yeniden hesapla
+    var yil = new Date().getFullYear();
+    var donemler = await sbGet('fiyat_donem','yil=eq.'+yil).catch(function(){return [];});
+    if (donemler && donemler.length > 0) {
+      var guncellenenSayisi = 0;
+      for (var j=0; j<donemler.length; j++) {
+        var d = donemler[j];
+        var double_ = d.double_fiyat || 0;
+        if (double_ > 0) {
+          await sbPatch('fiyat_donem', 'id=eq.'+d.id, {
+            single_fiyat: Math.round(double_ * sk),
+            triple_fiyat: Math.round(double_ * tk),
+            ex_bed_fiyat: Math.round(double_ * ek)
+          });
+          guncellenenSayisi++;
+        }
+      }
+      showToast('Katsayilar kaydedildi! ' + guncellenenSayisi + ' donem guncellendi.');
+    } else {
+      showToast('Katsayilar kaydedildi!');
+    }
+
+    // 4. Fiyat listesi alt notunu güncelle
+    var notEl = document.querySelector('#fiyat-listesi-tablo + div');
+    if (notEl) {
+      notEl.textContent = 'Katsayilar: Single = Double x ' + sk + ' | Triple = Double x ' + tk + ' | Ex.Bed = Double x ' + ek + ' | Pax = Double x ' + pk;
+    }
+
+    // 5. Ayarlar sayfasını yenile
+    ayarlarYukle();
+
   } catch(e) { showToast('Hata: '+e.message, true); }
 }
+
 
 async function dfcAyarKaydet() {
   var yil = new Date().getFullYear();
