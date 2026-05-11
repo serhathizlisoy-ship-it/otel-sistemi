@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_26.html -->
+<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_27.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -4367,6 +4367,15 @@ async function fiyatHesaplamaYukle() {
   var yil = parseInt(document.getElementById('but-yil').value) || 2026;
   el.innerHTML = '<div style="text-align:center;padding:20px"><div class="spinner" style="margin:0 auto"></div></div>';
 
+  // Kilit durumunu kontrol et
+  if (!window._butceKilitliYuklendi) {
+    try {
+      var revOnay = await sbGet('butce_revizyon', 'yil=eq.'+yil+'&durum=eq.onaylandi').catch(function(){return [];});
+      window._butceKilitli = revOnay && revOnay.length > 0;
+      window._butceKilitliYuklendi = true;
+    } catch(e) { window._butceKilitli = false; }
+  }
+
   try {
     var params = await sbGet('butce_parametreler', 'yil=eq.' + yil).catch(function(){return [];});
     params = params && params[0] ? params[0] : null;
@@ -4402,8 +4411,21 @@ async function fiyatHesaplamaYukle() {
     var adim1Tamam = acikAylar.every(function(ay){ return aylikData[ay] && aylikData[ay].doluluk_hedef > 0; });
     var aktifAdim = window._fiyatAdim || 1;
 
+    // Kilitli banner
+    var html = '';
+    if (window._butceKilitli) {
+      html += '<div style="padding:12px 16px;background:var(--accent-l);border:1px solid var(--accent-b);border-radius:8px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">' +
+        '<div style="display:flex;align-items:center;gap:10px">' +
+        '<span style="font-size:18px">&#x1F512;</span>' +
+        '<div><div style="font-size:13px;font-weight:700;color:var(--accent)">Butce Onaylandi &amp; Kilitlendi</div>' +
+        '<div style="font-size:11px;color:var(--text-2)">Salt okunur moddasiniz. Degisiklik yapmak icin Revize Et butonunu kullanin.</div></div>' +
+        '</div>' +
+        '<button onclick="revizyonBaslat()" style="padding:8px 18px;border:1px solid var(--warn);border-radius:7px;background:var(--warn-l);color:var(--warn);font-size:12px;font-weight:700;cursor:pointer">&#x1F504; Revize Et</button>' +
+        '</div>';
+    }
+
     // Tab bar
-    var html = '<div style="display:flex;gap:0;margin-bottom:16px;border:1px solid var(--border);border-radius:10px;overflow:hidden">' +
+    html += '<div style="display:flex;gap:0;margin-bottom:16px;border:1px solid var(--border);border-radius:10px;overflow:hidden">' +
       '<div style="flex:1;padding:10px;text-align:center;font-size:13px;font-weight:700;cursor:pointer;' + (aktifAdim===1?'background:var(--accent);color:#000':'background:var(--surface);color:var(--text-2)') + '" onclick="fiyatAdimGec(1)">\u2460 Ayl\u0131k Doluluk Hedefleri</div>' +
       '<div style="flex:1;padding:10px;text-align:center;font-size:13px;font-weight:700;cursor:pointer;' + (aktifAdim===2?'background:var(--accent);color:#000':'background:var(--surface);color:var(--text-2)') + '" onclick="fiyatAdimGec(2)">' + (adim1Tamam?'\u2461 D\u00f6nem Detay\u0131':'\u2461 D\u00f6nem Detay\u0131 \ud83d\udd12') + '</div>' +
       '</div>';
@@ -4632,6 +4654,18 @@ async function fiyatHesaplamaYukle() {
 
     el.innerHTML = html;
     window._seciliSenaryo = 'orta';
+
+    // Kilitli modda tüm input ve butonları devre dışı bırak
+    if (window._butceKilitli) {
+      var inputs = el.querySelectorAll('input, select, textarea, button');
+      inputs.forEach(function(inp) {
+        if (!inp.onclick || !inp.onclick.toString().includes('revizyonBaslat')) {
+          inp.disabled = true;
+          inp.style.opacity = '0.5';
+          inp.style.cursor = 'not-allowed';
+        }
+      });
+    }
 
   } catch(e) {
     el.innerHTML = '<div style="color:var(--danger);padding:20px">Hata: '+e.message+'</div>';
@@ -5454,6 +5488,7 @@ async function butceOnayla() {
     await sbPost('butce_revizyon', revizyonData);
 
     window._butceKilitli = true;
+    window._butceKilitliYuklendi = true;
     showToast('Butce onaylandi ve kilitlendi!');
     fiyatHesaplamaYukle();
   } catch(e) { showToast('Hata: '+e.message, true); }
@@ -5491,6 +5526,7 @@ async function revizyonOnayla() {
     }
 
     window._butceKilitli = false;
+    window._butceKilitliYuklendi = true;
     showToast('Revizyon basladi! Butce duzenlemeye acildi.');
     window._fiyatAdim = 1;
     fiyatHesaplamaYukle();
