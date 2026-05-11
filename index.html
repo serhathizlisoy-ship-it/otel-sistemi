@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_23.html -->
+<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_24.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -4642,27 +4642,65 @@ function ayDolulukAnlikGoster(ay) {
   var doluluk = parseFloat(document.getElementById('dol-ay-'+ay)?.value) || 0;
   var gun = new Date(yil, ay, 0).getDate();
   var odaSayisi = window._odaSayisi || 13;
+  var dfcTip = window._dfcTipAktif || 'orta';
+  var ozelDFC = window._ozelDFC || {};
+  var hedefCiro = window._hedefCiro || 0;
+  var acikAylar = window._acikAylarFiyat || [];
 
   var odaGecesi = doluluk ? Math.round(odaSayisi * gun * doluluk / 100) : 0;
-  var el = document.getElementById('oda-gecesi-'+ay);
-  if (el) el.textContent = odaGecesi || '—';
+  var elOG = document.getElementById('oda-gecesi-'+ay);
+  if (elOG) elOG.textContent = odaGecesi || '—';
 
-  // Toplam oda gecesi ve ort ADR güncelle
-  var acikAylar = window._acikAylarFiyat || [];
+  // Tüm ayların güncel oda gecesi toplamını hesapla
   var toplam = 0;
   acikAylar.forEach(function(a) {
     var dVal = parseFloat(document.getElementById('dol-ay-'+a)?.value) || 0;
     var g = new Date(yil, a, 0).getDate();
     toplam += dVal ? Math.round(odaSayisi * g * dVal / 100) : 0;
   });
-  var hedefCiro = window._hedefCiro || 0;
-  var ortADR = toplam > 0 ? Math.round(hedefCiro / toplam) : 0;
 
+  // Ortalama ADR = Hedef Ciro / Toplam Oda Gecesi
+  var ortADR = toplam > 0 ? Math.round(hedefCiro / toplam) : 0;
+  window._geciciBaseADR = ortADR;
+
+  // Bu ayın DFC katsayısına göre ADR'yi hesapla
+  var ayADR = 0;
+  if (doluluk > 0 && ortADR > 0) {
+    var dfc = getDFC(dfcTip, doluluk);
+    var ozel = ozelDFC[dfc.alt];
+    var katsayi = ozel ? parseFloat(ozel['dfc_'+dfcTip]) : dfc.dfc;
+    ayADR = Math.round(ortADR * katsayi);
+  }
+
+  // Bu ayın tahmini geliri
+  var gelir = ayADR > 0 && odaGecesi > 0 ? Math.round(ayADR * odaGecesi) : 0;
+
+  // Ekranda güncelle
+  var elADR = document.getElementById('adr-ay-'+ay);
+  if (elADR) elADR.textContent = ayADR > 0 ? ayADR.toLocaleString('tr-TR') + ' TL' : '—';
+
+  var elGelir = document.getElementById('gelir-ay-'+ay);
+  if (elGelir) elGelir.textContent = gelir > 0 ? gelir.toLocaleString('tr-TR') + ' TL' : '—';
+
+  // Toplam satırını güncelle
   var toplamEl = document.getElementById('toplam-oda-gecesi');
   if (toplamEl) toplamEl.textContent = toplam || '—';
   var ortEl = document.getElementById('ort-adr-goster');
   if (ortEl) ortEl.textContent = ortADR > 0 ? ortADR.toLocaleString('tr-TR') + ' TL' : '—';
+
+  // Tüm ayların gelirini toplayıp güncelle
+  var toplamGelir = 0;
+  acikAylar.forEach(function(a) {
+    var gelirEl = document.getElementById('gelir-ay-'+a);
+    if (gelirEl && gelirEl.textContent !== '—') {
+      toplamGelir += parseInt(gelirEl.textContent.replace(/[^0-9]/g,'')) || 0;
+    }
+  });
+
+  var toplamGelirEl = document.getElementById('toplam-gelir-adim1');
+  if (toplamGelirEl) toplamGelirEl.textContent = toplamGelir > 0 ? toplamGelir.toLocaleString('tr-TR') + ' TL' : '—';
 }
+
 
 async function aylikDolulukKaydet() {
   var acikAylar = window._acikAylarFiyat || [];
