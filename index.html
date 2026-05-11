@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_38.html -->
+<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_39.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -5626,6 +5626,13 @@ function gbSekme(sekme) {
   if (sekme === 'zecsec') gbZecSecGoster();
   if (sekme === 'analiz') gbAnalizGoster();
   if (sekme === 'revizyon') gbRevizyonGoster();
+  if (sekme === 'giris') {
+    // Kilitli ise girişi engelle
+    if (window._gbKilitli) {
+      gbSekme('analiz');
+      showToast('Butce kilitli! Revize Et butonunu kullanin.', true);
+    }
+  }
 }
 
 function gbArastirmaGoster() {
@@ -6027,6 +6034,29 @@ async function gbAnalizGoster() {
     '📊 Onaylanan kalem: ' + toplamOnaylandi + '/' + toplamKalem + ' ana başlık' +
     '</div>';
 
+  // Kilit durumu kontrol et
+  try {
+    var revOnay = await sbGet('butce_gider_revizyon', 'yil=eq.'+_gbYilGB+'&durum=eq.onaylandi').catch(function(){return [];});
+    window._gbKilitli = revOnay && revOnay.length > 0;
+  } catch(e) { window._gbKilitli = false; }
+
+  // Banner veya butonlar
+  if (window._gbKilitli) {
+    html = '<div style="padding:12px 16px;background:var(--accent-l);border:1px solid var(--accent-b);border-radius:8px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">' +
+      '<div style="display:flex;align-items:center;gap:10px">' +
+      '<span style="font-size:18px">&#x1F512;</span>' +
+      '<div><div style="font-size:13px;font-weight:700;color:var(--accent)">Gider Butcesi Onaylandi &amp; Kilitlendi</div>' +
+      '<div style="font-size:11px;color:var(--text-2)">Salt okunur moddasiniz. Degisiklik icin Revize Et butonunu kullanin.</div></div>' +
+      '</div>' +
+      '<button onclick="gbRevizyonBaslat()" style="padding:8px 18px;border:1px solid var(--warn);border-radius:7px;background:var(--warn-l);color:var(--warn);font-size:12px;font-weight:700;cursor:pointer">&#x1F504; Revize Et</button>' +
+      '</div>' + html;
+  } else {
+    html += '<div style="margin-top:14px;display:flex;gap:10px;justify-content:flex-end">' +
+      '<button onclick="gbSekme(&quot;giris&quot;)" style="padding:10px 20px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:13px;font-weight:600;cursor:pointer">&#x270F;&#xFE0F; Duzenle</button>' +
+      '<button onclick="gbButceOnayla()" style="padding:10px 24px;border:none;border-radius:8px;background:var(--accent);color:#000;font-size:13px;font-weight:700;cursor:pointer">&#x2705; Butce Onayla</button>' +
+      '</div>';
+  }
+
   el.innerHTML = html;
 }
 
@@ -6333,12 +6363,107 @@ async function gbTumunuKaydet() {
 }
 
 
+
+async function gbButceOnayla() {
+  if (!confirm('Gider butcesini onaylamak istiyor musunuz? Onaylandiktan sonra duzenleme icin revizyon nedeni girmeniz gerekecek.')) return;
+  var oturum = JSON.parse(sessionStorage.getItem('oturum')||'{}');
+  try {
+    // Mevcut verileri snapshot al
+    var kayitlar = await sbGet('butce_gider_aylik','yil=eq.'+_gbYilGB).catch(function(){return [];});
+    var genelToplam = (kayitlar||[]).reduce(function(t,k){ return t+(k.hesaplanan_tutar||0); },0);
+    var snapshot = { kayitlar: kayitlar, genelToplam: genelToplam, ciro: _gbCiroGB, tarih: new Date().toISOString() };
+
+    // Eski onayı arşivle
+    var mevcutOnay = await sbGet('butce_gider_revizyon','yil=eq.'+_gbYilGB+'&durum=eq.onaylandi').catch(function(){return [];});
+    if (mevcutOnay && mevcutOnay.length > 0) {
+      await sbPatch('butce_gider_revizyon','id=eq.'+mevcutOnay[0].id,{durum:'arsiv'});
+    }
+
+    // Yeni onay kaydı
+    var versiyon = mevcutOnay && mevcutOnay.length > 0 ? (mevcutOnay[0].versiyon||1)+1 : 1;
+    await sbPost('butce_gider_revizyon', {
+      yil: _gbYilGB, versiyon: versiyon, durum: 'onaylandi',
+      onaylayan: oturum.kullanici_adi||'admin',
+      onay_tarihi: new Date().toISOString(),
+      snapshot: JSON.stringify(snapshot)
+    });
+
+    window._gbKilitli = true;
+    showToast('Gider butcesi onaylandi!');
+    gbAnalizGoster();
+  } catch(e) { showToast('Hata: '+e.message, true); }
+}
+
+function gbRevizyonBaslat() {
+  var el = document.getElementById('gb-analiz-icerik');
+  if (!el) return;
+  el.innerHTML = '<div style="max-width:500px;margin:40px auto;padding:24px;background:var(--surface);border:1px solid var(--border);border-radius:12px">' +
+    '<div style="font-size:16px;font-weight:700;margin-bottom:8px">Gider Butcesi Revizyon Nedeni</div>' +
+    '<div style="font-size:13px;color:var(--text-2);margin-bottom:16px">Revizyon nedeninizi yazin. Bu bilgi revizyon gecmisinde gorunecektir.</div>' +
+    '<textarea id="gb-revizyon-neden" rows="4" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:Instrument Sans,sans-serif;font-size:13px;padding:12px;resize:vertical;margin-bottom:16px" placeholder="Ornek: Personel giderleri guncellendi..."></textarea>' +
+    '<div style="display:flex;gap:10px;justify-content:flex-end">' +
+    '<button onclick="gbAnalizGoster()" style="padding:10px 20px;border:1px solid var(--border);border-radius:8px;background:none;color:var(--text-2);font-size:13px;cursor:pointer">Iptal</button>' +
+    '<button onclick="gbRevizyonOnayla()" style="padding:10px 24px;border:none;border-radius:8px;background:var(--accent);color:#000;font-size:13px;font-weight:700;cursor:pointer">Revizyonu Baslat</button>' +
+    '</div></div>';
+}
+
+async function gbRevizyonOnayla() {
+  var neden = document.getElementById('gb-revizyon-neden')?.value?.trim();
+  if (!neden) { showToast('Revizyon nedeni yazin!', true); return; }
+  var oturum = JSON.parse(sessionStorage.getItem('oturum')||'{}');
+  try {
+    var mevcutOnay = await sbGet('butce_gider_revizyon','yil=eq.'+_gbYilGB+'&durum=eq.onaylandi').catch(function(){return [];});
+    if (mevcutOnay && mevcutOnay.length > 0) {
+      await sbPatch('butce_gider_revizyon','id=eq.'+mevcutOnay[0].id, {
+        durum: 'arsiv',
+        revizyon_nedeni: neden,
+        revize_eden: oturum.kullanici_adi||'admin',
+        revizyon_tarihi: new Date().toISOString()
+      });
+    }
+    window._gbKilitli = false;
+    showToast('Revizyon basladi! Gider butcesi duzenlemeye acildi.');
+    gbSekme('giris');
+    setTimeout(function(){ gbSekme('revizyon'); }, 500);
+  } catch(e) { showToast('Hata: '+e.message, true); }
+}
+
 async function gbRevizyonGoster() {
   var el = document.getElementById('gb-revizyon-icerik');
   if (!el) return;
   el.innerHTML = '<div style="text-align:center;padding:30px"><div class="spinner" style="margin:0 auto;border-color:var(--border);border-top-color:var(--accent)"></div></div>';
 
   try {
+    // Revizyon geçmişi
+    var revizyonlar = await sbGet('butce_gider_revizyon', 'yil=eq.'+_gbYilGB+'&order=olusturma.desc').catch(function(){return [];});
+    var revizyonHtml = '';
+    if (revizyonlar && revizyonlar.length > 0) {
+      var durumRenk = {onaylandi:'var(--accent)', arsiv:'var(--warn)'};
+      var durumAd = {onaylandi:'Onaylandi', arsiv:'Arsiv'};
+      revizyonHtml = '<div style="margin-bottom:16px"><div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text-2)">Revizyon Gecmisi</div>';
+      revizyonlar.forEach(function(r) {
+        var renk = durumRenk[r.durum]||'var(--text-3)';
+        var snap = {};
+        try { snap = JSON.parse(r.snapshot||'{}'); } catch(e) {}
+        revizyonHtml += '<div style="background:var(--surface);border:1px solid var(--border);border-left:4px solid '+renk+';border-radius:10px;padding:14px 16px;margin-bottom:10px">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">' +
+          '<div><span style="font-size:13px;font-weight:700">'+_gbYilGB+' Gider Butcesi</span> ' +
+          '<span style="padding:2px 8px;border-radius:8px;font-size:11px;font-weight:600;background:'+renk.replace(')','-l)').replace('var(','var(')+';color:'+renk+'">'+durumAd[r.durum]+'</span></div>' +
+          '<span style="font-size:11px;color:var(--text-3)">'+(r.onay_tarihi?new Date(r.onay_tarihi).toLocaleDateString('tr-TR'):'')+'</span>' +
+          '</div>' +
+          (r.revizyon_nedeni?'<div style="font-size:12px;color:var(--warn);margin-bottom:6px">Revizyon: <em>'+r.revizyon_nedeni+'</em></div>':'') +
+          '<div style="display:flex;gap:16px;font-size:12px;color:var(--text-2)">' +
+          (r.onaylayan?'<span>Onaylayan: <strong>'+r.onaylayan+'</strong></span>':'') +
+          (r.revize_eden?'<span>Revize Eden: <strong>'+r.revize_eden+'</strong></span>':'') +
+          (snap.genelToplam?'<span>Toplam Gider: <strong>'+Math.round(snap.genelToplam).toLocaleString('tr-TR')+' TL</strong></span>':'') +
+          '</div></div>';
+      });
+      revizyonHtml += '</div>';
+    }
+
+    el.innerHTML = revizyonHtml;
+
+    // Kalem listesi
     var liste = await sbGet('butce_gider_aylik', 'yil=eq.' + _gbYilGB + '&order=ana_baslik.asc,ay.asc');
     if (!liste || liste.length === 0) {
       el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-3)"><div style="font-size:32px;margin-bottom:12px">📋</div><div>Henüz gider bütçesi girişi yok.</div><div style="font-size:12px;margin-top:8px">Gider Girişi sekmesinden veri girdikten sonra burada görünecek.</div></div>';
