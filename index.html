@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_34.html -->
+<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_35.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -2251,7 +2251,7 @@ function getAyar(ayarlar, anahtar, varsayilan) {
   return a ? a.deger : (varsayilan || '');
 }
 
-function renderAyarlar(kullanicilar, odalar, ayarlar) {
+async function renderAyarlar(kullanicilar, odalar, ayarlar) {
   var el = document.getElementById('ayarlar-ic');
   var toplamKapasite = odalar.filter(function(o){ return o.aktif; }).reduce(function(s,o){ return s+(o.kapasite||2); }, 0);
   var toplamAktif = odalar.filter(function(o){ return o.aktif; }).length;
