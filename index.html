@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_14.html -->
+<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_15.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -4474,7 +4474,7 @@ async function fiyatHesaplamaYukle() {
         '<select id="secili-ay" onchange="seciliAyDegisti()" style="padding:8px 12px;border:1px solid var(--border);border-radius:7px;font-size:13px;background:var(--bg);color:var(--text)">';
       acikAylar.forEach(function(ay) {
         var d = aylikData[ay];
-        var adr = d ? (d.tahmini_adr_orta||0) : 0;
+        var adr = d ? (d.onerilenfiyat_orta||0) : 0;
         var dol = d ? (d.doluluk_hedef||0) : 0;
         html += '<option value="' + ay + '">' + AY_ADT[ay] + ' \u2014 ADR: ' + adr.toLocaleString('tr-TR') + ' TL | Hedef: %' + dol + '</option>';
       });
@@ -4625,7 +4625,7 @@ async function aylikDolulukKaydet() {
       var gelir = Math.round(adr * odaGecesi);
 
       var mevcut = await sbGet('butce_aylik', 'yil=eq.'+yil+'&ay=eq.'+ay).catch(function(){return [];});
-      var data = { yil:yil, ay:ay, doluluk_hedef:doluluk, tahmini_adr_orta:adr, tahmini_gelir_orta:gelir, gun_sayisi:gun };
+      var data = { yil:yil, ay:ay, doluluk_hedef:doluluk, hedef_oda_gecesi:odaGecesi, onerilenfiyat_orta:adr, tahmini_gelir_orta:gelir, dfc_degeri:katsayi };
       if (mevcut && mevcut.length > 0) {
         await sbPatch('butce_aylik', 'yil=eq.'+yil+'&ay=eq.'+ay, data);
       } else {
@@ -4663,7 +4663,7 @@ function donemDolulukaGireHesapla() {
 
   var ay = parseInt(document.getElementById('secili-ay')?.value) || 5;
   var aylikData = window._aylikData || {};
-  var baseADR = aylikData[ay] ? (aylikData[ay].tahmini_adr_orta||0) : (window._geciciBaseADR||0);
+  var baseADR = aylikData[ay] ? (aylikData[ay].onerilenfiyat_orta||0) : (window._geciciBaseADR||0);
   var dfcTip = window._dfcTipAktif || 'orta';
   var ozelDFC = window._ozelDFC || {};
   var dfc = getDFC(dfcTip, doluluk);
