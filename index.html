@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_16.html -->
+<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_17.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -4395,6 +4395,7 @@ async function fiyatHesaplamaYukle() {
     window._hedefCiro = hedefCiro;
     window._donemler = donemler;
 
+    var AY_ADT_G = ['','Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
     var AY_AD = ['','Ocak','Subat','Mart','Nisan','Mayis','Haziran','Temmuz','Agustos','Eylul','Ekim','Kasim','Aralik'];
     var AY_ADT = ['','\u004fcak','\u015eubat','Mart','Nisan','May\u0131s','Haziran','Temmuz','A\u011fustos','Eyl\u00fcl','Ekim','Kas\u0131m','Aral\u0131k'];
 
@@ -4783,6 +4784,47 @@ async function donemUyariKontrol(ay, yil) {
 
 function donemKarsilastirmaKontrol() {
   butceSekme('listesi');
+}
+
+
+function donemDuzenle(btn) {
+  var id = btn.dataset.id;
+  var bas = btn.dataset.bas;
+  var bit = btn.dataset.bit;
+  var dol = btn.dataset.dol;
+  var adr = btn.dataset.adr;
+  var aciklama = btn.dataset.aciklama;
+  var ay = new Date(bas).getMonth() + 1;
+
+  // Ay seçicisini güncelle
+  var ayEl = document.getElementById('secili-ay');
+  if (ayEl) { ayEl.value = ay; seciliAyDegisti(); }
+
+  // Formu doldur
+  setTimeout(function() {
+    var basEl = document.getElementById('fd-bas');
+    var bitEl = document.getElementById('fd-bit');
+    var dolEl = document.getElementById('fd-doluluk');
+    var acEl = document.getElementById('fd-aciklama');
+    if (basEl) basEl.value = bas;
+    if (bitEl) bitEl.value = bit;
+    if (dolEl) { dolEl.value = dol; donemDolulukaGireHesapla(); }
+    if (acEl) acEl.value = aciklama;
+    window._duzenlenenId = id;
+  }, 100);
+
+  // Önce sil, kaydet ile yeniden eklenecek
+  donemSilFDSessiz(id);
+}
+
+async function donemSilFDSessiz(id) {
+  try {
+    await fetch(SB_URL+'/rest/v1/fiyat_donem?id=eq.'+id, {
+      method:'DELETE', headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
+    });
+    // _donemler listesini güncelle
+    window._donemler = (window._donemler||[]).filter(function(d){ return d.id !== id; });
+  } catch(e) {}
 }
 
 async function donemSilFD(id) {
