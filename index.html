@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_21.html -->
+<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_22.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -4431,13 +4431,15 @@ async function fiyatHesaplamaYukle() {
         '<th style="text-align:right">Tahmini Gelir</th>' +
         '</tr></thead><tbody>';
 
+      var toplamGelirAdim1 = 0;
       acikAylar.forEach(function(ay) {
         var mevcut = aylikData[ay];
         var doluluk = mevcut ? (mevcut.doluluk_hedef||'') : '';
         var gun = new Date(yil, ay, 0).getDate();
         var odaGecesi = doluluk ? Math.round(odaSayisi * gun * doluluk / 100) : 0;
-        var adr = mevcut ? (mevcut.tahmini_adr_orta||0) : 0;
+        var adr = mevcut ? (mevcut.onerilenfiyat_orta||0) : 0;
         var gelir = adr && doluluk ? Math.round(adr * odaGecesi) : 0;
+        toplamGelirAdim1 += gelir;
 
         html += '<tr>' +
           '<td style="font-weight:600">' + AY_ADT[ay] + '</td>' +
@@ -4460,8 +4462,19 @@ async function fiyatHesaplamaYukle() {
         '</tr>';
 
       html += '</tbody></table></div>';
+
+      if (toplamGelirAdim1 > 0) {
+        var gelirFark = toplamGelirAdim1 - hedefCiro;
+        var farkRenk = Math.abs(gelirFark) < hedefCiro*0.05 ? 'var(--accent)' : Math.abs(gelirFark) < hedefCiro*0.15 ? 'var(--warn)' : 'var(--danger)';
+        var farkIkon = Math.abs(gelirFark) < hedefCiro*0.05 ? 'OK' : Math.abs(gelirFark) < hedefCiro*0.15 ? '!' : '!!';
+        html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px">' +
+          '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px"><div style="font-size:11px;color:var(--text-3);margin-bottom:4px">Tahmini Sezon Geliri</div><div style="font-size:15px;font-weight:700;font-family:DM Mono,monospace;color:var(--accent)">' + toplamGelirAdim1.toLocaleString('tr-TR') + ' TL</div></div>' +
+          '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px"><div style="font-size:11px;color:var(--text-3);margin-bottom:4px">Hedef Ciro</div><div style="font-size:15px;font-weight:700;font-family:DM Mono,monospace">' + hedefCiro.toLocaleString('tr-TR') + ' TL</div></div>' +
+          '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px"><div style="font-size:11px;color:var(--text-3);margin-bottom:4px">Fark</div><div style="font-size:15px;font-weight:700;font-family:DM Mono,monospace;color:' + farkRenk + '">[' + farkIkon + '] ' + (gelirFark>=0?'+':'') + gelirFark.toLocaleString('tr-TR') + ' TL</div></div>' +
+          '</div>';
+      }
       html += '<div style="margin-top:14px;display:flex;justify-content:flex-end">' +
-        '<button onclick="aylikDolulukKaydet()" style="padding:10px 24px;border:none;border-radius:8px;background:var(--accent);color:#000;font-family:Instrument Sans,sans-serif;font-size:13px;font-weight:700;cursor:pointer">\ud83d\udcbe Hesapla & Kaydet \u2192</button>' +
+        '<button onclick="aylikDolulukKaydet()" style="padding:10px 24px;border:none;border-radius:8px;background:var(--accent);color:#000;font-family:Instrument Sans,sans-serif;font-size:13px;font-weight:700;cursor:pointer">Hesapla & Kaydet</button>' +
         '</div>';
 
     } else {
@@ -4785,33 +4798,45 @@ async function _donemKaydetIslem(bas, bit, doluluk, adr, aciklama, yil) {
     var toplamGun = 0, toplamOdaGecesi = 0, toplamDolGun = 0;
     var ozet = '<div style="margin-top:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:12px">';
     ozet += '<div style="font-weight:700;color:var(--text-2);margin-bottom:8px">' + AY_ADT2[ay] + ' Ayi Ozeti:</div>';
+    var toplamGelirDonem = 0;
     ozet += '<table style="width:100%;font-size:11px"><thead><tr style="color:var(--text-3)">' +
-      '<th style="text-align:left;padding:3px 6px">Tarih Araligi</th>' +
+      '<th style="text-align:left;padding:3px 6px">Tarih</th>' +
       '<th style="text-align:center;padding:3px 6px">Gun</th>' +
       '<th style="text-align:center;padding:3px 6px">Doluluk</th>' +
+      '<th style="text-align:right;padding:3px 6px">ADR</th>' +
       '<th style="text-align:right;padding:3px 6px">Oda Gecesi</th>' +
+      '<th style="text-align:right;padding:3px 6px">Gelir</th>' +
       '</tr></thead><tbody>';
 
     ayDonemler.forEach(function(d) {
       var gun = Math.round((new Date(d.bitis)-new Date(d.baslangic))/(1000*60*60*24))+1;
       var odaGecesi = Math.round(odaSayisi * gun * (d.doluluk_hedef||0) / 100);
+      var donemGelir = Math.round((d.double_fiyat||0) * odaGecesi);
       toplamGun += gun;
       toplamOdaGecesi += odaGecesi;
       toplamDolGun += gun * (d.doluluk_hedef||0);
-      ozet += '<tr><td style="padding:3px 6px;font-family:DM Mono,monospace">' + d.baslangic + ' → ' + d.bitis + '</td>' +
+      toplamGelirDonem += donemGelir;
+      ozet += '<tr>' +
+        '<td style="padding:3px 6px;font-family:DM Mono,monospace;font-size:10px">' + d.baslangic + ' > ' + d.bitis + '</td>' +
         '<td style="text-align:center;padding:3px 6px">' + gun + '</td>' +
         '<td style="text-align:center;padding:3px 6px;font-weight:700">%' + (d.doluluk_hedef||0) + '</td>' +
-        '<td style="text-align:right;padding:3px 6px;font-family:DM Mono,monospace">' + odaGecesi + '</td></tr>';
+        '<td style="text-align:right;padding:3px 6px;font-family:DM Mono,monospace">' + (d.double_fiyat||0).toLocaleString('tr-TR') + ' TL</td>' +
+        '<td style="text-align:right;padding:3px 6px;font-family:DM Mono,monospace">' + odaGecesi + '</td>' +
+        '<td style="text-align:right;padding:3px 6px;font-family:DM Mono,monospace">' + donemGelir.toLocaleString('tr-TR') + ' TL</td>' +
+        '</tr>';
     });
 
     var agirOrt = toplamGun > 0 ? Math.round(toplamDolGun/toplamGun) : 0;
+    var agirADR = toplamOdaGecesi > 0 ? Math.round(toplamGelirDonem/toplamOdaGecesi) : 0;
     var maxOdaGecesi = odaSayisi * ayGunSayisi;
 
-    ozet += '<tr style="border-top:1px solid var(--border);font-weight:700">' +
-      '<td style="padding:4px 6px">TOPLAM (' + toplamGun + '/' + ayGunSayisi + ' gun)</td>' +
+    ozet += '<tr style="border-top:1px solid var(--border);font-weight:700;background:var(--accent-l)">' +
+      '<td style="padding:4px 6px">TOPLAM (' + toplamGun + '/' + ayGunSayisi + ')</td>' +
       '<td style="text-align:center;padding:4px 6px">' + toplamGun + '</td>' +
       '<td style="text-align:center;padding:4px 6px;color:var(--accent)">%' + agirOrt + '</td>' +
-      '<td style="text-align:right;padding:4px 6px;font-family:DM Mono,monospace;color:var(--accent)">' + toplamOdaGecesi + ' / ' + maxOdaGecesi + '</td>' +
+      '<td style="text-align:right;padding:4px 6px;font-family:DM Mono,monospace;color:var(--accent)">' + agirADR.toLocaleString('tr-TR') + ' TL</td>' +
+      '<td style="text-align:right;padding:4px 6px;font-family:DM Mono,monospace;color:var(--accent)">' + toplamOdaGecesi + '/' + maxOdaGecesi + '</td>' +
+      '<td style="text-align:right;padding:4px 6px;font-family:DM Mono,monospace;color:var(--accent);font-weight:700">' + toplamGelirDonem.toLocaleString('tr-TR') + ' TL</td>' +
       '</tr></tbody></table></div>';
 
     // Ay tamamlandi mi?
@@ -4823,7 +4848,7 @@ async function _donemKaydetIslem(bas, bit, doluluk, adr, aciklama, yil) {
       if (fark > 2 && hedefDoluluk > 0) {
         // Uyari + dogrudan guncelleme onay secenegi
         ozet += '<div style="padding:12px;background:var(--warn-l);border:1px solid #E0C87A;border-radius:8px;margin-top:8px">' +
-          '<div style="font-weight:700;color:var(--warn);margin-bottom:6px">⚠️ ' + AY_ADT2[ay] + ' ayi tamamlandi! Agirlikli doluluk: %' + agirOrt + ' — Adim 1 Hedefi: %' + hedefDoluluk + '</div>' +
+          '<div style="font-weight:700;color:var(--warn);margin-bottom:6px">Uyari! ' + AY_ADT2[ay] + ' tamamlandi! Agirlikli Doluluk: %' + agirOrt + ' | Ort.ADR: ' + agirADR.toLocaleString('tr-TR') + ' TL | Gelir: ' + toplamGelirDonem.toLocaleString('tr-TR') + ' TL</div>' +
           '<div style="color:var(--warn);margin-bottom:10px;font-size:11px">' + AY_ADT2[ay] + ' ayindaki Adim 1 hedefini (%' + hedefDoluluk + ') → %' + agirOrt + ' olarak guncellemek ister misiniz?</div>' +
           '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
           '<button data-ay="' + ay + '" data-yeni="' + agirOrt + '" onclick="adim1GuncelleOnay(this.dataset.ay, this.dataset.yeni)" style="padding:8px 14px;border:none;border-radius:7px;background:var(--accent);color:#000;font-size:12px;font-weight:700;cursor:pointer">✅ Evet, %' + hedefDoluluk + ' → %' + agirOrt + ' Guncelle</button>' +
