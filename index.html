@@ -1,47 +1,6 @@
-
-<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_48.html -->
-<html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></head><body>async function kapanisDuzenleKaydet() {
-  var id = window._kapanisDuzenleId;
-  if (!id) { showToast('Duzenlenecek kayit bulunamadi!', true); return; }
-  try {
-    var g = function(eid) { var el = document.getElementById(eid); return el ? (parseFloat(el.value)||0) : 0; };
-    var data = {
-      konaklama_ciro:  g('kap-ciro-kon'),
-      fb_ciro:         g('kap-ciro-fb'),
-      minibar_ciro:    g('kap-ciro-mini'),
-      camasir_ciro:    g('kap-ciro-cam'),
-      oda_servis_ciro: g('kap-ciro-os'),
-      diger_ciro:      g('kap-ciro-diger'),
-      nakit:           g('kap-tah-nakit'),
-      kredi_karti:     g('kap-tah-kredi'),
-      banka_havale:    g('kap-tah-havale'),
-      acenta:          g('kap-tah-acenta'),
-      depozito:        g('kap-tah-dep'),
-      dolu_oda:        parseInt(document.getElementById('kap-oda')?.value)||0,
-      konaklayan_kisi: parseInt(document.getElementById('kap-kisi')?.value)||0,
-      notlar:          document.getElementById('kap-not')?.value||''
-    };
-    data.toplam_ciro = data.konaklama_ciro + data.fb_ciro + data.minibar_ciro + data.camasir_ciro + data.oda_servis_ciro + data.diger_ciro;
-    data.toplam_tahsilat = data.nakit + data.kredi_karti + data.banka_havale + data.acenta + data.depozito;
-
-    await sbPatch('gunluk_kapanis', 'id=eq.'+id, data);
-    window._kapanisDuzenleId = null;
-
-    var kaydetBtn = document.getElementById('kap-kaydet-btn');
-    if (kaydetBtn) {
-      kaydetBtn.textContent = 'Kapanis Kaydet';
-      kaydetBtn.style.background = '';
-      kaydetBtn.style.color = '';
-    }
-    showToast('Kapanisi guncellendi!');
-    kapanisSekme('liste');
-    setTimeout(kapanisListesiYukle, 300);
-  } catch(e) { showToast('Hata: '+e.message, true); }
-}
-
-
-<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_21.html -->
-
+<!DOCTYPE html>
+<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_49.html -->
+<html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ASH Danışmanlık — Otel Yönetim Sistemi</title>
@@ -351,8 +310,8 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
   .dash-hero { flex-direction: column; align-items: flex-start; }
 }
 </style>
-
-
+</head>
+<body>
 
 <!-- GİRİŞ -->
 <div id="login">
