@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_41.html -->
+<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_42.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -4048,7 +4048,14 @@ async function kapanisListesiYukle() {
         '<td class="mono" style="color:var(--mgr);font-weight:600">' + (k.toplam_tahsilat||0).toLocaleString('tr-TR') + ' TL</td>' +
         '<td class="mono" style="color:var(--warn)">' + ((k.toplam_enerji_tutar||0)>0?(k.toplam_enerji_tutar||0).toLocaleString('tr-TR')+' TL':'—') + '</td>' +
         '<td style="font-size:11px;color:var(--text-3)">' + (k.notlar && k.notlar.length > 25 ? k.notlar.substring(0,25) + "..." : (k.notlar || "—")) + "</td>" +
-        '<td><button onclick="kapanisDetayAc(' + idx + ')" style="padding:4px 10px;border:1px solid var(--accent-b);border-radius:5px;background:var(--accent-l);color:var(--accent);font-family:Instrument Sans,sans-serif;font-size:11px;font-weight:600;cursor:pointer">Detay</button></td>' +
+        '<td style="white-space:nowrap">' +
+        '<button onclick="kapanisDetayAc(' + idx + ')" style="padding:4px 8px;border:1px solid var(--accent-b);border-radius:5px;background:var(--accent-l);color:var(--accent);font-size:11px;font-weight:600;cursor:pointer;margin-right:4px">Detay</button>' +
+        (oturum.rol === 'admin' ?
+          '<button data-id="' + k.id + '" onclick="kapanisDuzenle(this.dataset.id)" style="padding:4px 8px;border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text);font-size:11px;cursor:pointer;margin-right:4px">Duzenle</button>' +
+          '<button data-id="' + k.id + '" onclick="kapanisSil(this.dataset.id)" style="padding:4px 8px;border:1px solid var(--danger);border-radius:5px;background:var(--danger-l);color:var(--danger);font-size:11px;cursor:pointer">Sil</button>'
+          : '') +
+        '</td>' +
+        '</tr>';
         '</tr>';
     });
 
@@ -4079,6 +4086,98 @@ async function kapanisListesiYukle() {
     el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--danger)">Hata: ' + e.message + '</div>';
   }
 }
+
+async function kapanisDuzenle(id) {
+  try {
+    var kayit = await sbGet('gunluk_kapanis', 'id=eq.'+id);
+    if (!kayit || kayit.length === 0) { showToast('Kayit bulunamadi!', true); return; }
+    var k = kayit[0];
+
+    var modal = document.createElement('div');
+    modal.id = 'kap-duzenle-modal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;display:flex;align-items:center;justify-content:center';
+
+    var fields = [
+      ['konaklama_ciro', 'Konaklama Ciro', k.konaklama_ciro||0],
+      ['fb_ciro', 'F&B Ciro', k.fb_ciro||0],
+      ['minibar_ciro', 'Minibar Ciro', k.minibar_ciro||0],
+      ['camasir_ciro', 'Camasir Ciro', k.camasir_ciro||0],
+      ['oda_servis_ciro', 'Oda Servis', k.oda_servis_ciro||0],
+      ['diger_ciro', 'Diger Ciro', k.diger_ciro||0],
+      ['nakit', 'Nakit', k.nakit||0],
+      ['kredi_karti', 'Kredi Karti', k.kredi_karti||0],
+      ['banka_havale', 'Banka Havale', k.banka_havale||0],
+      ['diger_tahsilat', 'Diger Tahsilat', k.diger_tahsilat||0],
+      ['dolu_oda', 'Dolu Oda', k.dolu_oda||0],
+      ['konaklayan_kisi', 'Konaklayan Kisi', k.konaklayan_kisi||0]
+    ];
+
+    var formHtml = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;width:560px;max-width:95vw;max-height:90vh;overflow-y:auto">' +
+      '<div style="font-size:15px;font-weight:700;margin-bottom:4px">Kapanisi Duzenle</div>' +
+      '<div style="font-size:12px;color:var(--text-2);margin-bottom:16px">' + k.tarih + '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">';
+
+    fields.forEach(function(f) {
+      formHtml += '<div class="sfield"><label>'+f[0]==='dolu_oda'||f[0]==='konaklayan_kisi'?f[1]+' (Adet)':f[1]+' (TL)'+'</label>' +
+        '<input type="number" id="kd-'+f[0]+'" value="'+f[2]+'" style="font-family:DM Mono,monospace"></div>';
+    });
+
+    formHtml += '</div>' +
+      '<div class="sfield" style="margin-bottom:16px"><label>Notlar</label><input type="text" id="kd-notlar" value="'+(k.notlar||'')+'"></div>' +
+      '<div style="display:flex;gap:10px;justify-content:flex-end">' +
+      '<button onclick="kapanisDuzenleModalKapat()" style="padding:9px 20px;border:1px solid var(--border);border-radius:8px;background:none;color:var(--text-2);font-size:13px;cursor:pointer">Iptal</button>' +
+      '<button data-id="'+id+'" onclick="kapanisDuzenleKaydet(this.dataset.id)" style="padding:9px 24px;border:none;border-radius:8px;background:var(--accent);color:#000;font-size:13px;font-weight:700;cursor:pointer">Kaydet</button>' +
+      '</div></div>';
+
+    modal.innerHTML = formHtml;
+    document.body.appendChild(modal);
+  } catch(e) { showToast('Hata: '+e.message, true); }
+}
+
+function kapanisDuzenleModalKapat() {
+  var m = document.getElementById('kap-duzenle-modal');
+  if (m) m.remove();
+}
+
+async function kapanisDuzenleKaydet(id) {
+  try {
+    var data = {
+      konaklama_ciro:  parseFloat(document.getElementById('kd-konaklama_ciro').value)||0,
+      fb_ciro:         parseFloat(document.getElementById('kd-fb_ciro').value)||0,
+      minibar_ciro:    parseFloat(document.getElementById('kd-minibar_ciro').value)||0,
+      camasir_ciro:    parseFloat(document.getElementById('kd-camasir_ciro').value)||0,
+      oda_servis_ciro: parseFloat(document.getElementById('kd-oda_servis_ciro').value)||0,
+      diger_ciro:      parseFloat(document.getElementById('kd-diger_ciro').value)||0,
+      nakit:           parseFloat(document.getElementById('kd-nakit').value)||0,
+      kredi_karti:     parseFloat(document.getElementById('kd-kredi_karti').value)||0,
+      banka_havale:    parseFloat(document.getElementById('kd-banka_havale').value)||0,
+      diger_tahsilat:  parseFloat(document.getElementById('kd-diger_tahsilat').value)||0,
+      dolu_oda:        parseInt(document.getElementById('kd-dolu_oda').value)||0,
+      konaklayan_kisi: parseInt(document.getElementById('kd-konaklayan_kisi').value)||0,
+      notlar:          document.getElementById('kd-notlar').value
+    };
+    // Toplamları hesapla
+    data.toplam_ciro = data.konaklama_ciro + data.fb_ciro + data.minibar_ciro + data.camasir_ciro + data.oda_servis_ciro + data.diger_ciro;
+    data.toplam_tahsilat = data.nakit + data.kredi_karti + data.banka_havale + data.diger_tahsilat;
+
+    await sbPatch('gunluk_kapanis', 'id=eq.'+id, data);
+    kapanisDuzenleModalKapat();
+    showToast('Kapanisi guncellendi!');
+    kapanisListesiYukle();
+  } catch(e) { showToast('Hata: '+e.message, true); }
+}
+
+async function kapanisSil(id) {
+  if (!confirm('Bu kapanisi silmek istediginize emin misiniz?')) return;
+  try {
+    await fetch(SB_URL+'/rest/v1/gunluk_kapanis?id=eq.'+id, {
+      method:'DELETE', headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
+    });
+    showToast('Kapanisi silindi!');
+    kapanisListesiYukle();
+  } catch(e) { showToast('Hata: '+e.message, true); }
+}
+
 
 function kapanisDetayAc(idx) {
   var k = window._kapanisKayitlar[idx];
