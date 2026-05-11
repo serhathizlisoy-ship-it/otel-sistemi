@@ -1,5 +1,5 @@
 
-<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_47.html -->
+<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_48.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></head><body>async function kapanisDuzenleKaydet() {
   var id = window._kapanisDuzenleId;
   if (!id) { showToast('Duzenlenecek kayit bulunamadi!', true); return; }
@@ -31,7 +31,7 @@
     if (kaydetBtn) {
       kaydetBtn.textContent = 'Kapanis Kaydet';
       kaydetBtn.style.background = '';
-      kaydetBtn.setAttribute('onclick', 'kapanisKaydet()');
+      kaydetBtn.style.color = '';
     }
     showToast('Kapanisi guncellendi!');
     kapanisSekme('liste');
@@ -3860,6 +3860,11 @@ async function kapEnerjihesapla() {
 }
 
 async function kapanisKaydet() {
+  // Duzenleme modundaysa yonlendir
+  if (window._kapanisDuzenleId) {
+    await kapanisDuzenleKaydet();
+    return;
+  }
   var tarih = document.getElementById('kap-tarih').value;
   if (!tarih) { showToast('Lütfen tarih seçin!', true); return; }
 
@@ -4185,7 +4190,6 @@ async function kapanisDuzenle(id) {
       if (kaydetBtn) {
         kaydetBtn.textContent = 'Guncelle';
         kaydetBtn.style.background = 'var(--warn)';
-        kaydetBtn.setAttribute('onclick', 'kapanisDuzenleKaydet()');
       }
 
       // Uyari goster
