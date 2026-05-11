@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0042)file:///C:/Users/HP/Downloads/index_8.html -->
+<!-- saved from url=(0042)file:///C:/Users/HP/Downloads/index_9.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -4317,9 +4317,17 @@ async function parametreleriKaydet() {
   if (!window._butHesap) { showToast('Lütfen önce bütçe değerlerini girin!', true); return; }
 
   var yil = parseInt(document.getElementById('but-yil').value);
+  var acikAylar = window._acikAylar || [5,6,7,8,9,10];
+  var sezonBas = yil + '-' + String(Math.min.apply(null, acikAylar)).padStart(2,'0') + '-01';
+  var sezonBitAy = Math.max.apply(null, acikAylar);
+  var sezonBitGun = new Date(yil, sezonBitAy, 0).getDate();
+  var sezonBit = yil + '-' + String(sezonBitAy).padStart(2,'0') + '-' + sezonBitGun;
+
   var data = {
     yil: yil,
-    acik_aylar: JSON.stringify(window._acikAylar || [5,6,7,8,9,10]),
+    acik_aylar: JSON.stringify(acikAylar),
+    sezon_baslangic: sezonBas,
+    sezon_bitis: sezonBit,
     baslangic_tipi: tip.value,
     gider_butcesi: window._butHesap.gider,
     hedef_kar: window._butHesap.kar,
