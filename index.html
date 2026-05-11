@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_43.html -->
+<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_44.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -834,7 +834,7 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
             <button onclick="aksaklikModalAc()" style="width:100%;padding:11px;border:1.5px dashed #e0baba;border-radius:8px;background:var(--danger-l);color:var(--danger);font-family:Instrument Sans,sans-serif;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:8px">
               ⚠️ Aksaklık / Hasar Bildir
             </button>
-            <button class="sbtn" onclick="kapanisKaydet()" style="font-size:14px;padding:14px">
+            <button class="sbtn" id="kap-kaydet-btn" onclick="kapanisKaydet()" style="font-size:14px;padding:14px">
               🌙 Günlük Kapanışı Kaydet
             </button>
 
@@ -4140,7 +4140,7 @@ async function kapanisDuzenle(id) {
       if (typeof kapanisOzetGoster === 'function') kapanisOzetGoster();
 
       // Kaydet butonunu guncelleme moduna al
-      var kaydetBtn = document.querySelector('[onclick="kapanisKaydet()"]');
+      var kaydetBtn = document.getElementById('kap-kaydet-btn');
       if (kaydetBtn) {
         kaydetBtn.textContent = 'Guncelle';
         kaydetBtn.style.background = 'var(--warn)';
@@ -4186,7 +4186,7 @@ async function kapanisDuzenleKaydet() {
     await sbPatch('gunluk_kapanis', 'id=eq.'+id, data);
     window._kapanisDuzenleId = null;
     // Butonu eski haline dondur
-    var kaydetBtn = document.querySelector('[onclick="kapanisDuzenleKaydet()"]');
+    var kaydetBtn = document.getElementById('kap-kaydet-btn');
     if (kaydetBtn) {
       kaydetBtn.textContent = 'Kapanisi Kaydet';
       kaydetBtn.style.background = '';
