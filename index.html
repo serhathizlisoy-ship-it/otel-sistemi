@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_19.html -->
+<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_20.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -4739,34 +4739,7 @@ async function yeniDonemKaydet() {
     return;
   }
 
-  // Kaydedilecek donemi de dahil ederek agirlikli ort hesapla
-  var aylikData = window._aylikData || {};
-  var hedefDoluluk = aylikData[ay] ? (aylikData[ay].doluluk_hedef||0) : 0;
-  var yeniGun = Math.round((new Date(bit)-new Date(bas))/(1000*60*60*24))+1;
-  var toplamGun = yeniGun, toplamDolGun = yeniGun * doluluk;
-  mevcutDonemler.forEach(function(d) {
-    if (new Date(d.baslangic).getMonth()+1 === ay) {
-      var g = Math.round((new Date(d.bitis)-new Date(d.baslangic))/(1000*60*60*24))+1;
-      toplamGun += g; toplamDolGun += g * (d.doluluk_hedef||0);
-    }
-  });
-  var agirOrt = toplamGun > 0 ? Math.round(toplamDolGun/toplamGun) : 0;
-  var fark = hedefDoluluk > 0 ? Math.abs(agirOrt - hedefDoluluk) : 0;
-
-  if (fark > 5 && hedefDoluluk > 0) {
-    var uyariAlan = document.getElementById('ay-uyari-alani');
-    if (uyariAlan) {
-      uyariAlan.innerHTML = '<div style="padding:12px 16px;background:var(--warn-l);border:1px solid #E0C87A;border-radius:8px;font-size:12px;margin-top:10px">' +
-        '<div style="font-weight:700;color:var(--warn);margin-bottom:6px">⚠️ Uyari! Bu donemi eklerseniz agirlikli doluluk %'+agirOrt+' olacak.</div>' +
-        '<div style="color:var(--warn);margin-bottom:10px">Aylik hedefiniz: %'+hedefDoluluk+'. Ne yapmak istersiniz?</div>' +
-        '<div style="display:flex;gap:10px">' +
-        '<button onclick="fiyatAdimGec(1)" style="padding:8px 16px;border:1px solid var(--warn);border-radius:7px;background:none;color:var(--warn);font-size:12px;font-weight:700;cursor:pointer">← Adim 1 e Don</button>' +
-        '<button onclick="donemKaydetOnay()" style="padding:8px 16px;border:none;border-radius:7px;background:var(--warn);color:#000;font-size:12px;font-weight:700;cursor:pointer">Yine de Kaydet</button>' +
-        '</div></div>';
-    }
-    return;
-  }
-
+  
   await _donemKaydetIslem(bas, bit, doluluk, adr, aciklama, yil);
 }
 
@@ -4780,6 +4753,8 @@ async function donemKaydetOnay() {
   await _donemKaydetIslem(bas, bit, doluluk, adr, aciklama, yil);
 }
 
+function uyariKapat() { var a = document.getElementById('ay-uyari-alani'); if(a) a.innerHTML=''; }
+
 async function _donemKaydetIslem(bas, bit, doluluk, adr, aciklama, yil) {
   try {
     await sbPost('fiyat_donem', {
@@ -4788,12 +4763,59 @@ async function _donemKaydetIslem(bas, bit, doluluk, adr, aciklama, yil) {
       triple_fiyat:Math.round(adr*1.35), ex_bed_fiyat:Math.round(adr*0.35),
       aciklama:aciklama
     });
+
     var uyariAlan = document.getElementById('ay-uyari-alani');
     if (uyariAlan) uyariAlan.innerHTML = '';
+
+    // Kaydettikten sonra ay tamamlandi mi kontrol et
+    var ay = parseInt(document.getElementById('secili-ay')?.value) || 5;
+    var ayGunSayisi = new Date(yil, ay, 0).getDate();
+    var tumDonemler = await sbGet('fiyat_donem', 'yil=eq.'+yil+'&order=baslangic.asc').catch(function(){return [];});
+    tumDonemler = tumDonemler || [];
+
+    // Bu aya ait donemler
+    var ayDonemler = tumDonemler.filter(function(d) {
+      return new Date(d.baslangic).getMonth()+1 === ay;
+    });
+
+    // Toplam gun hesapla
+    var toplamGun = ayDonemler.reduce(function(t,d) {
+      return t + Math.round((new Date(d.bitis)-new Date(d.baslangic))/(1000*60*60*24))+1;
+    }, 0);
+
+    // Ay tamamlandi mi?
+    if (toplamGun >= ayGunSayisi) {
+      var aylikData = window._aylikData || {};
+      var hedefDoluluk = aylikData[ay] ? (aylikData[ay].doluluk_hedef||0) : 0;
+
+      // Agirlikli ortalama hesapla
+      var toplamDolGun = ayDonemler.reduce(function(t,d) {
+        var g = Math.round((new Date(d.bitis)-new Date(d.baslangic))/(1000*60*60*24))+1;
+        return t + g*(d.doluluk_hedef||0);
+      }, 0);
+      var agirOrt = toplamGun > 0 ? Math.round(toplamDolGun/toplamGun) : 0;
+      var fark = hedefDoluluk > 0 ? Math.abs(agirOrt - hedefDoluluk) : 0;
+
+      if (fark > 2 && hedefDoluluk > 0) {
+        if (uyariAlan) {
+          uyariAlan.innerHTML = '<div style="padding:12px 16px;background:var(--warn-l);border:1px solid #E0C87A;border-radius:8px;font-size:12px;margin-top:10px">' +
+            '<div style="font-weight:700;color:var(--warn);margin-bottom:6px">⚠️ Ay tamamlandi! Mayis ayi agirlikli doluluk: %'+agirOrt+' — Hedef: %'+hedefDoluluk+'</div>' +
+            '<div style="color:var(--warn);margin-bottom:10px">Donem detaylarindaki doluluk oranlari aylik hedefinizden farkli. Ne yapmak istersiniz?</div>' +
+            '<div style="display:flex;gap:10px">' +
+            '<button onclick="fiyatAdimGec(1)" style="padding:8px 16px;border:1px solid var(--warn);border-radius:7px;background:none;color:var(--warn);font-size:12px;font-weight:700;cursor:pointer">← Adim 1 e Don (%'+hedefDoluluk+' yi guncelle)</button>' +
+            '<button onclick="uyariKapat()" style="padding:8px 16px;border:none;border-radius:7px;background:var(--warn);color:#000;font-size:12px;font-weight:700;cursor:pointer">Tamam, Devam Et</button>' +
+            '</div></div>';
+        }
+      } else if (hedefDoluluk > 0) {
+        showToast('✅ ' + ['','Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'][ay] + ' ayi tamamlandi! Agirlikli doluluk: %'+agirOrt+' ≈ Hedef: %'+hedefDoluluk+' ✅');
+      }
+    }
+
     showToast('✅ Donem kaydedildi!');
     fiyatHesaplamaYukle();
   } catch(e) { showToast('Hata: '+e.message, true); }
 }
+
 
 function donemKarsilastirmaKontrol() {
   butceSekme('listesi');
