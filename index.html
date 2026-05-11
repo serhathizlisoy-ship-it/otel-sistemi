@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_20.html -->
+<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_21.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -4767,54 +4767,146 @@ async function _donemKaydetIslem(bas, bit, doluluk, adr, aciklama, yil) {
     var uyariAlan = document.getElementById('ay-uyari-alani');
     if (uyariAlan) uyariAlan.innerHTML = '';
 
-    // Kaydettikten sonra ay tamamlandi mi kontrol et
+    // Kaydettikten sonra ay ozeti goster ve tamamlandi mi kontrol et
     var ay = parseInt(document.getElementById('secili-ay')?.value) || 5;
     var ayGunSayisi = new Date(yil, ay, 0).getDate();
+    var odaSayisi = window._odaSayisi || 13;
+    var AY_ADT2 = ['','Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+
     var tumDonemler = await sbGet('fiyat_donem', 'yil=eq.'+yil+'&order=baslangic.asc').catch(function(){return [];});
     tumDonemler = tumDonemler || [];
+    window._donemler = tumDonemler;
 
-    // Bu aya ait donemler
     var ayDonemler = tumDonemler.filter(function(d) {
       return new Date(d.baslangic).getMonth()+1 === ay;
     });
 
-    // Toplam gun hesapla
-    var toplamGun = ayDonemler.reduce(function(t,d) {
-      return t + Math.round((new Date(d.bitis)-new Date(d.baslangic))/(1000*60*60*24))+1;
-    }, 0);
+    // Her donem icin oda gecesi hesapla ve goster
+    var toplamGun = 0, toplamOdaGecesi = 0, toplamDolGun = 0;
+    var ozet = '<div style="margin-top:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:12px">';
+    ozet += '<div style="font-weight:700;color:var(--text-2);margin-bottom:8px">' + AY_ADT2[ay] + ' Ayi Ozeti:</div>';
+    ozet += '<table style="width:100%;font-size:11px"><thead><tr style="color:var(--text-3)">' +
+      '<th style="text-align:left;padding:3px 6px">Tarih Araligi</th>' +
+      '<th style="text-align:center;padding:3px 6px">Gun</th>' +
+      '<th style="text-align:center;padding:3px 6px">Doluluk</th>' +
+      '<th style="text-align:right;padding:3px 6px">Oda Gecesi</th>' +
+      '</tr></thead><tbody>';
+
+    ayDonemler.forEach(function(d) {
+      var gun = Math.round((new Date(d.bitis)-new Date(d.baslangic))/(1000*60*60*24))+1;
+      var odaGecesi = Math.round(odaSayisi * gun * (d.doluluk_hedef||0) / 100);
+      toplamGun += gun;
+      toplamOdaGecesi += odaGecesi;
+      toplamDolGun += gun * (d.doluluk_hedef||0);
+      ozet += '<tr><td style="padding:3px 6px;font-family:DM Mono,monospace">' + d.baslangic + ' → ' + d.bitis + '</td>' +
+        '<td style="text-align:center;padding:3px 6px">' + gun + '</td>' +
+        '<td style="text-align:center;padding:3px 6px;font-weight:700">%' + (d.doluluk_hedef||0) + '</td>' +
+        '<td style="text-align:right;padding:3px 6px;font-family:DM Mono,monospace">' + odaGecesi + '</td></tr>';
+    });
+
+    var agirOrt = toplamGun > 0 ? Math.round(toplamDolGun/toplamGun) : 0;
+    var maxOdaGecesi = odaSayisi * ayGunSayisi;
+
+    ozet += '<tr style="border-top:1px solid var(--border);font-weight:700">' +
+      '<td style="padding:4px 6px">TOPLAM (' + toplamGun + '/' + ayGunSayisi + ' gun)</td>' +
+      '<td style="text-align:center;padding:4px 6px">' + toplamGun + '</td>' +
+      '<td style="text-align:center;padding:4px 6px;color:var(--accent)">%' + agirOrt + '</td>' +
+      '<td style="text-align:right;padding:4px 6px;font-family:DM Mono,monospace;color:var(--accent)">' + toplamOdaGecesi + ' / ' + maxOdaGecesi + '</td>' +
+      '</tr></tbody></table></div>';
 
     // Ay tamamlandi mi?
     if (toplamGun >= ayGunSayisi) {
       var aylikData = window._aylikData || {};
       var hedefDoluluk = aylikData[ay] ? (aylikData[ay].doluluk_hedef||0) : 0;
-
-      // Agirlikli ortalama hesapla
-      var toplamDolGun = ayDonemler.reduce(function(t,d) {
-        var g = Math.round((new Date(d.bitis)-new Date(d.baslangic))/(1000*60*60*24))+1;
-        return t + g*(d.doluluk_hedef||0);
-      }, 0);
-      var agirOrt = toplamGun > 0 ? Math.round(toplamDolGun/toplamGun) : 0;
       var fark = hedefDoluluk > 0 ? Math.abs(agirOrt - hedefDoluluk) : 0;
 
       if (fark > 2 && hedefDoluluk > 0) {
-        if (uyariAlan) {
-          uyariAlan.innerHTML = '<div style="padding:12px 16px;background:var(--warn-l);border:1px solid #E0C87A;border-radius:8px;font-size:12px;margin-top:10px">' +
-            '<div style="font-weight:700;color:var(--warn);margin-bottom:6px">⚠️ Ay tamamlandi! Mayis ayi agirlikli doluluk: %'+agirOrt+' — Hedef: %'+hedefDoluluk+'</div>' +
-            '<div style="color:var(--warn);margin-bottom:10px">Donem detaylarindaki doluluk oranlari aylik hedefinizden farkli. Ne yapmak istersiniz?</div>' +
-            '<div style="display:flex;gap:10px">' +
-            '<button onclick="fiyatAdimGec(1)" style="padding:8px 16px;border:1px solid var(--warn);border-radius:7px;background:none;color:var(--warn);font-size:12px;font-weight:700;cursor:pointer">← Adim 1 e Don (%'+hedefDoluluk+' yi guncelle)</button>' +
-            '<button onclick="uyariKapat()" style="padding:8px 16px;border:none;border-radius:7px;background:var(--warn);color:#000;font-size:12px;font-weight:700;cursor:pointer">Tamam, Devam Et</button>' +
-            '</div></div>';
-        }
+        // Uyari + dogrudan guncelleme onay secenegi
+        ozet += '<div style="padding:12px;background:var(--warn-l);border:1px solid #E0C87A;border-radius:8px;margin-top:8px">' +
+          '<div style="font-weight:700;color:var(--warn);margin-bottom:6px">⚠️ ' + AY_ADT2[ay] + ' ayi tamamlandi! Agirlikli doluluk: %' + agirOrt + ' — Adim 1 Hedefi: %' + hedefDoluluk + '</div>' +
+          '<div style="color:var(--warn);margin-bottom:10px;font-size:11px">' + AY_ADT2[ay] + ' ayindaki Adim 1 hedefini (%' + hedefDoluluk + ') → %' + agirOrt + ' olarak guncellemek ister misiniz?</div>' +
+          '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+          '<button data-ay="' + ay + '" data-yeni="' + agirOrt + '" onclick="adim1GuncelleOnay(this.dataset.ay, this.dataset.yeni)" style="padding:8px 14px;border:none;border-radius:7px;background:var(--accent);color:#000;font-size:12px;font-weight:700;cursor:pointer">✅ Evet, %' + hedefDoluluk + ' → %' + agirOrt + ' Guncelle</button>' +
+          '<button onclick="uyariKapat()" style="padding:8px 14px;border:1px solid var(--warn);border-radius:7px;background:none;color:var(--warn);font-size:12px;font-weight:700;cursor:pointer">Hayir, Adim 1 e Geri Don</button>' +
+          '</div></div>';
       } else if (hedefDoluluk > 0) {
-        showToast('✅ ' + ['','Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'][ay] + ' ayi tamamlandi! Agirlikli doluluk: %'+agirOrt+' ≈ Hedef: %'+hedefDoluluk+' ✅');
+        ozet += '<div style="padding:10px 12px;background:var(--accent-l);border:1px solid var(--accent-b);border-radius:8px;margin-top:8px;font-size:12px;color:var(--accent);font-weight:700">✅ ' + AY_ADT2[ay] + ' ayi tamamlandi! Agirlikli doluluk %' + agirOrt + ' ≈ Hedef %' + hedefDoluluk + ' ✅</div>';
       }
     }
 
+    if (uyariAlan) uyariAlan.innerHTML = ozet;
     showToast('✅ Donem kaydedildi!');
     fiyatHesaplamaYukle();
   } catch(e) { showToast('Hata: '+e.message, true); }
 }
+
+async function adim1GuncelleOnay(ay, yeniDoluluk) {
+  ay = parseInt(ay);
+  yeniDoluluk = parseInt(yeniDoluluk);
+  var yil = window._fiyatYil || new Date().getFullYear();
+  var dfcTip = window._dfcTipAktif || 'orta';
+  var ozelDFC = window._ozelDFC || {};
+  var odaSayisi = window._odaSayisi || 13;
+  var hedefCiro = window._hedefCiro || 0;
+
+  try {
+    // Tum aylarin guncellenmis toplam oda gecesini hesapla
+    var acikAylar = window._acikAylarFiyat || [];
+    var tumDonemler = window._donemler || [];
+    var toplamOdaGecesi = 0;
+
+    acikAylar.forEach(function(a) {
+      var ayDonemler = tumDonemler.filter(function(d){ return new Date(d.baslangic).getMonth()+1 === a; });
+      if (ayDonemler.length > 0) {
+        // Bu ay icin donemlerden agirlikli hesapla
+        var tGun = 0, tDol = 0;
+        ayDonemler.forEach(function(d) {
+          var g = Math.round((new Date(d.bitis)-new Date(d.baslangic))/(1000*60*60*24))+1;
+          tGun += g; tDol += g*(d.doluluk_hedef||0);
+        });
+        var ayDol = tGun > 0 ? tDol/tGun/100 : 0;
+        toplamOdaGecesi += Math.round(odaSayisi * new Date(yil,a,0).getDate() * ayDol);
+      } else {
+        // Adim 1 degerini kullan
+        var d = (window._aylikData||{})[a];
+        if (d && d.doluluk_hedef) {
+          toplamOdaGecesi += Math.round(odaSayisi * new Date(yil,a,0).getDate() * d.doluluk_hedef/100);
+        }
+      }
+    });
+
+    // Yeni ort ADR
+    var yeniOrtADR = toplamOdaGecesi > 0 ? Math.round(hedefCiro / toplamOdaGecesi) : 0;
+
+    // Guncellenen ay icin DFC hesapla
+    var gun = new Date(yil, ay, 0).getDate();
+    var dfc = getDFC(dfcTip, yeniDoluluk);
+    var ozel = ozelDFC[dfc.alt];
+    var katsayi = ozel ? parseFloat(ozel['dfc_'+dfcTip]) : dfc.dfc;
+    var yeniADR = Math.round(yeniOrtADR * katsayi);
+    var odaGecesi = Math.round(odaSayisi * gun * yeniDoluluk/100);
+    var gelir = Math.round(yeniADR * odaGecesi);
+
+    var mevcut = await sbGet('butce_aylik', 'yil=eq.'+yil+'&ay=eq.'+ay).catch(function(){return [];});
+    var data = { yil:yil, ay:ay, doluluk_hedef:yeniDoluluk, hedef_oda_gecesi:odaGecesi, onerilenfiyat_orta:yeniADR, tahmini_gelir_orta:gelir, dfc_degeri:katsayi };
+
+    if (mevcut && mevcut.length > 0) {
+      await sbPatch('butce_aylik', 'yil=eq.'+yil+'&ay=eq.'+ay, data);
+    } else {
+      await sbPost('butce_aylik', data);
+    }
+
+    // window._aylikData guncelle
+    if (!window._aylikData) window._aylikData = {};
+    window._aylikData[ay] = data;
+    window._geciciBaseADR = yeniOrtADR;
+
+    showToast('✅ Adim 1 guncellendi! ' + ['','Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'][ay] + ' doluluk: %' + yeniDoluluk);
+    uyariKapat();
+    fiyatHesaplamaYukle();
+  } catch(e) { showToast('Hata: '+e.message, true); }
+}
+
 
 
 function donemKarsilastirmaKontrol() {
