@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0042)file:///C:/Users/HP/Downloads/index_9.html -->
+<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_11.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1167,6 +1167,7 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
           <button class="atab-btn" id="butab-fiyat" onclick="butceSekme(&#39;fiyat&#39;)">💰 Gelir &amp; Fiyat</button>
           <button class="atab-btn" id="butab-dfc" onclick="butceSekme(&#39;dfc&#39;)">📊 DFC Tablosu</button>
           <button class="atab-btn" id="butab-revizyon" onclick="butceSekme(&#39;revizyon&#39;)">🔄 Revizyon</button>
+          <button class="atab-btn" id="butab-listesi" onclick="butceSekme(&#39;listesi&#39;)">📋 Fiyat Listesi</button>
         </div>
 
         <!-- PARAMETRELER SEKMESİ -->
@@ -1377,6 +1378,10 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
         </div>
 
         <!-- REVİZYON GEÇMİŞİ -->
+        <div id="butce-listesi" style="display:none">
+          <div id="listesi-icerik"></div>
+        </div>
+
         <div id="butce-revizyon" style="display:none">
           <div id="revizyon-icerik">
             <div style="text-align:center;padding:30px"><div class="spinner" style="margin:0 auto"></div></div>
@@ -4193,13 +4198,14 @@ function parametreleriDoldur(p) {
 
 function butceSekme(sekme) {
   butceAktifSekme = sekme;
-  ['parametreler','fiyat','dfc','revizyon'].forEach(function(s) {
+  ['parametreler','fiyat','dfc','revizyon','listesi'].forEach(function(s) {
     var el = document.getElementById('butce-' + s);
     var btn = document.getElementById('butab-' + s);
     if (el) el.style.display = s === sekme ? 'block' : 'none';
     if (btn) btn.className = 'atab-btn' + (s === sekme ? ' on' : '');
   });
   if (sekme === 'fiyat') fiyatHesaplamaYukle();
+  if (sekme === 'listesi') fiyatListesiYukle();
   if (sekme === 'dfc') dfcTablosuYukle();
   if (sekme === 'revizyon') revizyonGecmisiYukle();
   if (sekme === 'gider') giderButcesiYukle();
@@ -4354,204 +4360,351 @@ async function parametreleriKaydet() {
   }
 }
 
+
+// ── GELİR & FİYAT (Dönem Bazlı) ─────────────────────
 async function fiyatHesaplamaYukle() {
   var el = document.getElementById('fiyat-icerik');
-  if (!_butceParametreler && !window._butHesap) {
-    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-3)"><div style="font-size:32px;margin-bottom:12px">⚙️</div><div>Önce Parametreler sekmesinden bütçe parametrelerini girin ve kaydedin.</div></div>';
-    return;
-  }
+  var yil = parseInt(document.getElementById('but-yil').value) || 2026;
+  var params = await sbGet('butce_parametreler', 'yil=eq.' + yil).catch(function(){return [];});
+  params = params && params[0] ? params[0] : null;
 
-  var ciro = (_butceParametreler?.hedef_ciro) || window._butHesap?.ciro || 0;
-  var dfcTip = (_butceParametreler?.dfc_tipi) || window._dfcTip || 'orta';
-  var yil = parseInt(document.getElementById('but-yil').value);
+  // Açık ayları belirle
+  var acikAylar = params ? JSON.parse(params.acik_aylar || '[5,6,7,8,9,10]') : (window._acikAylar || [5,6,7,8,9,10]);
+  var dfcTip = params ? (params.dfc_tipi || 'orta') : (window._dfcTip || 'orta');
 
-  el.innerHTML = '<div style="text-align:center;padding:30px"><div class="spinner" style="margin:0 auto;border-color:var(--border);border-top-color:var(--accent)"></div><div style="margin-top:10px">Hesaplanıyor...</div></div>';
+  // Hedef ciro ve base ADR
+  var hedefCiro = params ? (params.hedef_ciro || 0) : (window._butHesap?.ciro || 0);
+  var odaSayisi = 13;
+  var sezonGun = acikAylar.reduce(function(t, ay) {
+    return t + new Date(yil, ay, 0).getDate();
+  }, 0);
+  var baseADR = sezonGun > 0 && odaSayisi > 0 ? Math.round(hedefCiro / (sezonGun * odaSayisi)) : 0;
 
-  // Aylık doluluk hedeflerini yükle
-  var aylikData = {};
-  try {
-    var aylik = await sbGet('butce_aylik', 'yil=eq.' + yil);
-    if (aylik) aylik.forEach(function(a){ aylikData[a.ay] = a; });
-  } catch(e) {}
+  // Mevcut dönemleri yükle
+  var donemler = await sbGet('fiyat_donem', 'yil=eq.' + yil + '&order=baslangic.asc').catch(function(){return [];});
+  donemler = donemler || [];
 
-  // Açık ayları al
-  var sezonAylari = window._acikAylar || [5,6,7,8,9,10];
+  // Özel DFC değerleri
+  var ozelDFC = {};
+  var ozel = await sbGet('dfc_ozel', 'yil=eq.' + yil).catch(function(){return [];});
+  if (ozel) ozel.forEach(function(r){ ozelDFC[r.doluluk_alt] = r; });
 
-  // Form oluştur
-  var formHtml = '<div style="margin-bottom:16px;padding:12px 16px;background:var(--accent-l);border:1px solid var(--accent-b);border-radius:8px;font-size:12px;color:var(--accent)">' +
-    '💡 Her ay için hedef doluluk oranını girin. Sistem ADR ve fiyat bantlarını otomatik hesaplar.' +
-    '</div>' +
-    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">';
+  var html = '';
 
-  sezonAylari.forEach(function(ay) {
-    var mevcut = aylikData[ay];
-    formHtml += '<div style="padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px">' +
-      '<div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:8px">' + AY_ADLARI[ay] + '</div>' +
-      '<div class="sfield">' +
-      '<label>Hedef Doluluk (%)</label>' +
-      '<input type="number" id="dol-' + ay + '" value="' + (mevcut?.doluluk_hedef || '') + '" placeholder="0" min="0" max="100" step="1" oninput="anlıkHesapla(' + ay + ')" style="font-family:DM Mono,monospace;font-size:15px">' +
-      '</div>' +
-      '<div id="ay-sonuc-' + ay + '" style="margin-top:8px;font-size:11px;color:var(--text-3)"></div>' +
-      '</div>';
-  });
-
-  formHtml += '</div>';
-
-  // Özet tablo
-  formHtml += '<div id="fiyat-ozet-tablo"></div>' +
-    '<div style="display:flex;justify-content:flex-end;margin-top:16px">' +
-    (window._butceKilitli ?
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px"><button onclick="senaryoOnayiKaldir()" style="padding:10px 20px;border:1px solid var(--warn);border-radius:7px;background:var(--warn-l);color:var(--warn);font-family:Instrument Sans,sans-serif;font-size:13px;font-weight:600;cursor:pointer">🔓 Onayı Kaldır</button><div style=\"padding:10px 16px;background:var(--bg2);border-radius:8px;font-size:12px;color:var(--text-3)\">🔒 Bütçe onaylandı ve kilitlendi</div></div>' :
-      '<div style=\"display:flex;justify-content:flex-end;margin-top:16px\"><button class=\"sbtn\" style=\"width:auto;padding:11px 28px\" onclick=\"aylikFiyatlariKaydet()\">💾 Aylık Fiyatları Kaydet</button></div>'
-    ) +
+  // Bilgi kartı
+  html += '<div style="padding:10px 14px;background:var(--accent-l);border:1px solid var(--accent-b);border-radius:8px;font-size:12px;color:var(--accent);margin-bottom:14px">' +
+    '📊 Base ADR: <strong>' + baseADR.toLocaleString('tr-TR') + ' TL</strong> &nbsp;|&nbsp; ' +
+    'DFC Tipi: <strong>' + dfcTip + '</strong> &nbsp;|&nbsp; ' +
+    'Sezon: <strong>' + acikAylar.map(function(a){return ['','Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'][a];}).join(', ') + '</strong>' +
     '</div>';
 
-  el.innerHTML = formHtml;
+  // Dönem ekleme formu
+  html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px">' +
+    '<div style="font-size:13px;font-weight:700;color:var(--text-2);margin-bottom:12px">📅 Yeni Dönem Ekle</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:10px">' +
+    '<div class="sfield"><label>Başlangıç Tarihi</label><input type="date" id="fd-bas" value="' + yil + '-05-01"></div>' +
+    '<div class="sfield"><label>Bitiş Tarihi</label><input type="date" id="fd-bit" value="' + yil + '-05-13"></div>' +
+    '<div class="sfield"><label>Doluluk Oranı (%)</label><input type="number" id="fd-doluluk" placeholder="60" min="0" max="100" style="font-family:DM Mono,monospace" oninput="donemADRHesapla(window._baseADR, window._dfcTipAktif)"></div>' +
+    '<div class="sfield"><label>Açıklama</label><input type="text" id="fd-aciklama" placeholder="Sezon Başlangıcı..."></div>' +
+    '</div>' +
 
-  // Mevcut değerler varsa anlık hesapla
-  sezonAylari.forEach(function(ay) {
-    if (aylikData[ay] && aylikData[ay].doluluk_hedef > 0) anlıkHesapla(ay);
-  });
+    '<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px">' +
+    '<div style="font-size:11px;font-weight:700;color:var(--text-2);margin-bottom:10px">📐 ADR Seçimi — Doluluk oranına göre hesaplandı:</div>' +
+    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px" id="adr-secim-alani">' +
+    '<div style="padding:10px;border:2px solid var(--border);border-radius:8px;text-align:center;cursor:pointer;opacity:0.5" id="adr-alt-kart">' +
+    '<div style="font-size:11px;color:var(--text-3)">Alt Senaryo</div>' +
+    '<div style="font-size:16px;font-weight:700;font-family:DM Mono,monospace;color:var(--text-2)" id="adr-alt-deger">—</div>' +
+    '</div>' +
+    '<div style="padding:10px;border:2px solid var(--accent);border-radius:8px;text-align:center;cursor:pointer;background:var(--accent-l)" id="adr-orta-kart">' +
+    '<div style="font-size:11px;color:var(--accent)">Orta Senaryo ✓</div>' +
+    '<div style="font-size:16px;font-weight:700;font-family:DM Mono,monospace;color:var(--accent)" id="adr-orta-deger">—</div>' +
+    '</div>' +
+    '<div style="padding:10px;border:2px solid var(--border);border-radius:8px;text-align:center;cursor:pointer;opacity:0.5" id="adr-ust-kart">' +
+    '<div style="font-size:11px;color:var(--text-3)">Üst Senaryo</div>' +
+    '<div style="font-size:16px;font-weight:700;font-family:DM Mono,monospace;color:var(--text-2)" id="adr-ust-deger">—</div>' +
+    '</div>' +
+    '</div>' +
+    '<div style="margin-top:10px;display:flex;align-items:center;gap:10px">' +
+    '<label style="font-size:12px;color:var(--text-2)">Manuel ADR Düzeltme:</label>' +
+    '<input type="number" id="fd-adr-manuel" placeholder="0" style="width:120px;font-family:DM Mono,monospace;font-size:13px;font-weight:700" oninput="donemADRSecimIsaretle()">' +
+    '<span style="font-size:12px;color:var(--text-3)">TL (boş bırakırsan seçilen senaryo kullanılır)</span>' +
+    '</div>' +
+    '</div>' +
 
-  window._sezonAylari = sezonAylari;
-  window._butceCiro = ciro;
-  window._dfcTipSecili = dfcTip;
+    '<button onclick="yeniDonemKaydet()" style="padding:9px 20px;border:none;border-radius:7px;background:var(--accent);color:#000;font-family:Instrument Sans,sans-serif;font-size:13px;font-weight:700;cursor:pointer">💾 Dönem Kaydet</button>' +
+    '</div>';
 
-  ozetTabloGuncelle();
-}
+  // Mevcut dönemler tablosu
+  if (donemler.length > 0) {
+    html += '<div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text-2)">📋 Girilen Dönemler</div>';
+    html += '<div style="overflow-x:auto"><table class="tbl"><thead><tr>' +
+      '<th>Dönem</th><th>Tarih Aralığı</th><th style="text-align:center">Gün</th>' +
+      '<th style="text-align:center">Doluluk</th><th style="text-align:right">ADR (Double)</th>' +
+      '<th>Açıklama</th><th></th></tr></thead><tbody>';
 
-function anlıkHesapla(ay) {
-  var doluluk = parseFloat(document.getElementById('dol-' + ay)?.value) || 0;
-  var gun = AY_GUNLER[ay];
-  var odaGecesi = Math.round(sistemOdaSayisi * gun * doluluk / 100);
-  var el = document.getElementById('ay-sonuc-' + ay);
-  if (el && doluluk > 0) {
-    var dfc = getDFC(window._dfcTipSecili || 'orta', doluluk);
-    el.innerHTML = '<span style="color:var(--accent)">' + odaGecesi + ' oda gecesi</span> · DFC: <strong>' + dfc.dfc.toFixed(2) + '</strong>';
-  }
-  ozetTabloGuncelle();
-}
+    donemler.forEach(function(d) {
+      var gun = Math.round((new Date(d.bitis) - new Date(d.baslangic)) / (1000*60*60*24)) + 1;
+      var bas = new Date(d.baslangic);
+      var ay = ['','Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'][bas.getMonth()+1];
+      html += '<tr>' +
+        '<td style="font-weight:600;font-size:12px">' + ay + ' ' + bas.getDate() + '</td>' +
+        '<td style="font-family:DM Mono,monospace;font-size:12px">' + d.baslangic + ' → ' + d.bitis + '</td>' +
+        '<td style="text-align:center;font-weight:700;color:var(--accent)">' + gun + '</td>' +
+        '<td style="text-align:center">%' + (d.doluluk_hedef||0) + '</td>' +
+        '<td style="text-align:right;font-family:DM Mono,monospace;font-size:13px;font-weight:700;color:var(--accent)">' + (d.double_fiyat||0).toLocaleString('tr-TR') + ' TL</td>' +
+        '<td style="font-size:12px;color:var(--text-2)">' + (d.aciklama||'') + '</td>' +
+        '<td><button data-id="' + d.id + '" onclick="donemSilFD(this.dataset.id)" style="background:none;border:none;color:var(--danger);cursor:pointer">🗑</button></td>' +
+        '</tr>';
+    });
+    html += '</tbody></table></div>';
 
-function ozetTabloGuncelle() {
-  var aylar = window._sezonAylari || [];
-  var ciro = window._butceCiro || 0;
-  var dfcTip = window._dfcTipSecili || 'orta';
-
-  if (!aylar.length || !ciro) return;
-
-  // Toplam oda gecesi hesapla
-  var toplamGece = 0;
-  aylar.forEach(function(ay) {
-    var doluluk = parseFloat(document.getElementById('dol-' + ay)?.value) || 0;
-    var gun = AY_GUNLER[ay];
-    toplamGece += Math.round(sistemOdaSayisi * gun * doluluk / 100);
-  });
-
-  if (toplamGece === 0) return;
-
-  // Ham ADR
-  var hamADR = ciro / toplamGece;
-
-  // Özet tablo
-  var html = '<div style="overflow-x:auto"><table class="tbl">' +
-    '<thead><tr>' +
-    '<th>Ay</th><th>Doluluk</th><th>Oda Gecesi</th><th>DFC</th>' +
-    '<th style="text-align:right">Alt Fiyat</th>' +
-    '<th style="text-align:right;background:var(--accent-l)">Orta Fiyat</th>' +
-    '<th style="text-align:right">Üst Fiyat</th>' +
-    '<th style="text-align:right">Tahmini Gelir</th>' +
-    '</tr></thead><tbody>';
-
-  var toplamGelirOrta = 0;
-  aylar.forEach(function(ay) {
-    var doluluk = parseFloat(document.getElementById('dol-' + ay)?.value) || 0;
-    var gun = AY_GUNLER[ay];
-    var odaGecesi = Math.round(sistemOdaSayisi * gun * doluluk / 100);
-    var dfc = getDFC(dfcTip, doluluk);
-
-    var fiyatAlt = Math.round(hamADR * dfc.adfc);
-    var fiyatOrta = Math.round(hamADR * dfc.dfc);
-    var fiyatUst = Math.round(hamADR * dfc.udfc);
-    var gelirOrta = odaGecesi * fiyatOrta;
-    toplamGelirOrta += gelirOrta;
-
-    var dolulukRenk = doluluk >= 70 ? 'var(--accent)' : doluluk >= 40 ? 'var(--warn)' : 'var(--danger)';
-
-    html += '<tr>' +
-      '<td style="font-weight:600">' + AY_ADLARI[ay] + '</td>' +
-      '<td><span style="font-family:DM Mono,monospace;font-size:12px;font-weight:600;color:' + dolulukRenk + '">%' + (doluluk||0).toFixed(0) + '</span></td>' +
-      '<td class="mono">' + odaGecesi + '</td>' +
-      '<td class="mono">' + (dfc.dfc).toFixed(2) + '</td>' +
-      '<td class="mono" style="text-align:right;color:var(--text-3)">' + (doluluk>0?fiyatAlt.toLocaleString('tr-TR')+' TL':'—') + '</td>' +
-      '<td class="mono" style="text-align:right;font-weight:700;color:var(--accent);background:var(--accent-l)">' + (doluluk>0?fiyatOrta.toLocaleString('tr-TR')+' TL':'—') + '</td>' +
-      '<td class="mono" style="text-align:right;color:var(--text-3)">' + (doluluk>0?fiyatUst.toLocaleString('tr-TR')+' TL':'—') + '</td>' +
-      '<td class="mono" style="text-align:right;font-weight:600">' + (doluluk>0?gelirOrta.toLocaleString('tr-TR')+' TL':'—') + '</td>' +
-      '</tr>';
-  });
-
-  // Ham ADR satırı
-  html += '<tr style="background:var(--bg);font-weight:700">' +
-    '<td colspan="2">Ham ADR</td>' +
-    '<td class="mono">' + toplamGece + ' toplam</td>' +
-    '<td>—</td>' +
-    '<td colspan="3" class="mono" style="text-align:center;color:var(--admin)">' + Math.round(hamADR).toLocaleString('tr-TR') + ' TL</td>' +
-    '<td class="mono" style="text-align:right;color:' + (toplamGelirOrta >= ciro ? 'var(--accent)' : 'var(--danger)') + ';font-weight:700">' + toplamGelirOrta.toLocaleString('tr-TR') + ' TL</td>' +
-    '</tr>';
-
-  html += '</tbody></table></div>';
-
-  // Alt/Orta/Üst senaryo karşılaştırma
-  var toplamGelirAlt = 0, toplamGelirUst = 0;
-  aylar.forEach(function(ay) {
-    var doluluk = parseFloat(document.getElementById('dol-' + ay)?.value) || 0;
-    var gun = AY_GUNLER[ay];
-    var odaGecesi = Math.round(sistemOdaSayisi * gun * doluluk / 100);
-    var dfc = getDFC(dfcTip, doluluk);
-    toplamGelirAlt += odaGecesi * Math.round(hamADR * dfc.adfc);
-    toplamGelirUst += odaGecesi * Math.round(hamADR * dfc.udfc);
-  });
-
-  // Onay durumunu kontrol et
-  var onayliSenaryo = window._onayliSenaryo || null;
-
-  html += '<div style="margin-top:16px">' +
-    '<div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">Senaryo Karşılaştırması & Onay</div>' +
-    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">';
-
-  var senaryolar = [
-    {ad:'Alt Senaryo', gelir:toplamGelirAlt, renk:'var(--text-3)', bg:'var(--bg)', key:'alt'},
-    {ad:'Orta Senaryo', gelir:toplamGelirOrta, renk:'var(--accent)', bg:'var(--accent-l)', key:'orta'},
-    {ad:'Üst Senaryo', gelir:toplamGelirUst, renk:'var(--mgr)', bg:'var(--mgr-l)', key:'ust'}
-  ];
-
-  senaryolar.forEach(function(s) {
-    var fark = s.gelir - ciro;
-    var onaylandi = onayliSenaryo === s.key;
-    html += '<div style="padding:14px;background:' + (onaylandi?s.bg:'var(--surface)') + ';border:2px solid ' + (onaylandi?s.renk:'var(--border)') + ';border-radius:10px;text-align:center">' +
-      '<div style="font-size:11px;font-weight:600;color:' + s.renk + ';margin-bottom:6px">' + s.ad + '</div>' +
-      '<div style="font-family:DM Mono,monospace;font-size:18px;font-weight:700;color:' + s.renk + ';margin-bottom:4px">' + s.gelir.toLocaleString('tr-TR') + ' TL</div>' +
-      '<div style="font-size:11px;color:' + (fark>=0?'var(--accent)':'var(--danger)') + ';margin-bottom:10px">' + (fark>=0?'✅ +':'⚠️ ') + Math.abs(fark).toLocaleString('tr-TR') + ' TL ' + (fark>=0?'fazla':'eksik') + '</div>' +
-      (onaylandi ?
-        '<div style="padding:5px 10px;background:' + s.renk + ';color:#fff;border-radius:6px;font-size:11px;font-weight:600">🔒 ONAYLANDI</div>' :
-        (oturum.rol === 'admin' && !onayliSenaryo ?
-          '<button onclick="senaryoOnayla(\'' + s.key + '\')" style="width:100%;padding:6px;border:1px solid ' + s.renk + ';border-radius:6px;background:none;color:' + s.renk + ';font-family:Instrument Sans,sans-serif;font-size:11px;font-weight:600;cursor:pointer">Bu Senaryoyu Onayla</button>' :
-          '<div style="font-size:11px;color:var(--text-3)">' + (onayliSenaryo ? 'Başka senaryo onaylandı' : 'Admin onayı gerekli') + '</div>'
-        )
-      ) +
+    html += '<div style="margin-top:14px;display:flex;justify-content:flex-end">' +
+      '<button onclick="fiyatListesineGonder(' + yil + ')" style="padding:10px 24px;border:none;border-radius:8px;background:var(--accent);color:#000;font-family:Instrument Sans,sans-serif;font-size:13px;font-weight:700;cursor:pointer">📋 Fiyat Listesine Onayla →</button>' +
       '</div>';
-  });
-
-  html += '</div>';
-
-  if (onayliSenaryo && oturum.rol === 'admin') {
-    html += '<div style="margin-top:10px;text-align:right"><button onclick="senaryoOnayiKaldir()" style="padding:6px 14px;border:1px solid var(--danger);border-radius:6px;background:var(--danger-l);color:var(--danger);font-family:Instrument Sans,sans-serif;font-size:11px;cursor:pointer">🔓 Onayı Kaldır</button></div>';
+  } else {
+    html += '<div style="text-align:center;padding:30px;color:var(--text-3)"><div style="font-size:32px;margin-bottom:8px">📅</div><div>Henüz dönem eklenmedi.</div></div>';
   }
-  html += '</div>';
 
-  window._butceHamADR = hamADR;
-  var ozetEl = document.getElementById('fiyat-ozet-tablo');
-  if (ozetEl) ozetEl.innerHTML = html;
+  el.innerHTML = html;
+  window._fiyatYil = yil;
+  window._baseADR = baseADR;
+  window._dfcTip = dfcTip;
+  window._dfcTipAktif = dfcTip;
 }
+
+function donemADRHesapla(baseADR, dfcTip) {
+  var doluluk = parseFloat(document.getElementById('fd-doluluk')?.value) || 0;
+  if (!doluluk) return;
+
+  var dfc = getDFC(dfcTip, doluluk);
+  var altADR = Math.round(baseADR * dfc.adfc);
+  var ortaADR = Math.round(baseADR * dfc.dfc);
+  var ustADR = Math.round(baseADR * dfc.udfc);
+
+  document.getElementById('adr-alt-deger').textContent = altADR.toLocaleString('tr-TR') + ' TL';
+  document.getElementById('adr-orta-deger').textContent = ortaADR.toLocaleString('tr-TR') + ' TL';
+  document.getElementById('adr-ust-deger').textContent = ustADR.toLocaleString('tr-TR') + ' TL';
+
+  // Tıklanabilir kartlar
+  document.getElementById('adr-alt-kart').onclick = function() { adrKartSec('alt', altADR); };
+  document.getElementById('adr-orta-kart').onclick = function() { adrKartSec('orta', ortaADR); };
+  document.getElementById('adr-ust-kart').onclick = function() { adrKartSec('ust', ustADR); };
+
+  window._seciliADR = ortaADR;
+  window._seciliSenaryo = 'orta';
+}
+
+function adrKartSec(tip, deger) {
+  ['alt','orta','ust'].forEach(function(t) {
+    var kart = document.getElementById('adr-' + t + '-kart');
+    kart.style.borderColor = t === tip ? 'var(--accent)' : 'var(--border)';
+    kart.style.background = t === tip ? 'var(--accent-l)' : '';
+    kart.style.opacity = t === tip ? '1' : '0.6';
+    kart.querySelector('div').style.color = t === tip ? 'var(--accent)' : 'var(--text-3)';
+  });
+  document.getElementById('fd-adr-manuel').value = '';
+  window._seciliADR = deger;
+  window._seciliSenaryo = tip;
+}
+
+function donemADRSecimIsaretle() {
+  var manuel = parseFloat(document.getElementById('fd-adr-manuel')?.value) || 0;
+  if (manuel > 0) {
+    window._seciliADR = manuel;
+    ['alt','orta','ust'].forEach(function(t) {
+      document.getElementById('adr-' + t + '-kart').style.opacity = '0.4';
+    });
+  }
+}
+
+async function yeniDonemKaydet() {
+  var baseADR = window._baseADR || 0;
+  var dfcTip = window._dfcTipAktif || 'orta';
+  var yil = window._fiyatYil || new Date().getFullYear();
+  var bas = document.getElementById('fd-bas')?.value;
+  var bit = document.getElementById('fd-bit')?.value;
+  var doluluk = parseFloat(document.getElementById('fd-doluluk')?.value) || 0;
+  var aciklama = document.getElementById('fd-aciklama')?.value || '';
+  var manuel = parseFloat(document.getElementById('fd-adr-manuel')?.value) || 0;
+  var adr = manuel > 0 ? manuel : (window._seciliADR || 0);
+
+  if (!bas || !bit) { showToast('Tarih seçin!', true); return; }
+  if (doluluk <= 0) { showToast('Doluluk oranı girin!', true); return; }
+  if (adr <= 0) { showToast('Doluluk girin veya senaryo seçin!', true); return; }
+
+  try {
+    await sbPost('fiyat_donem', {
+      yil: yil,
+      baslangic: bas,
+      bitis: bit,
+      doluluk_hedef: doluluk,
+      pax: 2,
+      single_fiyat: Math.round(adr * 0.65),
+      double_fiyat: adr,
+      triple_fiyat: Math.round(adr * 1.35),
+      ex_bed_fiyat: Math.round(adr * 0.35),
+      aciklama: aciklama
+    });
+    showToast('✅ Dönem kaydedildi!');
+    fiyatHesaplamaYukle();
+  } catch(e) { showToast('Hata: ' + e.message, true); }
+}
+
+async function donemSilFD(id) {
+  if (!confirm('Bu dönemi silmek istiyor musunuz?')) return;
+  try {
+    await fetch(SB_URL + '/rest/v1/fiyat_donem?id=eq.' + id, {
+      method: 'DELETE',
+      headers: {'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY}
+    });
+    showToast('✅ Dönem silindi');
+    fiyatHesaplamaYukle();
+  } catch(e) { showToast('Hata: ' + e.message, true); }
+}
+
+async function fiyatListesineGonder(yil) {
+  showToast('✅ Fiyat listesi güncellendi!');
+  butceSekme('listesi');
+}
+
+// ── FİYAT LİSTESİ (Son Sekme) ─────────────────────────
+async function fiyatListesiYukle() {
+  var el = document.getElementById('listesi-icerik');
+  var yil = parseInt(document.getElementById('but-yil').value) || 2026;
+  el.innerHTML = '<div style="text-align:center;padding:20px"><div class="spinner" style="margin:0 auto;border-color:var(--border);border-top-color:var(--accent)"></div></div>';
+
+  try {
+    var donemler = await sbGet('fiyat_donem', 'yil=eq.' + yil + '&order=baslangic.asc');
+    donemler = donemler || [];
+
+    if (donemler.length === 0) {
+      el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-3)"><div style="font-size:32px;margin-bottom:8px">📋</div><div>Henüz onaylanmış dönem yok.<br>Gelir & Fiyat sekmesinden dönem ekleyip onaylayın.</div></div>';
+      return;
+    }
+
+    var html = '<div style="margin-bottom:16px;display:flex;align-items:center;justify-content:space-between">' +
+      '<div style="font-size:13px;font-weight:700">📋 Fiyat Listesi — ' + yil + ' Sezonu</div>' +
+      '<div style="font-size:11px;color:var(--text-3)">Single ×0.65 | Double baz | Triple ×1.35 | Ex.Bed ×0.35 | Pax ×0.50</div>' +
+      '</div>';
+
+    html += '<div style="overflow-x:auto"><table class="tbl"><thead><tr>' +
+      '<th>Dönem Adı</th>' +
+      '<th>Tarih Aralığı</th>' +
+      '<th style="text-align:center">Gün</th>' +
+      '<th style="text-align:center">Doluluk</th>' +
+      '<th style="text-align:right">Pax</th>' +
+      '<th style="text-align:right">Single</th>' +
+      '<th style="text-align:right;background:var(--accent-l)">Double</th>' +
+      '<th style="text-align:right">Triple</th>' +
+      '<th style="text-align:right">Ex.Bed</th>' +
+      '</tr></thead><tbody>';
+
+    var toplamGelir = 0;
+    var odaSayisi = 13;
+
+    donemler.forEach(function(d, i) {
+      var gun = Math.round((new Date(d.bitis) - new Date(d.baslangic)) / (1000*60*60*24)) + 1;
+      var double_ = d.double_fiyat || 0;
+      var single_ = d.single_fiyat || Math.round(double_ * 0.65);
+      var triple_ = d.triple_fiyat || Math.round(double_ * 1.35);
+      var exbed_ = d.ex_bed_fiyat || Math.round(double_ * 0.35);
+      var pax_ = Math.round(double_ * 0.50);
+      var doluluk = d.doluluk_hedef || 0;
+      var tahminiGelir = gun * odaSayisi * (doluluk/100) * double_;
+      toplamGelir += tahminiGelir;
+
+      var satirBg = i % 2 === 0 ? '' : 'background:var(--bg)';
+
+      html += '<tr style="' + satirBg + '">' +
+        '<td style="font-weight:600;font-size:12px">' + (d.aciklama || 'Dönem ' + (i+1)) + '</td>' +
+        '<td style="font-family:DM Mono,monospace;font-size:11px">' + d.baslangic + ' → ' + d.bitis + '</td>' +
+        '<td style="text-align:center;font-weight:600;color:var(--accent)">' + gun + '</td>' +
+        '<td style="text-align:center">%' + doluluk + '</td>' +
+        '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px">' + pax_.toLocaleString('tr-TR') + '</td>' +
+        '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px">' + single_.toLocaleString('tr-TR') + '</td>' +
+        '<td style="text-align:right;font-family:DM Mono,monospace;font-size:13px;font-weight:700;color:var(--accent);background:var(--accent-l)">' + double_.toLocaleString('tr-TR') + '</td>' +
+        '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px">' + triple_.toLocaleString('tr-TR') + '</td>' +
+        '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px">' + exbed_.toLocaleString('tr-TR') + '</td>' +
+        '</tr>';
+    });
+
+    html += '</tbody></table></div>';
+
+    // Özet
+    var ortaDouble = Math.round(donemler.reduce(function(t,d){return t+(d.double_fiyat||0);},0)/donemler.length);
+    var toplamGun = donemler.reduce(function(t,d){
+      return t + Math.round((new Date(d.bitis)-new Date(d.baslangic))/(1000*60*60*24))+1;
+    },0);
+
+    html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px">' +
+      '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px">' +
+      '<div style="font-size:11px;color:var(--text-3);margin-bottom:4px">Toplam Sezon</div>' +
+      '<div style="font-size:16px;font-weight:700;font-family:DM Mono,monospace;color:var(--accent)">' + toplamGun + ' Gün</div></div>' +
+      '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px">' +
+      '<div style="font-size:11px;color:var(--text-3);margin-bottom:4px">Ortalama Double ADR</div>' +
+      '<div style="font-size:16px;font-weight:700;font-family:DM Mono,monospace">' + ortaDouble.toLocaleString('tr-TR') + ' TL</div></div>' +
+      '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px">' +
+      '<div style="font-size:11px;color:var(--text-3);margin-bottom:4px">Tahmini Sezon Geliri</div>' +
+      '<div style="font-size:16px;font-weight:700;font-family:DM Mono,monospace;color:var(--accent)">' + toplamGelir.toLocaleString('tr-TR') + ' TL</div></div>' +
+      '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px">' +
+      '<div style="font-size:11px;color:var(--text-3);margin-bottom:4px">Dönem Sayısı</div>' +
+      '<div style="font-size:16px;font-weight:700;font-family:DM Mono,monospace">' + donemler.length + '</div></div>' +
+      '</div>';
+
+    el.innerHTML = html;
+  } catch(e) {
+    el.innerHTML = '<div style="color:var(--danger);padding:20px">Hata: ' + e.message + '</div>';
+  }
+}
+
+
+async function donemSil(id) {
+  if (!confirm('Bu dönemi silmek istiyor musunuz?')) return;
+  try {
+    await fetch(SB_URL + '/rest/v1/fiyat_donem?id=eq.' + id, {
+      method: 'DELETE',
+      headers: {'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY}
+    });
+    showToast('✅ Dönem silindi');
+    fiyatHesaplamaYukle();
+  } catch(e) { showToast('Hata: ' + e.message, true); }
+}
+
+async function fiyatButceHesapla() {
+  var yil = window._fiyatYil || new Date().getFullYear();
+  try {
+    var donemler = await sbGet('fiyat_donem', 'yil=eq.' + yil + '&order=baslangic.asc');
+    if (!donemler || donemler.length === 0) { showToast('Önce dönem ekleyin!', true); return; }
+    var ayGelir = {};
+    donemler.forEach(function(d) {
+      var gunSayac = new Date(d.baslangic);
+      var bit = new Date(d.bitis);
+      while (gunSayac <= bit) {
+        var ay = gunSayac.getMonth() + 1;
+        if (!ayGelir[ay]) ayGelir[ay] = {gun:0, adr_toplam:0};
+        ayGelir[ay].gun += 1;
+        ayGelir[ay].adr_toplam += (d.double_fiyat || 0);
+        gunSayac.setDate(gunSayac.getDate() + 1);
+      }
+    });
+    var odaSayisi = 13;
+    for (var ay in ayGelir) {
+      var a = ayGelir[ay];
+      var adr = a.gun > 0 ? Math.round(a.adr_toplam / a.gun) : 0;
+      var aylikGelir = adr * odaSayisi * a.gun;
+      var mevcut = await sbGet('butce_aylik', 'yil=eq.' + yil + '&ay=eq.' + ay);
+      var data = { yil: yil, ay: parseInt(ay), doluluk_hedef: 100, tahmini_gelir_orta: aylikGelir, tahmini_adr_orta: adr, gun_sayisi: a.gun };
+      if (mevcut && mevcut.length > 0) {
+        await sbPatch('butce_aylik', 'yil=eq.' + yil + '&ay=eq.' + ay, data);
+      } else {
+        await sbPost('butce_aylik', data);
+      }
+    }
+    showToast('✅ Dönem fiyatları bütçeye işlendi!');
+    fiyatHesaplamaYukle();
+  } catch(e) { showToast('Hata: ' + e.message, true); }
+}
+
 
 async function aylikFiyatlariKaydet() {
   var aylar = window._sezonAylari || [];
