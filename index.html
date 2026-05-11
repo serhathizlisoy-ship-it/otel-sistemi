@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_25.html -->
+<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_26.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -4458,7 +4458,7 @@ async function fiyatHesaplamaYukle() {
         '<td colspan="2" style="font-weight:700">TOPLAM</td>' +
         '<td style="text-align:right;font-family:DM Mono,monospace;font-weight:700" id="toplam-oda-gecesi">' + (toplamOdaGecesi||'—') + '</td>' +
         '<td style="text-align:right;font-family:DM Mono,monospace;font-weight:700;color:var(--accent)" id="ort-adr-goster">' + (ortADR>0?ortADR.toLocaleString('tr-TR')+' TL':'—') + '</td>' +
-        '<td style="text-align:right;font-family:DM Mono,monospace;font-weight:700;color:var(--accent);font-size:14px" id="toplam-gelir-adim1">' + (hedefCiro>0?hedefCiro.toLocaleString('tr-TR')+' TL':'—') + '</td>' +
+        '<td style="text-align:right;font-family:DM Mono,monospace;font-weight:700;color:var(--accent);font-size:14px" id="toplam-gelir-adim1">' + (toplamGelirAdim1>0?toplamGelirAdim1.toLocaleString('tr-TR')+' TL':'—') + '</td>' +
         '</tr>';
 
       html += '</tbody></table></div>';
@@ -4473,9 +4473,20 @@ async function fiyatHesaplamaYukle() {
           '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px"><div style="font-size:11px;color:var(--text-3);margin-bottom:4px">Fark</div><div style="font-size:15px;font-weight:700;font-family:DM Mono,monospace;color:' + farkRenk + '">[' + farkIkon + '] ' + (gelirFark>=0?'+':'') + gelirFark.toLocaleString('tr-TR') + ' TL</div></div>' +
           '</div>';
       }
-      html += '<div style="margin-top:14px;display:flex;justify-content:flex-end">' +
-        '<button onclick="aylikDolulukKaydet()" style="padding:10px 24px;border:none;border-radius:8px;background:var(--accent);color:#000;font-family:Instrument Sans,sans-serif;font-size:13px;font-weight:700;cursor:pointer">Hesapla & Kaydet</button>' +
-        '</div>';
+      // Butce onay durumu
+      var butceKilitli = window._butceKilitli || false;
+      if (butceKilitli) {
+        html += '<div style="margin-top:12px;padding:12px 16px;background:var(--accent-l);border:1px solid var(--accent-b);border-radius:8px;display:flex;align-items:center;justify-content:space-between">' +
+          '<div style="font-size:13px;font-weight:700;color:var(--accent)">Butce onaylandi ve kilitlendi.</div>' +
+          '<button onclick="revizyonBaslat()" style="padding:8px 18px;border:1px solid var(--warn);border-radius:7px;background:var(--warn-l);color:var(--warn);font-size:12px;font-weight:700;cursor:pointer">Revize Et</button>' +
+          '</div>';
+      } else {
+        html += '<div style="margin-top:12px;display:flex;gap:10px;justify-content:flex-end">' +
+          '<button onclick="aylikDolulukKaydet()" style="padding:10px 24px;border:none;border-radius:8px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:Instrument Sans,sans-serif;font-size:13px;font-weight:600;cursor:pointer">Hesapla & Kaydet</button>' +
+          (adim1Tamam ? '<button onclick="butceOnayla()" style="padding:10px 24px;border:none;border-radius:8px;background:var(--accent);color:#000;font-family:Instrument Sans,sans-serif;font-size:13px;font-weight:700;cursor:pointer">Butce Onayla</button>' : '') +
+          '</div>';
+      }
+
 
     } else {
       // ADIM 2 - Ay sekmeli yapı
@@ -5402,6 +5413,91 @@ async function senaryoOnayiKaldir() {
 
 
 // ── REVİZYON GEÇMİŞİ ────────────────────────────────
+
+// ── BUTCE ONAYLA & REVİZYON ──────────────────────────
+async function butceOnayla() {
+  if (!confirm('Butceyi onaylamak istediginize emin misiniz? Onaylandiktan sonra duzenleme icin revizyon nedeni girmeniz gerekecek.')) return;
+
+  var yil = window._fiyatYil || new Date().getFullYear();
+  var oturum = JSON.parse(sessionStorage.getItem('oturum') || '{}');
+
+  try {
+    // Mevcut aylik verileri kaydet (snapshot)
+    var aylikData = window._aylikData || {};
+    var donemler = window._donemler || [];
+    var snapshot = {
+      aylikData: aylikData,
+      donemler: donemler,
+      hedefCiro: window._hedefCiro || 0,
+      baseADR: window._geciciBaseADR || 0,
+      tarih: new Date().toISOString()
+    };
+
+    // Revizyon kaydı oluştur
+    var mevcut = await sbGet('butce_revizyon', 'yil=eq.'+yil+'&order=versiyon.desc&limit=1').catch(function(){return [];});
+    var versiyon = mevcut && mevcut.length > 0 ? (mevcut[0].versiyon || 0) + 1 : 1;
+
+    var revizyonData = {
+      yil: yil,
+      versiyon: versiyon,
+      durum: 'onaylandi',
+      onaylayan: oturum.kullanici_adi || 'admin',
+      onay_tarihi: new Date().toISOString(),
+      parametreler: JSON.stringify(snapshot)
+    };
+
+    var mevcutOnay = await sbGet('butce_revizyon', 'yil=eq.'+yil+'&durum=eq.onaylandi').catch(function(){return [];});
+    if (mevcutOnay && mevcutOnay.length > 0) {
+      // Eskisini arsive al
+      await sbPatch('butce_revizyon', 'id=eq.'+mevcutOnay[0].id, {durum: 'arsiv'});
+    }
+    await sbPost('butce_revizyon', revizyonData);
+
+    window._butceKilitli = true;
+    showToast('Butce onaylandi ve kilitlendi!');
+    fiyatHesaplamaYukle();
+  } catch(e) { showToast('Hata: '+e.message, true); }
+}
+
+function revizyonBaslat() {
+  var el = document.getElementById('fiyat-icerik');
+  el.innerHTML = '<div style="max-width:500px;margin:40px auto;padding:24px;background:var(--surface);border:1px solid var(--border);border-radius:12px">' +
+    '<div style="font-size:16px;font-weight:700;margin-bottom:8px">Revizyon Nedeni</div>' +
+    '<div style="font-size:13px;color:var(--text-2);margin-bottom:16px">Butce revizyonu icin nedeninizi yazin. Bu bilgi revizyon gecmisinde gorunecektir.</div>' +
+    '<textarea id="revizyon-neden" rows="4" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:Instrument Sans,sans-serif;font-size:13px;padding:12px;resize:vertical;margin-bottom:16px" placeholder="Ornek: Mayis doluluk hedefi %20 den %30 a yukseltildi..."></textarea>' +
+    '<div style="display:flex;gap:10px;justify-content:flex-end">' +
+    '<button onclick="fiyatHesaplamaYukle()" style="padding:10px 20px;border:1px solid var(--border);border-radius:8px;background:none;color:var(--text-2);font-size:13px;cursor:pointer">Iptal</button>' +
+    '<button onclick="revizyonOnayla()" style="padding:10px 24px;border:none;border-radius:8px;background:var(--accent);color:#000;font-size:13px;font-weight:700;cursor:pointer">Revizyonu Baslat</button>' +
+    '</div></div>';
+}
+
+async function revizyonOnayla() {
+  var neden = document.getElementById('revizyon-neden')?.value?.trim();
+  if (!neden) { showToast('Revizyon nedeni yazin!', true); return; }
+
+  var yil = window._fiyatYil || new Date().getFullYear();
+  var oturum = JSON.parse(sessionStorage.getItem('oturum') || '{}');
+
+  try {
+    // Mevcut onaylı revizyonu arsive al, revizyon nedeni yaz
+    var mevcutOnay = await sbGet('butce_revizyon', 'yil=eq.'+yil+'&durum=eq.onaylandi').catch(function(){return [];});
+    if (mevcutOnay && mevcutOnay.length > 0) {
+      await sbPatch('butce_revizyon', 'id=eq.'+mevcutOnay[0].id, {
+        durum: 'arsiv',
+        revizyon_nedeni: neden,
+        revize_eden: oturum.kullanici_adi || 'admin',
+        revizyon_tarihi: new Date().toISOString()
+      });
+    }
+
+    window._butceKilitli = false;
+    showToast('Revizyon basladi! Butce duzenlemeye acildi.');
+    window._fiyatAdim = 1;
+    fiyatHesaplamaYukle();
+    butceSekme('revizyon');
+  } catch(e) { showToast('Hata: '+e.message, true); }
+}
+
 async function revizyonGecmisiYukle() {
   var el = document.getElementById('revizyon-icerik');
   var yil = parseInt(document.getElementById('but-yil').value) || 2026;
@@ -5442,7 +5538,16 @@ async function revizyonGecmisiYukle() {
         (r.revize_eden ? '<div style="padding:8px 10px;background:var(--bg);border-radius:7px"><div style="font-size:10px;color:var(--text-3)">Revize Eden</div><div style="font-size:12px;font-weight:600">' + r.revize_eden + '</div></div>' : '') +
         (r.revizyon_tarihi ? '<div style="padding:8px 10px;background:var(--bg);border-radius:7px"><div style="font-size:10px;color:var(--text-3)">Revizyon Tarihi</div><div style="font-size:12px;font-weight:600">' + new Date(r.revizyon_tarihi).toLocaleDateString('tr-TR') + '</div></div>' : '') +
         '</div>' +
-        (param.hedefCiro ? '<div style="margin-top:10px;padding:8px 12px;background:var(--bg);border-radius:7px;font-size:12px"><span style="color:var(--text-3)">Hedef Ciro: </span><strong>' + parseFloat(param.hedefCiro).toLocaleString("tr-TR") + ' TL</strong> · <span style="color:var(--text-3)">Senaryo: </span><strong>' + (param.senaryo || '—') + '</strong></div>' : '') +
+        '<div style="margin-top:10px">' +
+        (param.hedefCiro ? '<div style="padding:8px 12px;background:var(--bg);border-radius:7px;font-size:12px;margin-bottom:6px"><span style="color:var(--text-3)">Hedef Ciro: </span><strong>' + parseFloat(param.hedefCiro).toLocaleString("tr-TR") + ' TL</strong>' + (param.baseADR ? ' · <span style="color:var(--text-3)">Base ADR: </span><strong>' + parseFloat(param.baseADR).toLocaleString("tr-TR") + ' TL</strong>' : '') + '</div>' : '') +
+        (param.aylikData ? '<div style="padding:8px 12px;background:var(--bg);border-radius:7px;font-size:11px"><div style="font-weight:700;color:var(--text-2);margin-bottom:6px">Aylik Doluluk Hedefleri:</div>' +
+          Object.keys(param.aylikData).map(function(ay) {
+            var d = param.aylikData[ay];
+            var AY_AD = ['','Oca','Sub','Mar','Nis','May','Haz','Tem','Agu','Eyl','Eki','Kas','Ara'];
+            return '<span style="display:inline-block;margin-right:12px;margin-bottom:4px">' + AY_AD[ay] + ': <strong>%' + (d.doluluk_hedef||0) + '</strong> | ' + (d.onerilenfiyat_orta||0).toLocaleString("tr-TR") + ' TL</span>';
+          }).join('') + '</div>' : '') +
+        (param.donemler && param.donemler.length > 0 ? '<div style="padding:8px 12px;background:var(--bg);border-radius:7px;font-size:11px;margin-top:6px"><div style="font-weight:700;color:var(--text-2);margin-bottom:6px">Donem Sayisi: ' + param.donemler.length + '</div></div>' : '') +
+        '</div>' +
         '</div>';
     });
 
