@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_44.html -->
+<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_46.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -4127,11 +4127,11 @@ async function kapanisDuzenle(id) {
       };
       Object.keys(fields).forEach(function(fid) {
         var el = document.getElementById(fid);
-        if (el) el.value = fields[fid] || '';
+        if (el) el.value = fields[fid] !== undefined ? fields[fid] : '';
       });
 
       // Notlar
-      var notEl = document.getElementById('kap-notlar');
+      var notEl = document.getElementById('kap-not');
       if (notEl) notEl.value = k.notlar||'';
 
       // Toplamları güncelle
