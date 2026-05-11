@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_15.html -->
+<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_16.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -4663,7 +4663,8 @@ function donemDolulukaGireHesapla() {
 
   var ay = parseInt(document.getElementById('secili-ay')?.value) || 5;
   var aylikData = window._aylikData || {};
-  var baseADR = aylikData[ay] ? (aylikData[ay].onerilenfiyat_orta||0) : (window._geciciBaseADR||0);
+  // Ortalama ADR kullan (Adim 1 den hesaplanan), DFC ile carp doneme ozel ADR bul
+  var baseADR = window._geciciBaseADR || 0;
   var dfcTip = window._dfcTipAktif || 'orta';
   var ozelDFC = window._ozelDFC || {};
   var dfc = getDFC(dfcTip, doluluk);
