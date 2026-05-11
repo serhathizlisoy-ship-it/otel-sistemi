@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_37.html -->
+<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_38.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -2570,7 +2570,6 @@ async function dfcAyarKaydet() {
 }
 
 async function getKatsayilar() {
-  if (window._katsayi_single) return;
   try {
     var kArr = await sbGet('otel_ayarlari','anahtar=like.katsayi_*').catch(function(){return [];});
     var k = {};
@@ -2580,10 +2579,13 @@ async function getKatsayilar() {
     window._katsayi_exbed  = k['katsayi_exbed'] ||0.35;
     window._katsayi_pax    = k['katsayi_pax']   ||0.50;
   } catch(e) {
-    window._katsayi_single=0.65; window._katsayi_triple=1.35;
-    window._katsayi_exbed=0.35;  window._katsayi_pax=0.50;
+    window._katsayi_single = window._katsayi_single||0.65;
+    window._katsayi_triple = window._katsayi_triple||1.35;
+    window._katsayi_exbed  = window._katsayi_exbed ||0.35;
+    window._katsayi_pax    = window._katsayi_pax   ||0.50;
   }
 }
+
 
 function ayarlarSekmeGit(id) {
   ayarlarSekme = id;
@@ -5150,6 +5152,7 @@ async function fiyatListesiYukle() {
       '<th style="text-align:right;background:var(--accent-l)">Double</th>' +
       '<th style="text-align:right">Triple</th><th style="text-align:right">Ex.Bed</th>' +
       '<th>A\u00e7\u0131klama</th></tr></thead><tbody>';
+    await getKatsayilar();
     donemler.forEach(function(d,i) {
       var double_ = d.double_fiyat||0;
       html += '<tr>' +
@@ -5164,7 +5167,7 @@ async function fiyatListesiYukle() {
         '</tr>';
     });
     html += '</tbody></table></div>';
-    html += '<div style="margin-top:12px;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--text-3)">Katsayilar: Single = Double \u00d7 0,65 | Triple = Double \u00d7 1,35 | Ex.Bed = Double \u00d7 0,35 | Pax = Double \u00d7 0,50</div>';
+    html += '<div style="margin-top:12px;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--text-3)">Katsayilar: Single = Double × ' + (window._katsayi_single||0.65) + ' | Triple = Double × ' + (window._katsayi_triple||1.35) + ' | Ex.Bed = Double × ' + (window._katsayi_exbed||0.35) + ' | Pax = Double × ' + (window._katsayi_pax||0.50) + '</div>';
     html += '</div>';
     el.innerHTML = html;
   } catch(e) {
