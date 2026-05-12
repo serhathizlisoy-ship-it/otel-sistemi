@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_68.html -->
+<!-- saved from url=(0046)file:///C:/Users/HP/Downloads/index_fixed.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -858,7 +858,7 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
               <input type="number" id="tuk-adet" placeholder="1" min="1" style="width:100px;font-family:DM Mono,monospace;font-size:15px;font-weight:700">
             </div>
             <div>
-              <button onclick="tuketimEkle()" style="padding:9px 18px;border:none;border-radius:7px;background:var(--accent);color:#000;font-size:13px;font-weight:700;cursor:pointer">+ Ekle</button>
+              <button onclick="tuketimEkle()" style="padding:9px 18px;border:none;border-radius:7px;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer">+ Ekle</button>
             </div>
           </div>
 
@@ -3104,7 +3104,7 @@ async function giderDuzenle(id) {
       '<div class="sfield" style="margin-bottom:16px"><label>Aciklama</label><input type="text" id="gd-aciklama" value="'+(k.aciklama||'')+'"></div>' +
       '<div style="display:flex;gap:10px;justify-content:flex-end">' +
       '<button onclick="giderModalKapat()" style="padding:9px 20px;border:1px solid var(--border);border-radius:8px;background:none;color:var(--text-2);font-size:13px;cursor:pointer">Iptal</button>' +
-      '<button data-id="'+id+'" onclick="giderKaydetDuzenle(this.dataset.id)" style="padding:9px 24px;border:none;border-radius:8px;background:var(--accent);color:#000;font-size:13px;font-weight:700;cursor:pointer">Kaydet</button>' +
+      '<button data-id="'+id+'" onclick="giderKaydetDuzenle(this.dataset.id)" style="padding:9px 24px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer">Kaydet</button>' +
       '</div></div>';
     document.body.appendChild(modal);
   } catch(e) { showToast('Hata: '+e.message, true); }
@@ -4700,8 +4700,8 @@ async function fiyatHesaplamaYukle() {
 
     // Tab bar
     var html = '<div style="display:flex;gap:0;margin-bottom:16px;border:1px solid var(--border);border-radius:10px;overflow:hidden">' +
-      '<div style="flex:1;padding:10px;text-align:center;font-size:13px;font-weight:700;cursor:pointer;' + (aktifAdim===1?'background:var(--accent);color:#000':'background:var(--surface);color:var(--text-2)') + '" onclick="fiyatAdimGec(1)">\u2460 Ayl\u0131k Doluluk Hedefleri</div>' +
-      '<div style="flex:1;padding:10px;text-align:center;font-size:13px;font-weight:700;cursor:pointer;' + (aktifAdim===2?'background:var(--accent);color:#000':'background:var(--surface);color:var(--text-2)') + '" onclick="fiyatAdimGec(2)">' + (adim1Tamam?'\u2461 D\u00f6nem Detay\u0131':'\u2461 D\u00f6nem Detay\u0131 \ud83d\udd12') + '</div>' +
+      '<div style="flex:1;padding:10px;text-align:center;font-size:13px;font-weight:700;cursor:pointer;' + (aktifAdim===1?'background:var(--accent);color:#fff':'background:var(--surface);color:var(--text-2)') + '" onclick="fiyatAdimGec(1)">\u2460 Ayl\u0131k Doluluk Hedefleri</div>' +
+      '<div style="flex:1;padding:10px;text-align:center;font-size:13px;font-weight:700;cursor:pointer;' + (aktifAdim===2?'background:var(--accent);color:#fff':'background:var(--surface);color:var(--text-2)') + '" onclick="fiyatAdimGec(2)">' + (adim1Tamam?'\u2461 D\u00f6nem Detay\u0131':'\u2461 D\u00f6nem Detay\u0131 \ud83d\udd12') + '</div>' +
       '</div>';
 
     if (aktifAdim === 1) {
@@ -4786,7 +4786,7 @@ async function fiyatHesaplamaYukle() {
       } else {
         html += '<div style="margin-top:14px;display:flex;gap:10px;justify-content:flex-end">' +
           '<button onclick="aylikDolulukKaydet()" style="padding:10px 24px;border:none;border-radius:8px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:Instrument Sans,sans-serif;font-size:13px;font-weight:600;cursor:pointer">Hesapla & Kaydet</button>' +
-          (adim1Tamam ? '<button onclick="butceOnayla()" style="padding:10px 24px;border:none;border-radius:8px;background:var(--accent);color:#000;font-family:Instrument Sans,sans-serif;font-size:13px;font-weight:700;cursor:pointer">&#x2705; Butce Onayla</button>' : '') +
+          (adim1Tamam ? '<button onclick="butceOnayla()" style="padding:10px 24px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-family:Instrument Sans,sans-serif;font-size:13px;font-weight:700;cursor:pointer">&#x2705; Butce Onayla</button>' : '') +
           '</div>';
       }
 
@@ -4841,7 +4841,7 @@ async function fiyatHesaplamaYukle() {
         '<input type="number" id="katsayi-ust" step="0.01" min="0.1" max="3" data-tip="ust" style="font-family:DM Mono,monospace;font-size:14px;font-weight:700" oninput="katsayiDegisti(this.dataset.tip)"></div>' +
         '<div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--text-3)">ADR:</span><span id="adr-ust-goster" style="font-family:DM Mono,monospace;font-weight:700">\u2014</span></div></div>' +
         '</div></div>' +
-        '<button onclick="yeniDonemKaydet()" style="padding:10px 24px;border:none;border-radius:8px;background:var(--accent);color:#000;font-family:Instrument Sans,sans-serif;font-size:13px;font-weight:700;cursor:pointer">\ud83d\udcbe D\u00f6nem Kaydet</button>' +
+        '<button onclick="yeniDonemKaydet()" style="padding:10px 24px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-family:Instrument Sans,sans-serif;font-size:13px;font-weight:700;cursor:pointer">\ud83d\udcbe D\u00f6nem Kaydet</button>' +
         '</div>';
 
       // Dönemler tablosu
@@ -4867,7 +4867,7 @@ async function fiyatHesaplamaYukle() {
         });
         html += '</tbody></table></div>';
         html += '<div style="margin-top:14px;display:flex;justify-content:flex-end">' +
-          '<button onclick="donemKarsilastirmaKontrol()" style="padding:10px 24px;border:none;border-radius:8px;background:var(--accent);color:#000;font-family:Instrument Sans,sans-serif;font-size:13px;font-weight:700;cursor:pointer">\ud83d\udcca Kontrol Et & Fiyat Listesi \u2192</button>' +
+          '<button onclick="donemKarsilastirmaKontrol()" style="padding:10px 24px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-family:Instrument Sans,sans-serif;font-size:13px;font-weight:700;cursor:pointer">\ud83d\udcca Kontrol Et & Fiyat Listesi \u2192</button>' +
           '</div>';
       }
     }
@@ -5200,7 +5200,7 @@ async function _donemKaydetIslem(bas, bit, doluluk, adr, aciklama, yil) {
           '<div style="font-weight:700;color:var(--warn);margin-bottom:6px">⚠️ ' + AY_ADT2[ay] + ' ayi tamamlandi! Agirlikli doluluk: %' + agirOrt + ' — Adim 1 Hedefi: %' + hedefDoluluk + '</div>' +
           '<div style="color:var(--warn);margin-bottom:10px;font-size:11px">' + AY_ADT2[ay] + ' ayindaki Adim 1 hedefini (%' + hedefDoluluk + ') → %' + agirOrt + ' olarak guncellemek ister misiniz?</div>' +
           '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
-          '<button data-ay="' + ay + '" data-yeni="' + agirOrt + '" onclick="adim1GuncelleOnay(this.dataset.ay, this.dataset.yeni)" style="padding:8px 14px;border:none;border-radius:7px;background:var(--accent);color:#000;font-size:12px;font-weight:700;cursor:pointer">✅ Evet, %' + hedefDoluluk + ' → %' + agirOrt + ' Guncelle</button>' +
+          '<button data-ay="' + ay + '" data-yeni="' + agirOrt + '" onclick="adim1GuncelleOnay(this.dataset.ay, this.dataset.yeni)" style="padding:8px 14px;border:none;border-radius:7px;background:var(--accent);color:#fff;font-size:12px;font-weight:700;cursor:pointer">✅ Evet, %' + hedefDoluluk + ' → %' + agirOrt + ' Guncelle</button>' +
           '<button onclick="uyariKapat()" style="padding:8px 14px;border:1px solid var(--warn);border-radius:7px;background:none;color:var(--warn);font-size:12px;font-weight:700;cursor:pointer">Hayir, Adim 1 e Geri Don</button>' +
           '</div></div>';
       } else if (hedefDoluluk > 0) {
@@ -5455,7 +5455,7 @@ function revizyonBaslat() {
     '<textarea id="revizyon-neden" rows="4" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:Instrument Sans,sans-serif;font-size:13px;padding:12px;resize:vertical;margin-bottom:16px" placeholder="Ornek: Mayis doluluk hedefi guncellendi..."></textarea>' +
     '<div style="display:flex;gap:10px;justify-content:flex-end">' +
     '<button onclick="fiyatHesaplamaYukle()" style="padding:10px 20px;border:1px solid var(--border);border-radius:8px;background:none;color:var(--text-2);font-size:13px;cursor:pointer">Iptal</button>' +
-    '<button onclick="revizyonOnayla()" style="padding:10px 24px;border:none;border-radius:8px;background:var(--accent);color:#000;font-size:13px;font-weight:700;cursor:pointer">Revizyonu Baslat</button>' +
+    '<button onclick="revizyonOnayla()" style="padding:10px 24px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer">Revizyonu Baslat</button>' +
     '</div></div>';
 }
 
