@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_57.html -->
+<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_58.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -3573,6 +3573,22 @@ var _tuketimListesi = []; // Eklenecek tüketimler
 async function tuketimSayfasiYukle() {
   _tuketimListesi = [];
 
+  // Stok verileri yüklü değilse yükle
+  try {
+    if (!_stokUrunler || _stokUrunler.length === 0) {
+      var urunler = await sbGet('stok_urun', 'aktif=eq.true&order=ad.asc');
+      _stokUrunler = urunler || [];
+    }
+    if (!_stokKategoriler || _stokKategoriler.length === 0) {
+      var kategoriler = await sbGet('stok_kategori', 'order=ad.asc');
+      _stokKategoriler = kategoriler || [];
+      _receteKategoriler = _stokKategoriler;
+    }
+    if (!_receteKategoriler || _receteKategoriler.length === 0) {
+      _receteKategoriler = _stokKategoriler;
+    }
+  } catch(e) {}
+
   // Tarih bugün
   var bugun = new Date().toISOString().split('T')[0];
   var tarihEl = document.getElementById('tuk-tarih');
@@ -3587,7 +3603,7 @@ async function tuketimSayfasiYukle() {
       if (receteler) {
         // Kategori map
         var katMap = {};
-        _receteKategoriler.forEach(function(k){ katMap[k.id] = k.ad; });
+        (_receteKategoriler||[]).forEach(function(k){ katMap[k.id] = k.ad; });
         receteler.forEach(function(r) {
           var katAd = r.kategori_id && katMap[r.kategori_id] ? katMap[r.kategori_id] : '';
           sel.innerHTML += '<option value="' + r.id + '" data-ad="' + r.ad + '">' + (katAd ? '[' + katAd + '] ' : '') + r.ad + '</option>';
@@ -7241,9 +7257,18 @@ var _duzenleReceteId = null;
 
 async function receteModuluBaslat() {
   try {
+    // Stok verileri henüz yüklenmemişse yükle
+    if (!_stokUrunler || _stokUrunler.length === 0) {
+      var urunler = await sbGet('stok_urun', 'aktif=eq.true&order=ad.asc');
+      _stokUrunler = urunler || [];
+    }
+    if (!_stokKategoriler || _stokKategoriler.length === 0) {
+      var kategoriler = await sbGet('stok_kategori', 'order=ad.asc');
+      _stokKategoriler = kategoriler || [];
+    }
+
     // Kategoriler = stok kategorileri
-    var stokKat = await sbGet('stok_kategori', 'order=ad.asc');
-    _receteKategoriler = stokKat || [];
+    _receteKategoriler = _stokKategoriler;
     var sel = document.getElementById('rec-kategori');
     if (sel) {
       sel.innerHTML = '<option value="">— Kategori seçin —</option>';
@@ -7251,7 +7276,7 @@ async function receteModuluBaslat() {
         sel.innerHTML += '<option value="' + k.id + '">' + k.ad + '</option>';
       });
     }
-  } catch(e) {}
+  } catch(e) { console.log('Recete modul hata:', e); }
   receteSekme(receteAktifSekme);
 }
 
