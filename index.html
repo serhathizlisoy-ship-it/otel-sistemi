@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_65.html -->
+<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_66.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -2117,27 +2117,42 @@ async function dashboard() {
   try {
     var stokEl = document.getElementById('dash-stok-list');
     var stokCnt = document.getElementById('dash-stok-count');
-    var bakiye = await sbGet('stok_bakiye','order=miktar.asc');
+
+    // Stok ürünleri yoksa yükle
+    if (!_stokUrunler || _stokUrunler.length === 0) {
+      var urunYukle = await sbGet('stok_urun', 'aktif=eq.true&order=ad.asc');
+      _stokUrunler = urunYukle || [];
+    }
+
+    var bakiye = await sbGet('stok_bakiye', 'order=miktar.asc');
     var kritikler = [];
-    if (bakiye && _stokUrunler) {
-      bakiye.forEach(function(b){
-        var u = _stokUrunler.find(function(x){return x.id===b.urun_id;});
-        if (u && u.kritik_stok>0 && b.miktar<=u.kritik_stok) kritikler.push({ad:u.ad,miktar:b.miktar,kritik:u.kritik_stok,birim:u.birim});
+
+    if (bakiye && _stokUrunler && _stokUrunler.length > 0) {
+      bakiye.forEach(function(b) {
+        var u = _stokUrunler.find(function(x){ return x.id === b.urun_id; });
+        if (!u) return;
+        // minimum_stok veya kritik_stok - hangisi varsa
+        var esik = u.minimum_stok || u.kritik_stok || 0;
+        if (esik > 0 && b.miktar <= esik) {
+          kritikler.push({ ad: u.ad, miktar: b.miktar, kritik: esik, birim: u.birim });
+        }
       });
     }
-    if (kritikler.length>0) {
-      if (stokCnt) stokCnt.textContent = kritikler.length+' ürün';
-      stokEl.innerHTML = kritikler.slice(0,5).map(function(k){
-        return '<div class="dash-alert-item"><div style="display:flex;justify-content:space-between">'+
-          '<span style="font-size:12px;font-weight:600">'+k.ad+'</span>'+
-          '<span style="font-size:11px;font-family:DM Mono,monospace;color:var(--danger)">'+k.miktar+' '+k.birim+'</span></div>'+
-          '<div style="font-size:11px;color:var(--text-3)">Kritik: '+k.kritik+' '+k.birim+'</div></div>';
+
+    if (kritikler.length > 0) {
+      if (stokCnt) stokCnt.textContent = kritikler.length + ' ürün';
+      stokEl.innerHTML = kritikler.slice(0, 8).map(function(k) {
+        var renk = k.miktar <= 0 ? 'var(--danger)' : 'var(--warn)';
+        return '<div class="dash-alert-item"><div style="display:flex;justify-content:space-between">' +
+          '<span style="font-size:12px;font-weight:600">' + k.ad + '</span>' +
+          '<span style="font-size:11px;font-family:DM Mono,monospace;color:' + renk + '">' + k.miktar + ' ' + k.birim + '</span></div>' +
+          '<div style="font-size:11px;color:var(--text-3)">Min. seviye: ' + k.kritik + ' ' + k.birim + '</div></div>';
       }).join('');
     } else {
       stokEl.innerHTML = '<div class="dash-alert-empty"><span class="ico">✅</span>Stok seviyeleri normal</div>';
       if (stokCnt) stokCnt.textContent = '';
     }
-  } catch(e){}
+  } catch(e) { console.warn('Kritik stok:', e); }
 
   if (btn) btn.classList.remove('loading');
 }
