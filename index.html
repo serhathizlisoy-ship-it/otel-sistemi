@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_51.html -->
+<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_52.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7600,6 +7600,110 @@ async function sayimKaydet() {
   sayimRaporuYukle();
 }
 
+function sayimModalKapat() { var m=document.getElementById("sayim-duzenle-modal"); if(m) m.remove(); }
+
+function sayimDuzenle(btn) {
+  var id = btn.dataset.id;
+  var gercek = parseFloat(btn.dataset.gercek) || 0;
+  var urunAd = btn.dataset.urun;
+  var birim = btn.dataset.birim;
+
+  var mevcut = document.getElementById('sayim-duzenle-modal');
+  if (mevcut) mevcut.remove();
+
+  var modal = document.createElement('div');
+  modal.id = 'sayim-duzenle-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  modal.innerHTML = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;width:380px;max-width:100%">' +
+    '<div style="font-size:15px;font-weight:700;margin-bottom:4px">Sayım Düzenle</div>' +
+    '<div style="font-size:12px;color:var(--text-2);margin-bottom:16px">' + urunAd + '</div>' +
+    '<div class="sfield" style="margin-bottom:16px"><label>Gerçek Miktar (' + birim + ')</label>' +
+    '<input type="number" id="sayim-gercek-input" value="' + gercek + '" step="0.01" min="0" style="font-family:DM Mono,monospace;font-size:18px;font-weight:700"></div>' +
+    '<div style="display:flex;gap:10px;justify-content:flex-end">' +
+    '<button onclick="sayimModalKapat()" style="padding:9px 20px;border:1px solid var(--border);border-radius:8px;background:none;color:var(--text-2);font-size:13px;cursor:pointer">Iptal</button>' +
+    '<button data-id="' + id + '" onclick="sayimKaydetDuzenle(this.dataset.id)" style="padding:9px 24px;border:none;border-radius:8px;background:var(--accent);color:#000;font-size:13px;font-weight:700;cursor:pointer">Kaydet</button>' +
+    '</div></div>';
+  document.body.appendChild(modal);
+  setTimeout(function(){ document.getElementById('sayim-gercek-input')?.focus(); }, 100);
+}
+
+async function sayimKaydetDuzenle(id) {
+  var yeniGercek = parseFloat(document.getElementById('sayim-gercek-input')?.value) || 0;
+  try {
+    // Mevcut hareketi getir
+    var mevcut = await sbGet('stok_hareket', 'id=eq.'+id);
+    if (!mevcut || mevcut.length === 0) { showToast('Kayit bulunamadi!', true); return; }
+    var h = mevcut[0];
+
+    // Eski stok bakiyesini geri al
+    var bakiye = await sbGet('stok_bakiye', 'urun_id=eq.'+h.urun_id);
+    var eskiBakiye = bakiye && bakiye[0] ? (bakiye[0].miktar||0) : 0;
+    var eskiGercek = eskiBakiye; // Mevcut bakiye = son sayım sonrası gerçek miktar
+    var eskiFark = h.miktar; // eski fark
+
+    // Yeni fark = yeniGercek - (eskiGercek - eskiFark) = yeniGercek - sistemMiktar
+    var sistemMiktar = eskiGercek - eskiFark;
+    var yeniFark = yeniGercek - sistemMiktar;
+    var yeniBirimFiyat = h.birim_fiyat || 0;
+    var yeniToplam = Math.abs(yeniFark) * yeniBirimFiyat;
+
+    // Stok bakiyesini güncelle
+    var yeniBakiye = sistemMiktar + yeniFark;
+    await sbPatch('stok_bakiye', 'urun_id=eq.'+h.urun_id, { miktar: yeniBakiye, son_guncelleme: new Date().toISOString() });
+
+    // Hareketi güncelle
+    await sbPatch('stok_hareket', 'id=eq.'+id, { miktar: yeniFark, toplam_tutar: yeniToplam });
+
+    sayimModalKapat();
+    showToast('Sayim guncellendi!');
+    sayimRaporuYukle();
+  } catch(e) { showToast('Hata: '+e.message, true); }
+}
+
+async function sayimSatirSil(id) {
+  if (!confirm('Bu sayim satirini silmek istiyor musunuz?')) return;
+  try {
+    var mevcut = await sbGet('stok_hareket', 'id=eq.'+id);
+    if (mevcut && mevcut[0]) {
+      var h = mevcut[0];
+      // Stok bakiyesini geri al
+      var bakiye = await sbGet('stok_bakiye', 'urun_id=eq.'+h.urun_id);
+      if (bakiye && bakiye[0]) {
+        var yeniBakiye = (bakiye[0].miktar||0) - h.miktar;
+        await sbPatch('stok_bakiye', 'urun_id=eq.'+h.urun_id, { miktar: yeniBakiye });
+      }
+    }
+    await fetch(SB_URL+'/rest/v1/stok_hareket?id=eq.'+id, {
+      method:'DELETE', headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
+    });
+    showToast('Satir silindi!');
+    sayimRaporuYukle();
+  } catch(e) { showToast('Hata: '+e.message, true); }
+}
+
+async function sayimTarihSil(tarih) {
+  if (!confirm(new Date(tarih).toLocaleDateString('tr-TR') + ' tarihli tum sayimi silmek istiyor musunuz? Stok bakiyeleri geri alinacak!')) return;
+  try {
+    var hareketler = await sbGet('stok_hareket', 'hareket_tipi=eq.sayim&tarih=eq.'+tarih);
+    if (hareketler && hareketler.length > 0) {
+      for (var i=0; i<hareketler.length; i++) {
+        var h = hareketler[i];
+        var bakiye = await sbGet('stok_bakiye', 'urun_id=eq.'+h.urun_id);
+        if (bakiye && bakiye[0]) {
+          var yeniBakiye = (bakiye[0].miktar||0) - h.miktar;
+          await sbPatch('stok_bakiye', 'urun_id=eq.'+h.urun_id, { miktar: yeniBakiye });
+        }
+        await fetch(SB_URL+'/rest/v1/stok_hareket?id=eq.'+h.id, {
+          method:'DELETE', headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
+        });
+      }
+    }
+    showToast('Sayim silindi!');
+    sayimRaporuYukle();
+  } catch(e) { showToast('Hata: '+e.message, true); }
+}
+
+
 async function sayimRaporuYukle() {
   var el = document.getElementById('sayim-rapor');
   if (!el) return;
@@ -7631,13 +7735,16 @@ async function sayimRaporuYukle() {
       var toplamFireMaliyet = 0;
       var toplamFazlaMaliyet = 0;
 
+      var tarihIds = grup.map(function(h){ return h.id; });
       html += '<div style="margin-bottom:16px;border:1px solid var(--border);border-radius:10px;overflow:hidden">' +
         '<div style="padding:10px 16px;background:var(--accent);display:flex;justify-content:space-between;align-items:center">' +
         '<span style="color:#fff;font-weight:700;font-size:13px">📋 ' + new Date(tarih).toLocaleDateString("tr-TR") + ' Sayımı</span>' +
+        (oturum.rol === 'admin' ? '<button data-tarih="' + tarih + '" onclick="sayimTarihSil(this.dataset.tarih)" style="padding:4px 12px;border:1px solid rgba(255,255,255,0.5);border-radius:6px;background:rgba(255,0,0,0.2);color:#fff;font-size:11px;font-weight:700;cursor:pointer">🗑 Sayımı Sil</button>' : '') +
         '</div>' +
         '<div style="overflow-x:auto"><table class="tbl" style="border-radius:0"><thead><tr>' +
         '<th>Ürün</th><th style="text-align:right">Sistem</th><th style="text-align:right">Gerçek</th>' +
         '<th style="text-align:right">Fark</th><th style="text-align:right">Birim Fiyat</th><th style="text-align:right">Fark Maliyeti</th>' +
+        (oturum.rol === 'admin' ? '<th></th>' : '') +
         '</tr></thead><tbody>';
 
       grup.forEach(function(h) {
@@ -7658,6 +7765,11 @@ async function sayimRaporuYukle() {
           '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px;font-weight:700;color:' + farkRenk + '">' + farkIkon + ' ' + Math.abs(fark).toLocaleString('tr-TR') + '</td>' +
           '<td style="text-align:right;font-family:DM Mono,monospace;font-size:11px;color:var(--text-3)">' + (h.birim_fiyat>0?h.birim_fiyat.toFixed(4)+' TL':'—') + '</td>' +
           '<td style="text-align:right;font-family:DM Mono,monospace;font-size:12px;font-weight:600;color:' + farkRenk + '">' + (h.toplam_tutar>0?(h.toplam_tutar).toFixed(2)+' TL':'—') + '</td>' +
+          (oturum.rol === 'admin' ?
+            '<td style="white-space:nowrap">' +
+            '<button data-id="' + h.id + '" data-gercek="' + gercekMiktar + '" data-urun="' + (urun?urun.ad:'') + '" data-birim="' + (urun?urun.birim:'') + '" onclick="sayimDuzenle(this)" style="padding:3px 8px;border:1px solid var(--accent-b);border-radius:5px;background:var(--accent-l);color:var(--accent);font-size:11px;cursor:pointer;margin-right:4px">Duzenle</button>' +
+            '<button data-id="' + h.id + '" onclick="sayimSatirSil(this.dataset.id)" style="padding:3px 8px;border:1px solid var(--danger);border-radius:5px;background:var(--danger-l);color:var(--danger);font-size:11px;cursor:pointer">Sil</button>' +
+            '</td>' : '') +
           '</tr>';
       });
 
@@ -8098,7 +8210,17 @@ async function raporYukle() {
 
     var giderSatirlari = Object.keys(SEKTOREL_ANA).map(function(baslik) {
       var tutar = giderAnaBaslik[baslik] || 0;
-      return { label: baslik.replace(' Giderleri','').replace(' Gideri',''), value: tutar.toLocaleString('tr-TR') + ' TL' };
+      return {
+        label: baslik.replace(' Giderleri','').replace(' Gideri',''),
+        value: tutar.toLocaleString('tr-TR') + ' TL',
+        color: tutar === 0 ? 'var(--text-3)' : ''
+      };
+    });
+    // Gider girişinde olan ama SEKTOREL_ANA'da olmayan başlıkları da ekle
+    Object.keys(giderAnaBaslik).forEach(function(baslik) {
+      if (!SEKTOREL_ANA[baslik]) {
+        giderSatirlari.push({ label: baslik, value: giderAnaBaslik[baslik].toLocaleString('tr-TR') + ' TL' });
+      }
     });
     giderSatirlari.push({ label: 'TOPLAM GİDER', value: toplamGider.toLocaleString('tr-TR') + ' TL', bold: true, color: 'var(--danger)', separator: true });
 
