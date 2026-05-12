@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_63.html -->
+<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_64.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -4776,13 +4776,15 @@ async function fiyatHesaplamaYukle() {
         '<th style="text-align:right">Tahmini Gelir</th>' +
         '</tr></thead><tbody>';
 
+      var toplamGelirAdim1 = 0;
       acikAylar.forEach(function(ay) {
         var mevcut = aylikData[ay];
         var doluluk = mevcut ? (mevcut.doluluk_hedef||'') : '';
         var gun = new Date(yil, ay, 0).getDate();
         var odaGecesi = doluluk ? Math.round(odaSayisi * gun * doluluk / 100) : 0;
-        var adr = mevcut ? (mevcut.tahmini_adr_orta||0) : 0;
+        var adr = mevcut ? (mevcut.onerilenfiyat_orta||0) : 0;
         var gelir = adr && doluluk ? Math.round(adr * odaGecesi) : 0;
+        toplamGelirAdim1 += gelir;
 
         html += '<tr>' +
           '<td style="font-weight:600">' + AY_ADT[ay] + '</td>' +
@@ -4801,10 +4803,28 @@ async function fiyatHesaplamaYukle() {
         '<td colspan="2" style="font-weight:700">TOPLAM</td>' +
         '<td style="text-align:right;font-family:DM Mono,monospace;font-weight:700" id="toplam-oda-gecesi">' + (toplamOdaGecesi||'—') + '</td>' +
         '<td style="text-align:right;font-family:DM Mono,monospace;font-weight:700;color:var(--accent)" id="ort-adr-goster">' + (ortADR>0?ortADR.toLocaleString('tr-TR')+' TL':'—') + '</td>' +
-        '<td style="text-align:right;font-family:DM Mono,monospace;font-weight:700;color:var(--accent);font-size:14px" id="toplam-gelir-adim1">' + (hedefCiro>0?hedefCiro.toLocaleString('tr-TR')+' TL':'—') + '</td>' +
+        '<td style="text-align:right;font-family:DM Mono,monospace;font-weight:700;color:var(--accent);font-size:14px" id="toplam-gelir-adim1">' + (toplamGelirAdim1>0?toplamGelirAdim1.toLocaleString('tr-TR')+' TL':'—') + '</td>' +
         '</tr>';
 
       html += '</tbody></table></div>';
+
+      // Karsilastirma kartlari
+      if (toplamGelirAdim1 > 0 || hedefCiro > 0) {
+        var gelirFark = toplamGelirAdim1 - hedefCiro;
+        var farkRenk = Math.abs(gelirFark) < hedefCiro*0.05 ? 'var(--accent)' : Math.abs(gelirFark) < hedefCiro*0.15 ? 'var(--warn)' : 'var(--danger)';
+        var farkIkon = gelirFark >= 0 ? '+' : '';
+        html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px">' +
+          '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px">' +
+          '<div style="font-size:11px;color:var(--text-3);margin-bottom:4px">Tahmini Sezon Geliri</div>' +
+          '<div style="font-size:16px;font-weight:700;font-family:DM Mono,monospace;color:var(--accent)">' + toplamGelirAdim1.toLocaleString('tr-TR') + ' TL</div></div>' +
+          '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px">' +
+          '<div style="font-size:11px;color:var(--text-3);margin-bottom:4px">Hedef Ciro</div>' +
+          '<div style="font-size:16px;font-weight:700;font-family:DM Mono,monospace">' + hedefCiro.toLocaleString('tr-TR') + ' TL</div></div>' +
+          '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px">' +
+          '<div style="font-size:11px;color:var(--text-3);margin-bottom:4px">Fark</div>' +
+          '<div style="font-size:16px;font-weight:700;font-family:DM Mono,monospace;color:' + farkRenk + '">' + farkIkon + gelirFark.toLocaleString('tr-TR') + ' TL</div></div>' +
+          '</div>';
+      }
       if (window._butceKilitli) {
         html = '<div style="padding:12px 16px;background:var(--accent-l);border:1px solid var(--accent-b);border-radius:8px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">' +
           '<div style="display:flex;align-items:center;gap:10px"><span style="font-size:18px">&#x1F512;</span>' +
@@ -4937,27 +4957,62 @@ function ayDolulukAnlikGoster(ay) {
   var doluluk = parseFloat(document.getElementById('dol-ay-'+ay)?.value) || 0;
   var gun = new Date(yil, ay, 0).getDate();
   var odaSayisi = window._odaSayisi || 13;
-
-  var odaGecesi = doluluk ? Math.round(odaSayisi * gun * doluluk / 100) : 0;
-  var el = document.getElementById('oda-gecesi-'+ay);
-  if (el) el.textContent = odaGecesi || '—';
-
-  // Toplam oda gecesi ve ort ADR güncelle
+  var dfcTip = window._dfcTipAktif || 'orta';
+  var ozelDFC = window._ozelDFC || {};
+  var hedefCiro = window._hedefCiro || 0;
   var acikAylar = window._acikAylarFiyat || [];
-  var toplam = 0;
+
+  // Oda gecesi
+  var odaGecesi = doluluk ? Math.round(odaSayisi * gun * doluluk / 100) : 0;
+  var ogEl = document.getElementById('oda-gecesi-'+ay);
+  if (ogEl) ogEl.textContent = odaGecesi || '—';
+
+  // Tum aylarin toplam oda gecesi
+  var toplamOG = 0;
   acikAylar.forEach(function(a) {
     var dVal = parseFloat(document.getElementById('dol-ay-'+a)?.value) || 0;
     var g = new Date(yil, a, 0).getDate();
-    toplam += dVal ? Math.round(odaSayisi * g * dVal / 100) : 0;
+    toplamOG += dVal ? Math.round(odaSayisi * g * dVal / 100) : 0;
   });
-  var hedefCiro = window._hedefCiro || 0;
-  var ortADR = toplam > 0 ? Math.round(hedefCiro / toplam) : 0;
 
-  var toplamEl = document.getElementById('toplam-oda-gecesi');
-  if (toplamEl) toplamEl.textContent = toplam || '—';
+  // Ortalama ADR
+  var ortADR = toplamOG > 0 ? Math.round(hedefCiro / toplamOG) : 0;
+  window._geciciBaseADR = ortADR;
+
+  // Bu ayin DFC katsayisina gore ADR
+  var ayADR = 0;
+  if (doluluk > 0 && ortADR > 0) {
+    var dfc = getDFC(dfcTip, doluluk);
+    var ozel = ozelDFC[dfc.alt];
+    var katsayi = ozel ? parseFloat(ozel['dfc_'+dfcTip]) : dfc.dfc;
+    ayADR = Math.round(ortADR * katsayi);
+  }
+  var gelir = ayADR > 0 && odaGecesi > 0 ? Math.round(ayADR * odaGecesi) : 0;
+
+  // Ekrani guncelle
+  var adrEl = document.getElementById('adr-ay-'+ay);
+  if (adrEl) adrEl.textContent = ayADR > 0 ? ayADR.toLocaleString('tr-TR') + ' TL' : '—';
+  var gelirEl = document.getElementById('gelir-ay-'+ay);
+  if (gelirEl) gelirEl.textContent = gelir > 0 ? gelir.toLocaleString('tr-TR') + ' TL' : '—';
+
+  // Toplam satirini guncelle
+  var toplamOGEl = document.getElementById('toplam-oda-gecesi');
+  if (toplamOGEl) toplamOGEl.textContent = toplamOG || '—';
   var ortEl = document.getElementById('ort-adr-goster');
   if (ortEl) ortEl.textContent = ortADR > 0 ? ortADR.toLocaleString('tr-TR') + ' TL' : '—';
+
+  // Toplam geliri guncelle
+  var toplamGelir = 0;
+  acikAylar.forEach(function(a) {
+    var gelirElA = document.getElementById('gelir-ay-'+a);
+    if (gelirElA && gelirElA.textContent !== '—') {
+      toplamGelir += parseInt(gelirElA.textContent.replace(/[^0-9]/g,'')) || 0;
+    }
+  });
+  var toplamGelirEl = document.getElementById('toplam-gelir-adim1');
+  if (toplamGelirEl) toplamGelirEl.textContent = toplamGelir > 0 ? toplamGelir.toLocaleString('tr-TR') + ' TL' : '—';
 }
+
 
 async function aylikDolulukKaydet() {
   var acikAylar = window._acikAylarFiyat || [];
