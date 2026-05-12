@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_53.html -->
+<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_54.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7087,17 +7087,21 @@ var receteAktifSekme = 'liste';
 
 async function receteModuluBaslat() {
   try {
-    var kat = await sbGet('recete_kategori', 'order=sira.asc');
-    if (kat) {
-      _receteKategoriler = kat;
+    // Reçete kategorisi = Stok kategorisi
+    var stokKat = await sbGet('stok_kategori', 'order=ad.asc');
+    if (stokKat) {
+      _receteKategoriler = stokKat;
       var recKatSel = document.getElementById('rec-kategori');
       if (recKatSel) {
-        recKatSel.innerHTML = '<option value="">— Seçiniz —</option>';
-        kat.forEach(function(k) {
+        recKatSel.innerHTML = '<option value="">— Kategori seçin —</option>';
+        stokKat.forEach(function(k) {
           recKatSel.innerHTML += '<option value="' + k.id + '">' + k.ad + '</option>';
         });
       }
     }
+    // Ayrıca recete_kategori tablosunu da yükle (reçete listesi için)
+    var recKat2 = await sbGet('recete_kategori', 'order=sira.asc');
+    if (recKat2) window._receteKatListesi = recKat2;
   } catch(e) {}
 
   receteSekme(receteAktifSekme);
@@ -7118,10 +7122,22 @@ function receteSekme(sekme) {
 async function receteUrunleriYukle() {
   var recUrunSel = document.getElementById('rec-urun');
   if (!recUrunSel) return;
+
+  var seciliKatId = document.getElementById('rec-kategori')?.value;
   recUrunSel.innerHTML = '<option value="">— Ürün seçin —</option>';
-  _stokUrunler.forEach(function(u) {
-    recUrunSel.innerHTML += '<option value="' + u.id + '" data-birim="' + u.birim + '" data-fiyat="' + (u.birim_fiyat||0) + '">' + u.ad + ' (' + u.birim + ')</option>';
-  });
+
+  var filtreliUrunler = seciliKatId
+    ? _stokUrunler.filter(function(u){ return u.kategori_id === seciliKatId && u.aktif !== false; })
+    : _stokUrunler.filter(function(u){ return u.aktif !== false; });
+
+  if (filtreliUrunler.length === 0) {
+    recUrunSel.innerHTML = '<option value="">Bu kategoride ürün yok</option>';
+  } else {
+    filtreliUrunler.forEach(function(u) {
+      recUrunSel.innerHTML += '<option value="' + u.id + '" data-birim="' + u.birim + '" data-fiyat="' + (u.birim_fiyat||0) + '">' + u.ad + ' (' + u.birim + ')</option>';
+    });
+  }
+
   recUrunSel.onchange = function() {
     var opt = this.options[this.selectedIndex];
     var birim = opt.getAttribute('data-birim') || '';
