@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_67.html -->
+<!-- saved from url=(0043)file:///C:/Users/HP/Downloads/index_68.html -->
 <html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1738,6 +1738,8 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
 <script>
 // ── GLOBAL DEĞİŞKENLER ───────────────────────────────
 var sistemOdaSayisi = 13;
+var sistemMaxKisi = 26;
+var sistemKisiKapasitesi = 26;
 var sistemKisiKapasitesi = 26;
 
 // ── SUPABASE BAĞLANTISI ──────────────────────────────
@@ -1978,7 +1980,10 @@ async function dashboard() {
       set('dash-d-ciro', fmtTL(ciro));
       set('dash-d-ciro-s', kisi>0?'Kişi başı '+fmtTL(ciro/kisi):'');
       set('dash-d-oda', dolu+' oda / '+kisi+' kişi');
-      set('dash-d-oda-s', toplam_oda>0?'%'+Math.round(dolu/toplam_oda*100)+' doluluk':'');
+      var odaDol = toplam_oda>0 ? Math.round(dolu/toplam_oda*100) : 0;
+      var maxKisiKap = sistemKisiKapasitesi || sistemMaxKisi || (toplam_oda * 2);
+      var kisiDol = maxKisiKap>0 ? Math.round(kisi/maxKisiKap*100) : 0;
+      set('dash-d-oda-s', '%'+odaDol+' oda dolulugu | %'+kisiDol+' kisi dolulugu');
       set('dash-d-adr', adr>0?fmtTL(adr):'—');
       set('dash-d-tah', fmtTL(tah));
       var fark = ciro-tah;
@@ -2014,7 +2019,11 @@ async function dashboard() {
     set('dash-m-ciro', fmtTL(ayCiro));
     set('dash-m-ciro-s', (ayKap?ayKap.length:0)+' kapatış');
     set('dash-m-oda', ayDolu+' oda / '+ayKisi+' kişi');
-    set('dash-m-oda-s', ayKap&&ayKap.length>0&&toplam_oda>0?'Ort. %'+Math.round(ayDolu/(toplam_oda*ayKap.length)*100)+' doluluk':'');
+    var ayGunSayisi = ayKap ? ayKap.length : 0;
+    var ayOdaDol = ayGunSayisi>0&&toplam_oda>0 ? Math.round(ayDolu/(toplam_oda*ayGunSayisi)*100) : 0;
+    var ayMaxKisiKap = (sistemKisiKapasitesi || sistemMaxKisi || (toplam_oda * 2)) * ayGunSayisi;
+    var ayKisiDol = ayMaxKisiKap>0 ? Math.round(ayKisi/ayMaxKisiKap*100) : 0;
+    set('dash-m-oda-s', '%'+ayOdaDol+' oda dolulugu | %'+ayKisiDol+' kisi dolulugu');
     set('dash-m-gercek-adr', ayADR>0?fmtTL(ayADR):'—');
 
     // Hedef ADR - butce_aylik
