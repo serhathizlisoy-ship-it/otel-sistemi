@@ -1,0 +1,20 @@
+{
+  "rewrites": [
+    {
+      "source": "/:slug",
+      "destination": "/panel/index.html"
+    },
+    {
+      "source": "/:slug/(.*)",
+      "destination": "/panel/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/oteller/(.*)/config.json",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache" }
+      ]
+    }
+  ]
+}
